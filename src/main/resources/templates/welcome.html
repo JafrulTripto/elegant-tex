@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to TechMinds</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">TechMinds</div>
+        </div>
+        
+        <h2>Welcome to TechMinds!</h2>
+        
+        <p>Hello <span th:text="${firstName}">User</span>,</p>
+        
+        <p>Thank you for joining TechMinds! We're excited to have you as part of our community.</p>
+        
+        <p>Your account has been successfully created and verified. You can now log in to access all the features and resources available to our members.</p>
+        
+        <p style="text-align: center;">
+            <a class="button" th:href="${loginUrl}">Log In to Your Account</a>
+        </p>
+        
+        <p>Here's what you can do with your TechMinds account:</p>
+        
+        <ul>
+            <li>Access exclusive content and resources</li>
+            <li>Connect with other members</li>
+            <li>Participate in discussions and forums</li>
+            <li>Stay updated with the latest news and events</li>
+        </ul>
+        
+        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        
+        <p>Best regards,<br>The TechMinds Team</p>
+        
+        <div class="footer">
+            <p>&copy; 2025 TechMinds. All rights reserved.</p>
+            <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>
