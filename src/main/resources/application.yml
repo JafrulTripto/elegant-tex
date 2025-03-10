@@ -72,3 +72,5 @@ app:
     s3-bucket-name: ${S3_BUCKET_NAME:}
     s3-region: ${S3_REGION:us-east-1}
     s3-public-access: ${S3_PUBLIC_ACCESS:false}
+    aws-access-key-id: ${AWS_ACCESS_KEY_ID:}
+    aws-secret-access-key: ${AWS_SECRET_ACCESS_KEY:}

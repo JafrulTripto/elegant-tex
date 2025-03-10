@@ -7,8 +7,6 @@ import com.tripzin.eleganttex.entity.Marketplace;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.exception.BadRequestException;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
-import com.tripzin.eleganttex.repository.FileStorageRepository;
-import com.tripzin.eleganttex.service.FileStorageService;
 import com.tripzin.eleganttex.repository.MarketplaceRepository;
 import com.tripzin.eleganttex.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +28,6 @@ public class MarketplaceService {
     
     private final MarketplaceRepository marketplaceRepository;
     private final UserRepository userRepository;
-    private final FileStorageRepository fileStorageRepository;
     private final FileStorageService fileStorageService;
     
     public Page<MarketplaceResponse> getAllMarketplaces(Pageable pageable) {

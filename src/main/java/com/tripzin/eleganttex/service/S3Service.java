@@ -5,6 +5,7 @@ import com.tripzin.eleganttex.exception.BadRequestException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -25,19 +26,30 @@ import java.util.Map;
 public class S3Service {
 
     private final FileStorageConfig fileStorageConfig;
+    private final Environment environment;
     private S3Client s3Client;
 
     @PostConstruct
     public void init() {
         if (fileStorageConfig.isUseS3Storage()) {
-            // Get AWS credentials from environment variables
-            String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-            String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+            // Get AWS credentials from environment variables through Spring Environment
+            String accessKey = environment.getProperty("AWS_ACCESS_KEY_ID");
+            String secretKey = environment.getProperty("AWS_SECRET_ACCESS_KEY");
 
             if (accessKey == null || secretKey == null) {
-                throw new IllegalStateException("AWS credentials not found. Make sure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set in the environment.");
+                log.error("AWS credentials not found. Checking system environment...");
+                
+                // Fallback to direct system environment check
+                accessKey = System.getenv("AWS_ACCESS_KEY_ID");
+                secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+                
+                if (accessKey == null || secretKey == null) {
+                    throw new IllegalStateException("AWS credentials not found. Make sure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set in the environment.");
+                }
             }
 
+            log.info("Successfully loaded AWS credentials");
+            
             // Create S3 client
             s3Client = S3Client.builder()
                     .region(Region.of(fileStorageConfig.getS3Region()))
@@ -166,9 +178,19 @@ public class S3Service {
         }
 
         try {
-            // Get AWS credentials from environment variables
-            String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-            String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+            // Get AWS credentials from environment using Spring Environment
+            String accessKey = environment.getProperty("AWS_ACCESS_KEY_ID");
+            String secretKey = environment.getProperty("AWS_SECRET_ACCESS_KEY");
+            
+            if (accessKey == null || secretKey == null) {
+                // Fallback to direct system environment check
+                accessKey = System.getenv("AWS_ACCESS_KEY_ID");
+                secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+                
+                if (accessKey == null || secretKey == null) {
+                    throw new IllegalStateException("AWS credentials not found for generating presigned URL");
+                }
+            }
 
             software.amazon.awssdk.services.s3.presigner.S3Presigner presigner = software.amazon.awssdk.services.s3.presigner.S3Presigner.builder()
                     .region(Region.of(fileStorageConfig.getS3Region()))

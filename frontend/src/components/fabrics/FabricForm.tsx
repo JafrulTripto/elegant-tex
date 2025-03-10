@@ -20,7 +20,7 @@ import { uploadFabricImage } from '../../services/fabric.service';
 interface FabricFormProps {
   initialData?: Partial<FabricFormData>;
   fabricId?: number;
-  onSubmit: (data: FabricFormData) => Promise<void>;
+  onSubmit: (data: FabricFormData, tempImageFile?: File) => Promise<void>;
   isSubmitting?: boolean;
   submitError?: string;
 }
@@ -44,6 +44,10 @@ const FabricForm: React.FC<FabricFormProps> = ({
   const [searchingTags, setSearchingTags] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  
+  // New state for storing temporary image file
+  const [tempImageFile, setTempImageFile] = useState<File | null>(null);
+  const [tempImagePreview, setTempImagePreview] = useState<string | null>(null);
 
   // Search tags when input changes
   useEffect(() => {
@@ -90,22 +94,45 @@ const FabricForm: React.FC<FabricFormProps> = ({
 
   const handleImageUpload = async (file: File) => {
     if (!fabricId) {
-      // For new fabrics, we'll handle the image upload after the fabric is created
-      return;
-    }
-    
-    try {
-      setUploadingImage(true);
-      setImageError(null);
-      
-      const response = await uploadFabricImage(fabricId, file);
-      setFormData(prev => ({ ...prev, imageId: response.imageId }));
-      
-      setUploadingImage(false);
-    } catch (err) {
-      console.error('Error uploading image:', err);
-      setImageError('Failed to upload image. Please try again.');
-      setUploadingImage(false);
+      // For new fabrics, store the file temporarily and create a preview
+      try {
+        setImageError(null);
+        setTempImageFile(file);
+        
+        // Create a preview URL for the temporary image
+        const previewUrl = URL.createObjectURL(file);
+        setTempImagePreview(previewUrl);
+        
+        return () => {
+          // Clean up the object URL when component unmounts or when no longer needed
+          URL.revokeObjectURL(previewUrl);
+        };
+      } catch (err) {
+        console.error('Error creating image preview:', err);
+        setImageError('Failed to preview image. Please try again.');
+      }
+    } else {
+      // For existing fabrics, upload the image immediately
+      try {
+        setUploadingImage(true);
+        setImageError(null);
+        
+        const response = await uploadFabricImage(fabricId, file);
+        setFormData(prev => ({ ...prev, imageId: response.imageId }));
+        
+        // Clear temporary image if there was one
+        if (tempImagePreview) {
+          URL.revokeObjectURL(tempImagePreview);
+          setTempImagePreview(null);
+        }
+        setTempImageFile(null);
+        
+        setUploadingImage(false);
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        setImageError('Failed to upload image. Please try again.');
+        setUploadingImage(false);
+      }
     }
   };
 
@@ -128,8 +155,18 @@ const FabricForm: React.FC<FabricFormProps> = ({
     }
     
     console.log('Submitting fabric form with data:', formData);
-    await onSubmit(formData);
+    // Pass the temporary image file to the parent component for handling after fabric creation
+    await onSubmit(formData, tempImageFile || undefined);
   };
+
+  // Clean up object URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (tempImagePreview) {
+        URL.revokeObjectURL(tempImagePreview);
+      }
+    };
+  }, [tempImagePreview]);
 
   return (
     <Paper elevation={2} sx={{ p: 3 }}>
@@ -199,12 +236,28 @@ const FabricForm: React.FC<FabricFormProps> = ({
                 Fabric Image
               </Typography>
               
-              <ImagePreview
-                imageId={formData.imageId}
-                height={200}
-                width="100%"
-                alt="Fabric"
-              />
+              {tempImagePreview ? (
+                // Show temporary image preview for new fabrics
+                <Box
+                  component="img"
+                  src={tempImagePreview}
+                  alt="Fabric Preview"
+                  sx={{
+                    height: 200,
+                    width: '100%',
+                    objectFit: 'cover',
+                    borderRadius: 1,
+                  }}
+                />
+              ) : (
+                // Show stored image for existing fabrics
+                <ImagePreview
+                  imageId={formData.imageId}
+                  height={200}
+                  width="100%"
+                  alt="Fabric"
+                />
+              )}
             </Box>
             
             <FileUpload
@@ -218,7 +271,9 @@ const FabricForm: React.FC<FabricFormProps> = ({
             <FormHelperText>
               {fabricId
                 ? 'Upload an image for your fabric'
-                : 'You can upload an image after creating the fabric'}
+                : tempImageFile
+                  ? 'Image will be uploaded after fabric creation'
+                  : 'Select an image for your new fabric'}
             </FormHelperText>
           </Grid>
         </Grid>
