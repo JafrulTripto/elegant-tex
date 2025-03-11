@@ -42,6 +42,10 @@ jwt:
 server:
   port: ${SERVER_PORT:8080}
   servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
     context-path: /api/v1
 
 # Logging Configuration

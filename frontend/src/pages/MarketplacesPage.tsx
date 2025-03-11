@@ -14,7 +14,7 @@ const MarketplacesPage: React.FC = () => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'warning';
   }>({
     open: false,
     message: '',
@@ -30,13 +30,34 @@ const MarketplacesPage: React.FC = () => {
     setSubmitError(undefined);
   };
 
-  const handleSubmit = async (data: MarketplaceFormData) => {
+  const handleSubmit = async (data: MarketplaceFormData, tempImageFile?: File) => {
     try {
       setIsSubmitting(true);
       setSubmitError(undefined);
       
       // Create the marketplace
       const createdMarketplace = await createMarketplace(data);
+      
+      // If there's a temporary image file, upload it now
+      if (tempImageFile && createdMarketplace.id) {
+        try {
+          await uploadMarketplaceImage(createdMarketplace.id, tempImageFile);
+        } catch (imageError) {
+          console.error('Error uploading image after marketplace creation:', imageError);
+          // Show a warning but don't block the flow since marketplace was created successfully
+          setSnackbar({
+            open: true,
+            message: 'Marketplace created successfully, but image upload failed. You can try uploading the image again by editing the marketplace.',
+            severity: 'warning'
+          });
+          
+          // Close the dialog and navigate anyway
+          setOpenDialog(false);
+          navigate(`/marketplaces/${createdMarketplace.id}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
       
       // Show success message
       setSnackbar({

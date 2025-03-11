@@ -34,6 +34,7 @@ import {
   Settings as SettingsIcon,
   Storefront as StorefrontIcon,
   Category as CategoryIcon,
+  ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -116,6 +117,14 @@ const MainLayout: React.FC = () => {
               <CategoryIcon />
             </ListItemIcon>
             <ListItemText primary="Fabrics" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => handleNavigate('/orders')}>
+            <ListItemIcon>
+              <ShoppingCartIcon />
+            </ListItemIcon>
+            <ListItemText primary="Orders" />
           </ListItemButton>
         </ListItem>
         {isAdmin && (

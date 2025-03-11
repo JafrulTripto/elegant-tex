@@ -21,7 +21,7 @@ import { uploadMarketplaceImage } from '../../services/marketplace.service';
 interface MarketplaceFormProps {
   initialData?: Partial<MarketplaceFormData>;
   marketplaceId?: number;
-  onSubmit: (data: MarketplaceFormData) => Promise<void>;
+  onSubmit: (data: MarketplaceFormData, tempImageFile?: File) => Promise<void>;
   isSubmitting?: boolean;
   submitError?: string;
 }
@@ -46,6 +46,8 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [tempImageFile, setTempImageFile] = useState<File | null>(null);
+  const [tempImagePreview, setTempImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -92,22 +94,45 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
 
   const handleImageUpload = async (file: File) => {
     if (!marketplaceId) {
-      // For new marketplaces, we'll handle the image upload after the marketplace is created
-      return;
-    }
-    
-    try {
-      setUploadingImage(true);
-      setImageError(null);
-      
-      const response = await uploadMarketplaceImage(marketplaceId, file);
-      setFormData(prev => ({ ...prev, imageId: response.imageId }));
-      
-      setUploadingImage(false);
-    } catch (err) {
-      console.error('Error uploading image:', err);
-      setImageError('Failed to upload image. Please try again.');
-      setUploadingImage(false);
+      // For new marketplaces, store the file temporarily and create a preview
+      try {
+        setImageError(null);
+        setTempImageFile(file);
+        
+        // Create a preview URL for the temporary image
+        const previewUrl = URL.createObjectURL(file);
+        setTempImagePreview(previewUrl);
+        
+        return () => {
+          // Clean up the object URL when component unmounts or when no longer needed
+          URL.revokeObjectURL(previewUrl);
+        };
+      } catch (err) {
+        console.error('Error creating image preview:', err);
+        setImageError('Failed to preview image. Please try again.');
+      }
+    } else {
+      // For existing marketplaces, upload the image immediately
+      try {
+        setUploadingImage(true);
+        setImageError(null);
+        
+        const response = await uploadMarketplaceImage(marketplaceId, file);
+        setFormData(prev => ({ ...prev, imageId: response.imageId }));
+        
+        // Clear temporary image if there was one
+        if (tempImagePreview) {
+          URL.revokeObjectURL(tempImagePreview);
+          setTempImagePreview(null);
+        }
+        setTempImageFile(null);
+        
+        setUploadingImage(false);
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        setImageError('Failed to upload image. Please try again.');
+        setUploadingImage(false);
+      }
     }
   };
 
@@ -135,8 +160,17 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
       return;
     }
     
-    await onSubmit(formData);
+    await onSubmit(formData, tempImageFile || undefined);
   };
+
+  // Clean up object URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (tempImagePreview) {
+        URL.revokeObjectURL(tempImagePreview);
+      }
+    };
+  }, [tempImagePreview]);
 
   return (
     <Paper elevation={2} sx={{ p: 3 }}>
@@ -214,12 +248,28 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
                 Marketplace Image
               </Typography>
               
-              <ImagePreview
-                imageId={formData.imageId}
-                height={200}
-                width="100%"
-                alt="Marketplace"
-              />
+              {tempImagePreview ? (
+                // Show temporary image preview for new marketplaces
+                <Box
+                  component="img"
+                  src={tempImagePreview}
+                  alt="Marketplace Preview"
+                  sx={{
+                    height: 200,
+                    width: '100%',
+                    objectFit: 'cover',
+                    borderRadius: 1,
+                  }}
+                />
+              ) : (
+                // Show stored image for existing marketplaces
+                <ImagePreview
+                  imageId={formData.imageId}
+                  height={200}
+                  width="100%"
+                  alt="Marketplace"
+                />
+              )}
             </Box>
             
             <FileUpload
@@ -233,7 +283,9 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
             <FormHelperText>
               {marketplaceId
                 ? 'Upload an image for your marketplace'
-                : 'You can upload an image after creating the marketplace'}
+                : tempImageFile
+                  ? 'Image will be uploaded after marketplace creation'
+                  : 'Select an image for your new marketplace'}
             </FormHelperText>
           </Grid>
         </Grid>
