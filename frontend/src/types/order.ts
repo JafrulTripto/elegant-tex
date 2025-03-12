@@ -89,6 +89,7 @@ export interface OrderProductFormData {
   tempImageBase64?: string[];
   tempImages?: File[];
   tempFiles?: File[];
+  existingImages?: OrderProductImage[];
 }
 
 export interface OrderFilterParams {

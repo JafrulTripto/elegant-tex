@@ -8,6 +8,7 @@ import com.tripzin.eleganttex.service.FileStorageService;
 import com.tripzin.eleganttex.service.MarketplaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/marketplaces")
 @RequiredArgsConstructor
+@Slf4j
 public class MarketplaceController {
     
     private final MarketplaceService marketplaceService;
@@ -102,12 +104,10 @@ public class MarketplaceController {
         // Get the marketplace
         MarketplaceResponse marketplace = marketplaceService.getMarketplaceById(id);
         
-        // Delete old image if exists
-        if (marketplace.getImageId() != null) {
-            fileStorageService.deleteFile(marketplace.getImageId());
-        }
+        // Save the old image ID for later deletion
+        Long oldImageId = marketplace.getImageId();
         
-        // Store new image
+        // Store new image first
         FileStorage storedFile = fileStorageService.storeFile(file, "MARKETPLACE", id);
         
         // Update marketplace with new image ID
@@ -121,6 +121,19 @@ public class MarketplaceController {
         
         // Update marketplace
         MarketplaceResponse updatedMarketplace = marketplaceService.updateMarketplace(id, updateRequest);
+        
+        // Now that the marketplace has been updated with the new image ID,
+        // we can safely delete the old image if it exists
+        if (oldImageId != null) {
+            try {
+                fileStorageService.deleteFile(oldImageId);
+            } catch (Exception e) {
+                // Log the error but don't fail the request
+                // The marketplace has already been updated successfully
+                log.error("Error deleting old marketplace image: {}", e.getMessage());
+            }
+        }
+        
         return ResponseEntity.ok(updatedMarketplace);
     }
 }

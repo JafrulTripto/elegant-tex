@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,6 +99,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         log.error("Access denied: {}", ex.getMessage());
         return buildErrorResponse("Access denied: " + ex.getMessage(), HttpStatus.FORBIDDEN, request);
+    }
+    
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, WebRequest request) {
+        log.error("File size limit exceeded: {}", ex.getMessage());
+        return buildErrorResponse(
+                "File size exceeds the maximum allowed limit (10MB). Please upload a smaller file.",
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                request
+        );
     }
     
     @ExceptionHandler(Exception.class)

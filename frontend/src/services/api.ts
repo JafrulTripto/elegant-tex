@@ -93,6 +93,11 @@ api.interceptors.response.use(
       details: ((error.response?.data as any)?.details) || '',
     };
     
+    // Add specific handling for file size errors (413 Payload Too Large)
+    if (error.response?.status === 413) {
+      apiError.message = 'File size exceeds the maximum allowed limit. Please upload smaller files (max 10MB total).';
+    }
+    
     return Promise.reject(apiError);
   }
 );

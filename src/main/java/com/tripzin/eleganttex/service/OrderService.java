@@ -6,6 +6,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,9 +14,9 @@ import java.util.Map;
 
 public interface OrderService {
 
-    OrderResponse createOrder(OrderRequest orderRequest, Long userId);
+    OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files);
     
-    OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId);
+    OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files);
     
     OrderResponse getOrderById(Long id);
     

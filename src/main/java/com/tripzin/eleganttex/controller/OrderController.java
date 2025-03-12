@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,24 +32,26 @@ public class OrderController {
     private final OrderService orderService;
     private final UserSecurity userSecurity;
 
-    @PostMapping
-    @PreAuthorize("hasAuthority('ORDER_CREATE')")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderResponse> createOrder(
-            @Valid @RequestBody OrderRequest orderRequest,
+            @Valid @RequestPart("orderRequest") OrderRequest orderRequest,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal UserDetails userDetails) {
         Long userId = userSecurity.getUserIdFromUserDetails(userDetails);
-        OrderResponse order = orderService.createOrder(orderRequest, userId);
+        OrderResponse order = orderService.createOrder(orderRequest, userId, files);
         return ResponseEntity.ok(order);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ORDER_UPDATE')")
     public ResponseEntity<OrderResponse> updateOrder(
             @PathVariable Long id,
-            @Valid @RequestBody OrderRequest orderRequest,
+            @Valid @RequestPart("orderRequest") OrderRequest orderRequest,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal UserDetails userDetails) {
         Long userId = userSecurity.getUserIdFromUserDetails(userDetails);
-        OrderResponse order = orderService.updateOrder(id, orderRequest, userId);
+        OrderResponse order = orderService.updateOrder(id, orderRequest, userId, files);
         return ResponseEntity.ok(order);
     }
 
@@ -96,7 +99,7 @@ public class OrderController {
     }
 
     @GetMapping("/filter")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getOrdersByFilters(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

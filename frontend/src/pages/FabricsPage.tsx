@@ -148,9 +148,17 @@
         setDeleteDialogOpen(false);
         loadFabrics();
         setDeleting(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error deleting fabric:', err);
-        setError('Failed to delete fabric. Please try again.');
+        
+        // Check if this is the foreign key constraint error
+        if (err.response?.data?.message?.includes('referenced by one or more orders')) {
+          setError('This fabric cannot be deleted because it is being used in one or more orders. Please remove the fabric from all orders before deleting.');
+        } else {
+          setError('Failed to delete fabric. Please try again.');
+        }
+        
+        setDeleteDialogOpen(false);
         setDeleting(false);
       }
     };

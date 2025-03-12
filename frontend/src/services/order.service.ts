@@ -29,16 +29,20 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
     }))
   };
   
-  formData.append('orderRequest', JSON.stringify(orderRequest));
+  formData.append('orderRequest', new Blob([JSON.stringify(orderRequest)], {
+    type: 'application/json'
+  }));
   
   // Append any temporary image files
-  orderData.products.forEach((product, productIndex) => {
-    if (product.tempFiles && product.tempFiles.length > 0) {
-      product.tempFiles.forEach((file, fileIndex) => {
-        formData.append(`files_${productIndex}_${fileIndex}`, file);
-      });
-    }
-  });
+  if (orderData.products) {
+    orderData.products.forEach((product) => {
+      if (product.tempImages && product.tempImages.length > 0) {
+        product.tempImages.forEach((file) => {
+          formData.append('files', file);
+        });
+      }
+    });
+  }
   
   const response = await api.post(BASE_URL, formData, {
     headers: {
@@ -87,16 +91,20 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
     }))
   };
   
-  formData.append('orderRequest', JSON.stringify(orderRequest));
+  formData.append('orderRequest', new Blob([JSON.stringify(orderRequest)], {
+    type: 'application/json'
+  }));
   
   // Append any temporary image files
-  orderData.products.forEach((product, productIndex) => {
-    if (product.tempFiles && product.tempFiles.length > 0) {
-      product.tempFiles.forEach((file, fileIndex) => {
-        formData.append(`files_${productIndex}_${fileIndex}`, file);
-      });
-    }
-  });
+  if (orderData.products) {
+    orderData.products.forEach((product) => {
+      if (product.tempImages && product.tempImages.length > 0) {
+        product.tempImages.forEach((file) => {
+          formData.append('files', file);
+        });
+      }
+    });
+  }
   
   const response = await api.put(`${BASE_URL}/${id}`, formData, {
     headers: {
@@ -108,7 +116,9 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
 };
 
 export const updateOrderStatus = async (id: number, status: string, notes?: string): Promise<Order> => {
-  const response = await api.patch(`${BASE_URL}/${id}/status`, { status, notes });
+  const response = await api.patch(`${BASE_URL}/${id}/status`, null, {
+    params: { status, notes }
+  });
   return response.data;
 };
 

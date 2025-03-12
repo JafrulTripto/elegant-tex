@@ -4,6 +4,7 @@ import com.tripzin.eleganttex.config.FileStorageConfig;
 import com.tripzin.eleganttex.entity.FileStorage;
 import com.tripzin.eleganttex.exception.BadRequestException;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
+import com.tripzin.eleganttex.repository.FabricRepository;
 import com.tripzin.eleganttex.repository.FileStorageRepository;
 import com.tripzin.eleganttex.repository.MarketplaceRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class FileStorageService {
     private final FileStorageRepository fileStorageRepository;
     private final FileStorageConfig fileStorageConfig;
     private final MarketplaceRepository marketplaceRepository;
+    private final FabricRepository fabricRepository;
     private final S3Service s3Service;
     
     @Transactional
@@ -121,6 +123,12 @@ public class FileStorageService {
                                          "Please update or delete the marketplaces first.");
         }
         
+        // Check if the file is referenced by any fabric
+        if (fabricRepository.existsByImageId(id)) {
+            throw new BadRequestException("Cannot delete file because it is referenced by one or more fabrics. " +
+                                         "Please update or delete the fabrics first.");
+        }
+        
         try {
             if (fileStorageConfig.isUseS3Storage()) {
                 // Delete from S3
@@ -161,6 +169,12 @@ public class FileStorageService {
             // Check if the file is referenced by any marketplace
             if (marketplaceRepository.existsByImageId(file.getId())) {
                 log.warn("File with ID {} is referenced by a marketplace and will not be deleted", file.getId());
+                continue;
+            }
+            
+            // Check if the file is referenced by any fabric
+            if (fabricRepository.existsByImageId(file.getId())) {
+                log.warn("File with ID {} is referenced by a fabric and will not be deleted", file.getId());
                 continue;
             }
             

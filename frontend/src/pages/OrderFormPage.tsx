@@ -18,7 +18,9 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  InputAdornment
+  InputAdornment,
+  Autocomplete,
+  Avatar
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -34,6 +36,7 @@ import { Fabric } from '../types/fabric';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
 import * as fabricService from '../services/fabric.service';
+import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
 import OrderFileUpload from '../components/orders/OrderFileUpload';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
@@ -77,6 +80,13 @@ const OrderFormPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
+  
+  // Fabric pagination state
+  const [fabricPage, setFabricPage] = useState<number>(0);
+  const [fabricPageSize] = useState<number>(50);
+  const [hasMoreFabrics, setHasMoreFabrics] = useState<boolean>(true);
+  const [loadingFabrics, setLoadingFabrics] = useState<boolean>(false);
+  const [fabricSearch, setFabricSearch] = useState<string>('');
 
   // Load data on mount
   useEffect(() => {
@@ -89,9 +99,8 @@ const OrderFormPage: React.FC = () => {
         const marketplacesResponse = await marketplaceService.getMarketplaces();
         setMarketplaces(marketplacesResponse.content);
         
-        // Load fabrics
-        const fabricsResponse = await fabricService.getFabrics();
-        setFabrics(fabricsResponse.content);
+        // Load initial fabrics with pagination
+        await loadFabrics(0);
         
         // If edit mode, load order data
         if (isEditMode && id) {
@@ -99,13 +108,19 @@ const OrderFormPage: React.FC = () => {
           
           // Transform order data to form data
           const transformedProducts = orderData.products.map(product => ({
+            id: product.id, // Include the product ID for updates
             productType: product.productType,
             fabricId: product.fabric.id,
             quantity: product.quantity,
             price: product.price,
             description: product.description || '',
             imageIds: product.images.map(img => img.imageId),
-            tempImages: []
+            tempImages: [],
+            existingImages: product.images.map(img => ({
+              id: img.id,
+              imageId: img.imageId,
+              imageUrl: `/files/${img.imageId}`
+            }))
           }));
           
           setFormData({
@@ -137,6 +152,68 @@ const OrderFormPage: React.FC = () => {
     
     loadData();
   }, [id, isEditMode]);
+  
+  // Function to load fabrics with pagination
+  const loadFabrics = async (page: number) => {
+    if (!hasMoreFabrics && page > 0) return;
+    
+    setLoadingFabrics(true);
+    try {
+      const response = await fabricService.getFabrics(page, fabricPageSize);
+      
+      if (page === 0) {
+        setFabrics(response.content);
+      } else {
+        setFabrics(prev => [...prev, ...response.content]);
+      }
+      
+      setHasMoreFabrics(!response.last);
+      setFabricPage(page);
+    } catch (error) {
+      console.error('Error loading fabrics:', error);
+    } finally {
+      setLoadingFabrics(false);
+    }
+  };
+  
+  // Handle scroll event to load more fabrics
+  const handleFabricListScroll = (event: React.UIEvent<HTMLUListElement>) => {
+    const listboxNode = event.currentTarget;
+    
+    if (
+      !loadingFabrics &&
+      hasMoreFabrics &&
+      listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 100
+    ) {
+      loadFabrics(fabricPage + 1);
+    }
+  };
+  
+  // Function to render fabric option with image
+  const renderFabricOption = (props: React.HTMLAttributes<HTMLLIElement>, fabric: Fabric) => (
+    <li {...props}>
+      <Box display="flex" alignItems="center" gap={1}>
+        {fabric.imageId ? (
+          <Avatar 
+            src={getFileUrl(fabric.imageId) || undefined}
+            alt={fabric.name}
+            variant="rounded"
+            sx={{ width: 40, height: 40 }}
+          >
+            {fabric.name.charAt(0)}
+          </Avatar>
+        ) : (
+          <Avatar 
+            variant="rounded"
+            sx={{ width: 40, height: 40 }}
+          >
+            {fabric.name.charAt(0)}
+          </Avatar>
+        )}
+        <Typography>{fabric.name}</Typography>
+      </Box>
+    </li>
+  );
 
   // Create empty product
   function createEmptyProduct(): OrderProductFormData {
@@ -206,10 +283,14 @@ const OrderFormPage: React.FC = () => {
   const handleImageUpload = (index: number, files: File[]) => {
     setFormData(prev => {
       const updatedProducts = [...prev.products];
+      
+      // Replace the tempImages array with the new files array
+      // This is important because OrderFileUpload is passing the complete list of files
       updatedProducts[index] = {
         ...updatedProducts[index],
-        tempImages: [...(updatedProducts[index].tempImages || []), ...files]
+        tempImages: files // Use the files directly, don't append to existing
       };
+      
       return {
         ...prev,
         products: updatedProducts
@@ -221,8 +302,11 @@ const OrderFormPage: React.FC = () => {
   const handleRemoveImage = (productIndex: number, imageIndex: number) => {
     setFormData(prev => {
       const updatedProducts = [...prev.products];
+      // Create a new array for tempImages
       const tempImages = [...(updatedProducts[productIndex].tempImages || [])];
+      // Remove the image at the specified index
       tempImages.splice(imageIndex, 1);
+      // Update the product with the new tempImages array
       updatedProducts[productIndex] = {
         ...updatedProducts[productIndex],
         tempImages
@@ -267,53 +351,29 @@ const OrderFormPage: React.FC = () => {
     setError(null);
     
     try {
-      // Convert tempImages to base64 strings
-      const productsWithBase64 = await Promise.all(
-        formData.products.map(async product => {
-          const tempImageBase64 = await Promise.all(
-            (product.tempImages || []).map(async file => {
-              return new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-              });
-            })
-          );
-          
-          return {
-            ...product,
-            tempImageBase64
-          };
-        })
-      );
-      
-      // Prepare request data
-      const requestData = {
-        ...formData,
-        products: productsWithBase64.map(p => ({
-          productType: p.productType,
-          fabricId: p.fabricId,
-          quantity: p.quantity,
-          price: p.price,
-          description: p.description,
-          imageIds: p.imageIds,
-          tempImageBase64: p.tempImageBase64
-        }))
-      };
-      
-      // Submit form
+      // Submit form with the current formData (no need to convert to base64)
       if (isEditMode && id) {
-        await orderService.updateOrder(parseInt(id), requestData);
+        await orderService.updateOrder(parseInt(id), formData);
       } else {
-        await orderService.createOrder(requestData);
+        await orderService.createOrder(formData);
       }
       
       // Navigate to orders page
       navigate('/orders');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting form:', err);
-      setError('Failed to save order. Please try again later.');
+      
+      // Display specific error message if available
+      if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Failed to save order. Please try again later.');
+      }
+      
+      // If it's a file size error, scroll to the top to make sure the error is visible
+      if (err.message && err.message.includes('file size')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -553,23 +613,23 @@ const OrderFormPage: React.FC = () => {
                           </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
-                            <InputLabel id={`fabric-label-${index}`}>Fabric</InputLabel>
-                            <Select
-                              labelId={`fabric-label-${index}`}
-                              id={`fabric-${index}`}
-                              value={product.fabricId || ''}
-                              label="Fabric"
-                              onChange={(e) => handleProductChange(index, 'fabricId', e.target.value)}
-                              required
-                            >
-                              {fabrics.map((fabric) => (
-                                <MenuItem key={fabric.id} value={fabric.id}>
-                                  {fabric.name}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
+                          <Autocomplete
+                            id={`fabric-${index}`}
+                            options={fabrics}
+                            getOptionLabel={(option) => option.name}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            value={fabrics.find(f => f.id === product.fabricId) || null}
+                            onChange={(_, newValue) => handleProductChange(index, 'fabricId', newValue?.id || 0)}
+                            renderInput={(params) => (
+                              <TextField {...params} label="Fabric" required />
+                            )}
+                            renderOption={renderFabricOption}
+                            ListboxProps={{
+                              onScroll: handleFabricListScroll
+                            }}
+                            loading={loadingFabrics}
+                            loadingText="Loading fabrics..."
+                          />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                           <TextField
@@ -610,23 +670,64 @@ const OrderFormPage: React.FC = () => {
                           <Typography variant="subtitle2" gutterBottom>
                             Product Images (Optional)
                           </Typography>
-                          <OrderFileUpload
-                            onFileSelect={(files: File[]) => handleImageUpload(index, files)}
-                            accept="image/*"
-                            multiple
-                          />
-                          {product.tempImages && product.tempImages.length > 0 && (
-                            <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
-                              {product.tempImages.map((file, imgIndex) => (
-                                <OrderImagePreview
-                                  key={imgIndex}
-                                  imageUrl={URL.createObjectURL(file)}
-                                  imageName={file.name}
-                                  onRemove={() => handleRemoveImage(index, imgIndex)}
-                                />
-                              ))}
+                          
+                          {/* Display existing images if any */}
+                          {product.existingImages && product.existingImages.length > 0 && (
+                            <Box mb={2}>
+                              <Typography variant="body2" color="textSecondary" gutterBottom>
+                                Existing Images:
+                              </Typography>
+                              <Box display="flex" flexWrap="wrap" gap={1}>
+                                {product.existingImages.map((image, imgIndex) => (
+                                  <OrderImagePreview
+                                    key={`existing-${imgIndex}-${image.imageId}`}
+                                    imageId={image.imageId}
+                                    width={100}
+                                    height={100}
+                                    showDeleteButton={true}
+                                    onDelete={() => {
+                                      // Remove from imageIds
+                                      const updatedProducts = [...formData.products];
+                                      const updatedImageIds = [...(updatedProducts[index].imageIds || [])];
+                                      const idIndex = updatedImageIds.indexOf(image.imageId);
+                                      if (idIndex !== -1) {
+                                        updatedImageIds.splice(idIndex, 1);
+                                      }
+                                      
+                                      // Remove from existingImages
+                                      const updatedExistingImages = [...(updatedProducts[index].existingImages || [])];
+                                      updatedExistingImages.splice(imgIndex, 1);
+                                      
+                                      // Update the product
+                                      updatedProducts[index] = {
+                                        ...updatedProducts[index],
+                                        imageIds: updatedImageIds,
+                                        existingImages: updatedExistingImages
+                                      };
+                                      
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        products: updatedProducts
+                                      }));
+                                    }}
+                                  />
+                                ))}
+                              </Box>
                             </Box>
                           )}
+                          
+                          {/* Upload new images */}
+                          <Typography variant="body2" color="textSecondary" gutterBottom>
+                            {product.existingImages && product.existingImages.length > 0 ? 'Add New Images:' : 'Upload Images:'}
+                          </Typography>
+                          <OrderFileUpload
+                            onFileSelect={(files: File[]) => handleImageUpload(index, files)}
+                            selectedFiles={product.tempImages || []}
+                            onRemoveFile={(imgIndex) => handleRemoveImage(index, imgIndex)}
+                            accept="image/*"
+                            multiple
+                            maxFileSize={5} // 5MB max file size
+                          />
                         </Grid>
                       </Grid>
                     </CardContent>

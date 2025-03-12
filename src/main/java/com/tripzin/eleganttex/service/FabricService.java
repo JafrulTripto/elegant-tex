@@ -5,8 +5,10 @@ import com.tripzin.eleganttex.dto.response.FabricResponse;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
 import com.tripzin.eleganttex.entity.Fabric;
 import com.tripzin.eleganttex.entity.Tag;
+import com.tripzin.eleganttex.exception.BadRequestException;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.repository.FabricRepository;
+import com.tripzin.eleganttex.repository.OrderProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class FabricService {
     
     private final FabricRepository fabricRepository;
+    private final OrderProductRepository orderProductRepository;
     private final TagService tagService;
     private final FileStorageService fileStorageService;
     
@@ -98,6 +101,12 @@ public class FabricService {
         Fabric fabric = findFabricById(id);
         Long imageId = fabric.getImageId();
         
+        // Check if the fabric is referenced by any order products
+        if (isReferencedByOrderProducts(id)) {
+            throw new BadRequestException("Cannot delete fabric as it is referenced by one or more orders. " +
+                    "Please remove the fabric from all orders before deleting.");
+        }
+        
         // First delete the fabric to remove the reference to the image
         fabricRepository.delete(fabric);
         
@@ -115,6 +124,16 @@ public class FabricService {
         }
         
         return MessageResponse.success("Fabric deleted successfully");
+    }
+    
+    /**
+     * Check if a fabric is referenced by any order products
+     * 
+     * @param fabricId the fabric ID to check
+     * @return true if the fabric is referenced by any order products, false otherwise
+     */
+    private boolean isReferencedByOrderProducts(Long fabricId) {
+        return orderProductRepository.existsByFabricId(fabricId);
     }
     
     private Fabric findFabricById(Long id) {

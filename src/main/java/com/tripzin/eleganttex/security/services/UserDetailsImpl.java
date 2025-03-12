@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @AllArgsConstructor
 @Getter
@@ -33,20 +33,18 @@ public class UserDetailsImpl implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(User user) {
-        List<GrantedAuthority> authorities = user.getRoles().stream()
-                .flatMap(role -> {
-                    // Add role as an authority
-                    List<GrantedAuthority> auths = List.of(new SimpleGrantedAuthority(role.getName().name()));
-                    
-                    return auths.stream().collect(Collectors.toList()).stream().sequential()
-                            .collect(Collectors.toList())
-                            .stream()
-                            .sequential()
-                            .collect(Collectors.toList())
-                            .stream()
-                            .sequential();
-                })
-                .collect(Collectors.toList());
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        
+        // Process each role
+        user.getRoles().forEach(role -> {
+            // Add role as an authority with ROLE_ prefix
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().name()));
+            
+            // Add all permissions from the role as authorities
+            role.getPermissions().forEach(permission -> {
+                authorities.add(new SimpleGrantedAuthority(permission.getName()));
+            });
+        });
 
         return new UserDetailsImpl(
                 user.getId(),

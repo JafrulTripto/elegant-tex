@@ -42,7 +42,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse createOrder(OrderRequest orderRequest, Long userId) {
+    public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
         log.info("Creating new order for marketplace ID: {}", orderRequest.getMarketplaceId());
@@ -50,6 +50,15 @@ public class OrderServiceImpl implements OrderService {
         // Find marketplace
         Marketplace marketplace = marketplaceRepository.findById(orderRequest.getMarketplaceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Marketplace not found with ID: " + orderRequest.getMarketplaceId()));
+        
+        // Calculate total amount from products
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (OrderProductRequest productRequest : orderRequest.getProducts()) {
+            BigDecimal productTotal = productRequest.getPrice().multiply(new BigDecimal(productRequest.getQuantity()));
+            totalAmount = totalAmount.add(productTotal);
+        }
+        // Add delivery charge to total
+        totalAmount = totalAmount.add(orderRequest.getDeliveryCharge());
         
         // Create order
         Order order = Order.builder()
@@ -63,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
                 .deliveryCharge(orderRequest.getDeliveryCharge())
                 .deliveryDate(orderRequest.getDeliveryDate())
                 .status("Created")
+                .totalAmount(totalAmount) // Set the calculated total amount
                 .createdBy(currentUser)
                 .build();
         
@@ -104,21 +114,17 @@ public class OrderServiceImpl implements OrderService {
                     OrderProductImage image = OrderProductImage.builder()
                             .orderProduct(savedProduct)
                             .imageId(imageId)
-                            .imageUrl("/api/files/" + imageId)
+                            .imageUrl("/files/" + imageId)
                             .build();
                     
                     orderProductImageRepository.save(image);
                 }
             }
             
-            // Handle new images (base64)
-            if (productRequest.getTempImageBase64() != null && !productRequest.getTempImageBase64().isEmpty()) {
-                for (String base64Image : productRequest.getTempImageBase64()) {
+            // Handle new images from files
+            if (files != null && !files.isEmpty()) {
+                for (MultipartFile file : files) {
                     try {
-                        // Convert base64 to MultipartFile
-                        // This is a placeholder - in a real implementation, you would convert the base64 string to a MultipartFile
-                        MultipartFile file = null; // Placeholder
-                        
                         // Save image to file storage
                         FileStorage fileStorage = fileStorageService.storeFile(
                                 file,
@@ -130,13 +136,28 @@ public class OrderServiceImpl implements OrderService {
                         OrderProductImage image = OrderProductImage.builder()
                                 .orderProduct(savedProduct)
                                 .imageId(fileStorage.getId())
-                                .imageUrl("/api/files/" + fileStorage.getId())
+                                .imageUrl("/files/" + fileStorage.getId())
                                 .build();
                         
                         orderProductImageRepository.save(image);
                     } catch (Exception e) {
                         log.error("Error saving product image", e);
                         // Continue with other images
+                    }
+                }
+            }
+            
+            // Handle new images from base64
+            if (productRequest.getTempImageBase64() != null && !productRequest.getTempImageBase64().isEmpty()) {
+                for (String base64Image : productRequest.getTempImageBase64()) {
+                    try {
+                        // Process base64 image
+                        // This would be implemented in a real application
+                        log.info("Processing base64 image for product ID: {}", savedProduct.getId());
+                        
+                        // For now, we'll skip this since we're using MultipartFile
+                    } catch (Exception e) {
+                        log.error("Error saving product image from base64", e);
                     }
                 }
             }
@@ -157,7 +178,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId) {
+    public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
         log.info("Updating order with ID: {}", id);
@@ -169,6 +190,15 @@ public class OrderServiceImpl implements OrderService {
         Marketplace marketplace = marketplaceRepository.findById(orderRequest.getMarketplaceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Marketplace not found with ID: " + orderRequest.getMarketplaceId()));
         
+        // Calculate total amount from products
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (OrderProductRequest productRequest : orderRequest.getProducts()) {
+            BigDecimal productTotal = productRequest.getPrice().multiply(new BigDecimal(productRequest.getQuantity()));
+            totalAmount = totalAmount.add(productTotal);
+        }
+        // Add delivery charge to total
+        totalAmount = totalAmount.add(orderRequest.getDeliveryCharge());
+        
         // Update order fields
         order.setMarketplace(marketplace);
         order.setCustomerName(orderRequest.getCustomerName());
@@ -179,65 +209,136 @@ public class OrderServiceImpl implements OrderService {
         order.setDeliveryChannel(orderRequest.getDeliveryChannel());
         order.setDeliveryCharge(orderRequest.getDeliveryCharge());
         order.setDeliveryDate(orderRequest.getDeliveryDate());
+        order.setTotalAmount(totalAmount); // Set the calculated total amount
         
         Order savedOrder = orderRepository.save(order);
         
-        // Delete existing products and create new ones
-        orderProductRepository.deleteByOrderId(id);
+        // Get existing products
+        List<OrderProduct> existingProducts = orderProductRepository.findByOrderId(id);
+        Map<Long, OrderProduct> existingProductMap = new HashMap<>();
+        for (OrderProduct existingProduct : existingProducts) {
+            if (existingProduct.getId() != null) {
+                existingProductMap.put(existingProduct.getId(), existingProduct);
+            }
+        }
         
-        // Create products
+        // Track products to keep
+        Set<Long> productsToKeep = new HashSet<>();
+        
+        // Update or create products
         for (OrderProductRequest productRequest : orderRequest.getProducts()) {
-            Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
+            OrderProduct product;
             
-            OrderProduct product = OrderProduct.builder()
-                    .order(savedOrder)
-                    .productType(productRequest.getProductType())
-                    .fabric(fabric)
-                    .quantity(productRequest.getQuantity())
-                    .price(productRequest.getPrice())
-                    .description(productRequest.getDescription())
-                    .build();
-            
-            OrderProduct savedProduct = orderProductRepository.save(product);
-            
-            // Handle existing images
-            if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
-                for (Long imageId : productRequest.getImageIds()) {
-                    // Verify image exists
-                    FileStorage fileStorage = fileStorageRepository.findById(imageId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
-                    
-                    OrderProductImage image = OrderProductImage.builder()
-                            .orderProduct(savedProduct)
-                            .imageId(imageId)
-                            .imageUrl("/api/files/" + imageId)
-                            .build();
-                    
-                    orderProductImageRepository.save(image);
+            // Check if this is an existing product or a new one
+            if (productRequest.getId() != null && existingProductMap.containsKey(productRequest.getId())) {
+                // Update existing product
+                product = existingProductMap.get(productRequest.getId());
+                productsToKeep.add(product.getId());
+                
+                // Update product fields
+                Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
+                
+                product.setProductType(productRequest.getProductType());
+                product.setFabric(fabric);
+                product.setQuantity(productRequest.getQuantity());
+                product.setPrice(productRequest.getPrice());
+                product.setDescription(productRequest.getDescription());
+                
+                // Save updated product
+                product = orderProductRepository.save(product);
+                
+                // Get existing images
+                List<OrderProductImage> existingImages = orderProductImageRepository.findByOrderProductId(product.getId());
+                Map<Long, OrderProductImage> existingImageMap = new HashMap<>();
+                for (OrderProductImage existingImage : existingImages) {
+                    existingImageMap.put(existingImage.getImageId(), existingImage);
+                }
+                
+                // Track images to keep
+                Set<Long> imagesToKeep = new HashSet<>();
+                
+                // Handle existing images
+                if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
+                    for (Long imageId : productRequest.getImageIds()) {
+                        // Check if image already exists for this product
+                        if (existingImageMap.containsKey(imageId)) {
+                            // Keep existing image
+                            imagesToKeep.add(imageId);
+                        } else {
+                            // Verify image exists
+                            FileStorage fileStorage = fileStorageRepository.findById(imageId)
+                                    .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
+                            
+                            // Create new image reference
+                            OrderProductImage image = OrderProductImage.builder()
+                                    .orderProduct(product)
+                                    .imageId(imageId)
+                                    .imageUrl("/files/" + imageId)
+                                    .build();
+                            
+                            orderProductImageRepository.save(image);
+                            imagesToKeep.add(imageId);
+                        }
+                    }
+                }
+                
+                // Remove images that are no longer needed
+                for (OrderProductImage existingImage : existingImages) {
+                    if (!imagesToKeep.contains(existingImage.getImageId())) {
+                        orderProductImageRepository.delete(existingImage);
+                    }
+                }
+            } else {
+                // Create new product
+                Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
+                
+                product = OrderProduct.builder()
+                        .order(savedOrder)
+                        .productType(productRequest.getProductType())
+                        .fabric(fabric)
+                        .quantity(productRequest.getQuantity())
+                        .price(productRequest.getPrice())
+                        .description(productRequest.getDescription())
+                        .build();
+                
+                product = orderProductRepository.save(product);
+                
+                // Handle existing images
+                if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
+                    for (Long imageId : productRequest.getImageIds()) {
+                        // Verify image exists
+                        FileStorage fileStorage = fileStorageRepository.findById(imageId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
+                        
+                        OrderProductImage image = OrderProductImage.builder()
+                                .orderProduct(product)
+                                .imageId(imageId)
+                                .imageUrl("/files/" + imageId)
+                                .build();
+                        
+                        orderProductImageRepository.save(image);
+                    }
                 }
             }
             
-            // Handle new images (base64)
-            if (productRequest.getTempImageBase64() != null && !productRequest.getTempImageBase64().isEmpty()) {
-                for (String base64Image : productRequest.getTempImageBase64()) {
+            // Handle new images from files
+            if (files != null && !files.isEmpty()) {
+                for (MultipartFile file : files) {
                     try {
-                        // Convert base64 to MultipartFile
-                        // This is a placeholder - in a real implementation, you would convert the base64 string to a MultipartFile
-                        MultipartFile file = null; // Placeholder
-                        
                         // Save image to file storage
                         FileStorage fileStorage = fileStorageService.storeFile(
                                 file,
                                 "ORDER_PRODUCT",
-                                savedProduct.getId()
+                                product.getId()
                         );
                         
                         // Create order product image
                         OrderProductImage image = OrderProductImage.builder()
-                                .orderProduct(savedProduct)
+                                .orderProduct(product)
                                 .imageId(fileStorage.getId())
-                                .imageUrl("/api/files/" + fileStorage.getId())
+                                .imageUrl("/files/" + fileStorage.getId())
                                 .build();
                         
                         orderProductImageRepository.save(image);
@@ -246,6 +347,37 @@ public class OrderServiceImpl implements OrderService {
                         // Continue with other images
                     }
                 }
+            }
+            
+            // Handle new images from base64
+            if (productRequest.getTempImageBase64() != null && !productRequest.getTempImageBase64().isEmpty()) {
+                for (String base64Image : productRequest.getTempImageBase64()) {
+                    try {
+                        // Process base64 image
+                        // This would be implemented in a real application
+                        log.info("Processing base64 image for product ID: {}", product.getId());
+                        
+                        // For now, we'll skip this since we're using MultipartFile
+                    } catch (Exception e) {
+                        log.error("Error saving product image from base64", e);
+                    }
+                }
+            }
+        }
+        
+        // Delete products that are no longer needed
+        for (OrderProduct existingProduct : existingProducts) {
+            if (existingProduct.getId() != null && !productsToKeep.contains(existingProduct.getId())) {
+                // First delete all images associated with this product
+                List<OrderProductImage> images = orderProductImageRepository.findByOrderProductId(existingProduct.getId());
+                for (OrderProductImage image : images) {
+                    orderProductImageRepository.delete(image);
+                }
+                
+                // Then delete the product
+                orderProductRepository.delete(existingProduct);
+                
+                log.info("Deleted product with ID: {} from order: {}", existingProduct.getId(), id);
             }
         }
         
@@ -522,7 +654,7 @@ public class OrderServiceImpl implements OrderService {
         OrderProductResponse.FabricResponse fabricResponse = OrderProductResponse.FabricResponse.builder()
                 .id(product.getFabric().getId())
                 .name(product.getFabric().getName())
-                .imageUrl("/api/files/" + product.getFabric().getImageId())
+                .imageUrl("/files/" + product.getFabric().getImageId())
                 .build();
         
         // Map images

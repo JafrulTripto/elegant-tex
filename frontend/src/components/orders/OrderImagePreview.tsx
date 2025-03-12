@@ -59,7 +59,7 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   height = 150,
   onDelete,
   onRemove,
-  showDeleteButton = false,
+  showDeleteButton = true,
   showZoomButton = true
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -67,7 +67,7 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
   // Determine the source URL
-  const src = imageUrl || (imageId ? `${api.defaults.baseURL}/file-storage/${imageId}` : '');
+  const src = imageUrl || (imageId ? `/files/${imageId}` : '');
 
   const handleImageError = () => {
     setError(true);
@@ -143,10 +143,14 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
                 </IconButton>
               )}
               
-              {showDeleteButton && (onDelete || onRemove) && (
+              {(showDeleteButton && (onDelete || onRemove)) && (
                 <IconButton
                   size="small"
-                  onClick={onDelete || onRemove}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent opening the dialog when clicking delete
+                    if (onDelete) onDelete();
+                    if (onRemove) onRemove();
+                  }}
                   sx={{ color: 'white', p: 0.5 }}
                 >
                   <DeleteIcon fontSize="small" />

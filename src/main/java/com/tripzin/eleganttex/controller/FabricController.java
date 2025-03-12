@@ -8,6 +8,7 @@ import com.tripzin.eleganttex.service.FabricService;
 import com.tripzin.eleganttex.service.FileStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/fabrics")
 @RequiredArgsConstructor
+@Slf4j
 public class FabricController {
     
     private final FabricService fabricService;
@@ -77,12 +79,10 @@ public class FabricController {
         // Get the fabric
         FabricResponse fabric = fabricService.getFabricById(id);
         
-        // Delete old image if exists
-        if (fabric.getImageId() != null) {
-            fileStorageService.deleteFile(fabric.getImageId());
-        }
+        // Save the old image ID for later deletion
+        Long oldImageId = fabric.getImageId();
         
-        // Store new image
+        // Store new image first
         FileStorage storedFile = fileStorageService.storeFile(file, "FABRIC", id);
         
         // Update fabric with new image ID
@@ -95,6 +95,19 @@ public class FabricController {
         
         // Update fabric
         FabricResponse updatedFabric = fabricService.updateFabric(id, updateRequest);
+        
+        // Now that the fabric has been updated with the new image ID,
+        // we can safely delete the old image if it exists
+        if (oldImageId != null) {
+            try {
+                fileStorageService.deleteFile(oldImageId);
+            } catch (Exception e) {
+                // Log the error but don't fail the request
+                // The fabric has already been updated successfully
+                log.error("Error deleting old fabric image: {}", e.getMessage());
+            }
+        }
+        
         return ResponseEntity.ok(updatedFabric);
     }
 }

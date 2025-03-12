@@ -23,5 +23,8 @@ public interface OrderProductRepository extends JpaRepository<OrderProduct, Long
     @Query("SELECT op FROM OrderProduct op LEFT JOIN FETCH op.fabric LEFT JOIN FETCH op.images WHERE op.id = :id")
     Optional<OrderProduct> findByIdWithFabricAndImages(@Param("id") Long id);
     
+    @Query("SELECT COUNT(op) > 0 FROM OrderProduct op WHERE op.fabric.id = :fabricId")
+    boolean existsByFabricId(@Param("fabricId") Long fabricId);
+    
     void deleteByOrderId(Long orderId);
 }

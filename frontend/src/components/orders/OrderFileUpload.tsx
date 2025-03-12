@@ -6,17 +6,22 @@ import {
   IconButton,
   Paper,
   CircularProgress,
-  Alert
+  Alert,
+  Grid
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
   Delete as DeleteIcon,
   Image as ImageIcon
 } from '@mui/icons-material';
+import OrderImagePreview from './OrderImagePreview';
 
 interface OrderFileUploadProps {
   onFileSelect: (files: File[]) => void;
+  selectedFiles: File[]; // Make selectedFiles a prop instead of internal state
+  onRemoveFile: (index: number) => void; // Add callback for removing files
   maxFiles?: number;
+  maxFileSize?: number;
   accept?: string;
   multiple?: boolean;
   disabled?: boolean;
@@ -27,7 +32,10 @@ interface OrderFileUploadProps {
 
 const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
   onFileSelect,
+  selectedFiles,
+  onRemoveFile,
   maxFiles = 5,
+  maxFileSize = 5, // Default max file size: 5MB
   accept = 'image/*',
   multiple = true,
   disabled = false,
@@ -36,7 +44,7 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
   helperText
 }) => {
   const [dragActive, setDragActive] = useState<boolean>(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [sizeError, setSizeError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
@@ -75,31 +83,56 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
   };
 
   const handleFiles = (files: File[]) => {
-    // Filter for accepted file types
+    // Reset size error
+    setSizeError(null);
+    
+    // Filter for accepted file types and size
     const validFiles = files.filter(file => {
       const fileType = file.type;
-      return accept === '*' || accept.includes('*') ? true : accept.includes(fileType);
+      const isValidType = accept === '*' || accept.includes('*') ? true : accept.includes(fileType);
+      
+      // Check file size (convert maxFileSize from MB to bytes)
+      const isValidSize = file.size <= maxFileSize * 1024 * 1024;
+      
+      if (!isValidSize) {
+        setSizeError(`File "${file.name}" exceeds the maximum size of ${maxFileSize}MB`);
+        return false;
+      }
+      
+      return isValidType;
     });
     
     // Limit to max files
     const newFiles = [...selectedFiles];
     
-    for (let i = 0; i < validFiles.length; i++) {
-      if (newFiles.length < maxFiles) {
-        newFiles.push(validFiles[i]);
-      } else {
-        break;
+    // Check if adding these files would exceed the max files limit
+    if (newFiles.length + validFiles.length > maxFiles) {
+      setSizeError(`Maximum ${maxFiles} files allowed`);
+      // Only add files up to the limit
+      const remainingSlots = maxFiles - newFiles.length;
+      if (remainingSlots <= 0) {
+        return; // No slots available
       }
+      // Only add files up to the remaining slots
+      validFiles.splice(remainingSlots);
     }
     
-    setSelectedFiles(newFiles);
-    onFileSelect(newFiles);
-  };
-
-  const handleRemoveFile = (index: number) => {
-    const newFiles = [...selectedFiles];
-    newFiles.splice(index, 1);
-    setSelectedFiles(newFiles);
+    // Add valid files to the array
+    for (let i = 0; i < validFiles.length; i++) {
+      newFiles.push(validFiles[i]);
+    }
+    
+    // Check total size of all files (limit to 10MB total to match server config)
+    const totalSizeInBytes = newFiles.reduce((sum, file) => sum + file.size, 0);
+    const totalSizeInMB = totalSizeInBytes / (1024 * 1024);
+    const maxTotalSize = 10; // 10MB max total size (matching server config)
+    
+    if (totalSizeInMB > maxTotalSize) {
+      setSizeError(`Total file size (${totalSizeInMB.toFixed(2)}MB) exceeds the maximum allowed (${maxTotalSize}MB)`);
+      // Don't return the files that would exceed the limit
+      return;
+    }
+    
     onFileSelect(newFiles);
   };
 
@@ -154,15 +187,15 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
                 : `Drag and drop files here, or click to select files`}
             </Typography>
             <Typography variant="caption" color="text.secondary" align="center">
-              {helperText || `Accepted formats: ${accept}. Max ${maxFiles} files.`}
+              {helperText || `Accepted formats: ${accept}. Max ${maxFiles} files, ${maxFileSize}MB per file.`}
             </Typography>
           </>
         )}
       </Paper>
       
-      {error && (
+      {(error || sizeError) && (
         <Alert severity="error" sx={{ mt: 1 }}>
-          {error}
+          {error || sizeError}
         </Alert>
       )}
       
@@ -172,6 +205,7 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
             Selected Files ({selectedFiles.length}/{maxFiles})
           </Typography>
           
+          {/* File list with text info */}
           {selectedFiles.map((file, index) => (
             <Box
               key={`${file.name}-${index}`}
@@ -192,7 +226,7 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleRemoveFile(index);
+                  onRemoveFile(index);
                 }}
                 disabled={disabled || loading}
               >
@@ -200,6 +234,19 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
               </IconButton>
             </Box>
           ))}
+          
+          {/* Image previews */}
+          <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
+            {selectedFiles.map((file, index) => (
+              <OrderImagePreview
+                key={`preview-${index}-${file.name}`}
+                imageUrl={URL.createObjectURL(file)}
+                imageName={file.name}
+                showDeleteButton={true}
+                onRemove={() => onRemoveFile(index)}
+              />
+            ))}
+          </Box>
         </Box>
       )}
     </Box>
