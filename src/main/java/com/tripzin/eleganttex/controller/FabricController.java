@@ -34,13 +34,38 @@ public class FabricController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
         
         Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
                 Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         
-        Page<FabricResponse> fabrics = fabricService.getAllFabrics(pageable);
+        Page<FabricResponse> fabrics;
+        if (query != null && !query.trim().isEmpty()) {
+            fabrics = fabricService.searchFabrics(query, pageable, activeOnly);
+        } else {
+            fabrics = fabricService.getAllFabrics(pageable, activeOnly);
+        }
+        
+        return ResponseEntity.ok(fabrics);
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<Page<FabricResponse>> searchFabrics(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
+        
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        Page<FabricResponse> fabrics = fabricService.searchFabrics(query, pageable, activeOnly);
         return ResponseEntity.ok(fabrics);
     }
     
@@ -69,6 +94,12 @@ public class FabricController {
     public ResponseEntity<MessageResponse> deleteFabric(@PathVariable Long id) {
         MessageResponse response = fabricService.deleteFabric(id);
         return ResponseEntity.ok(response);
+    }
+    
+    @PatchMapping("/{id}/toggle-active")
+    public ResponseEntity<FabricResponse> toggleFabricActive(@PathVariable Long id) {
+        FabricResponse updatedFabric = fabricService.toggleFabricActive(id);
+        return ResponseEntity.ok(updatedFabric);
     }
     
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

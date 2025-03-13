@@ -35,13 +35,38 @@ public class MarketplaceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
         
         Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
                 Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         
-        Page<MarketplaceResponse> marketplaces = marketplaceService.getAllMarketplaces(pageable);
+        Page<MarketplaceResponse> marketplaces;
+        if (query != null && !query.trim().isEmpty()) {
+            marketplaces = marketplaceService.searchMarketplaces(query, pageable, activeOnly);
+        } else {
+            marketplaces = marketplaceService.getAllMarketplaces(pageable, activeOnly);
+        }
+        
+        return ResponseEntity.ok(marketplaces);
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<Page<MarketplaceResponse>> searchMarketplaces(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
+        
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        Page<MarketplaceResponse> marketplaces = marketplaceService.searchMarketplaces(query, pageable, activeOnly);
         return ResponseEntity.ok(marketplaces);
     }
     
@@ -76,6 +101,12 @@ public class MarketplaceController {
     public ResponseEntity<MessageResponse> deleteMarketplace(@PathVariable Long id) {
         MessageResponse response = marketplaceService.deleteMarketplace(id);
         return ResponseEntity.ok(response);
+    }
+    
+    @PatchMapping("/{id}/toggle-active")
+    public ResponseEntity<MarketplaceResponse> toggleMarketplaceActive(@PathVariable Long id) {
+        MarketplaceResponse updatedMarketplace = marketplaceService.toggleMarketplaceActive(id);
+        return ResponseEntity.ok(updatedMarketplace);
     }
     
     @PostMapping("/{id}/members/{userId}")

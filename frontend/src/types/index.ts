@@ -72,6 +72,15 @@ export interface ResendVerificationRequest {
   email: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
 // API response types
 export interface ApiResponse<T> {
   data: T;

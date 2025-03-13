@@ -29,4 +29,19 @@ public interface MarketplaceRepository extends JpaRepository<Marketplace, Long> 
     boolean existsByImageId(Long imageId);
     
     List<Marketplace> findByImageId(Long imageId);
+    
+    // Find active marketplaces
+    Page<Marketplace> findByActiveTrue(Pageable pageable);
+    
+    // Find active marketplaces by member ID
+    @Query("SELECT m FROM Marketplace m JOIN m.members u WHERE u.id = :userId AND m.active = true")
+    List<Marketplace> findByMembersIdAndActiveTrue(@Param("userId") Long userId);
+    
+    // Search marketplaces by name or page URL (case-insensitive)
+    Page<Marketplace> findDistinctByNameContainingIgnoreCaseOrPageUrlContainingIgnoreCase(
+        String name, String pageUrl, Pageable pageable);
+    
+    // Search active marketplaces by name or page URL (case-insensitive)
+    Page<Marketplace> findDistinctByNameContainingIgnoreCaseOrPageUrlContainingIgnoreCaseAndActiveTrue(
+        String name, String pageUrl, Pageable pageable);
 }

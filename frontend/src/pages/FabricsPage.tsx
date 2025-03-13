@@ -16,11 +16,15 @@
     Grid,
     Alert,
     CircularProgress,
+    TextField,
+    InputAdornment,
+    useTheme,
   } from '@mui/material';
-  import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+  import { spacing, layoutUtils } from '../theme/styleUtils';
+  import { Add as AddIcon, Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
   import FabricList from '../components/fabrics/FabricList';
   import FabricForm from '../components/fabrics/FabricForm';
-  import { getFabrics, createFabric, updateFabric, deleteFabric, getFabricById, uploadFabricImage } from '../services/fabric.service';
+  import { getFabrics, createFabric, updateFabric, deleteFabric, getFabricById, uploadFabricImage, toggleFabricActive } from '../services/fabric.service';
   import { Fabric, FabricFormData } from '../types/fabric';
 
   const FabricsPage: React.FC = () => {
@@ -29,10 +33,13 @@
     const [error, setError] = useState<string | null>(null);
     
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(9);
+    const [size, setSize] = useState(8);
     const [totalPages, setTotalPages] = useState(0);
     const [sortBy, setSortBy] = useState('id');
     const [sortDir, setSortDir] = useState('asc');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+    const [activeOnly, setActiveOnly] = useState(false);
     
     const [openDialog, setOpenDialog] = useState(false);
     const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
@@ -50,7 +57,7 @@
         setLoading(true);
         setError(null);
         
-        const response = await getFabrics(page, size, sortBy, sortDir);
+        const response = await getFabrics(page, size, sortBy, sortDir, debouncedSearchQuery, activeOnly);
         setFabrics(response.content);
         setTotalPages(response.totalPages);
         
@@ -64,7 +71,17 @@
 
     useEffect(() => {
       loadFabrics();
-    }, [page, size, sortBy, sortDir]);
+    }, [page, size, sortBy, sortDir, debouncedSearchQuery, activeOnly]);
+    
+    // Debounce search query
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setDebouncedSearchQuery(searchQuery);
+        setPage(0); // Reset to first page when search changes
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const handleCreateClick = () => {
       setDialogMode('create');
@@ -83,6 +100,7 @@
         setInitialFormData({
           name: fabric.name,
           imageId: fabric.imageId,
+          active: fabric.active,
           tagNames: fabric.tags.map(tag => tag.name),
         });
         setOpenDialog(true);
@@ -180,9 +198,11 @@
       setSortDir(event.target.value as string);
     };
 
-    return (
-      <Box sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    const theme = useTheme();
+  
+  return (
+      <Box sx={{ ...spacing.container(theme) }}>
+        <Box sx={{ ...layoutUtils.spaceBetweenFlex, mb: theme.customSpacing.section }}>
           <Typography variant="h4" component="h1">
             Fabrics
           </Typography>
@@ -197,71 +217,115 @@
         </Box>
         
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: theme.customSpacing.section }}>
             {error}
           </Alert>
         )}
         
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: theme.customSpacing.section }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Sort By</InputLabel>
-                <Select
-                  value={sortBy}
-                  label="Sort By"
-                  onChange={handleSortByChange as any}
-                >
-                  <MenuItem value="id">ID</MenuItem>
-                  <MenuItem value="name">Name</MenuItem>
-                  <MenuItem value="createdAt">Created Date</MenuItem>
-                </Select>
-              </FormControl>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                placeholder="Search fabrics by name or tag"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setSearchQuery('')}
+                        edge="end"
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Direction</InputLabel>
-                <Select
-                  value={sortDir}
-                  label="Direction"
-                  onChange={handleSortDirChange as any}
-                >
-                  <MenuItem value="asc">Ascending</MenuItem>
-                  <MenuItem value="desc">Descending</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Items Per Page</InputLabel>
-                <Select
-                  value={size}
-                  label="Items Per Page"
-                  onChange={handleSizeChange as any}
-                >
-                  <MenuItem value={6}>6</MenuItem>
-                  <MenuItem value={9}>9</MenuItem>
-                  <MenuItem value={12}>12</MenuItem>
-                  <MenuItem value={24}>24</MenuItem>
-                </Select>
-              </FormControl>
+            <Grid item xs={12} sm={6} md={8}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Sort By</InputLabel>
+                    <Select
+                      value={sortBy}
+                      label="Sort By"
+                      onChange={handleSortByChange as any}
+                    >
+                      <MenuItem value="id">ID</MenuItem>
+                      <MenuItem value="name">Name</MenuItem>
+                      <MenuItem value="createdAt">Created Date</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Direction</InputLabel>
+                    <Select
+                      value={sortDir}
+                      label="Direction"
+                      onChange={handleSortDirChange as any}
+                    >
+                      <MenuItem value="asc">Ascending</MenuItem>
+                      <MenuItem value="desc">Descending</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={activeOnly ? "active" : "all"}
+                      label="Status"
+                      onChange={(e) => setActiveOnly(e.target.value === "active")}
+                    >
+                      <MenuItem value="all">All</MenuItem>
+                      <MenuItem value="active">Active Only</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Items Per Page</InputLabel>
+                    <Select
+                      value={size}
+                      label="Items Per Page"
+                      onChange={handleSizeChange as any}
+                    >
+                      <MenuItem value={4}>4</MenuItem>
+                      <MenuItem value={8}>8</MenuItem>
+                      <MenuItem value={12}>12</MenuItem>
+                      <MenuItem value={20}>20</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </Box>
         
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+          <Box sx={{ ...layoutUtils.centeredFlex, my: theme.customSpacing.section * 2 }}>
             <CircularProgress />
           </Box>
         ) : fabrics.length === 0 ? (
-          <Box sx={{ textAlign: 'center', my: 5 }}>
+          <Box sx={{ textAlign: 'center', my: theme.customSpacing.section * 2 }}>
             <Typography variant="body1">No fabrics found.</Typography>
             <Button
               variant="contained"
               color="primary"
               startIcon={<AddIcon />}
               onClick={handleCreateClick}
-              sx={{ mt: 2 }}
+              sx={{ mt: theme.customSpacing.element }}
             >
               Add Your First Fabric
             </Button>
@@ -272,9 +336,19 @@
               fabrics={fabrics}
               onEdit={handleEditClick}
               onDelete={handleDeleteClick}
+              onToggleActive={async (fabric) => {
+                try {
+                  await toggleFabricActive(fabric.id);
+                  // Refresh the list
+                  loadFabrics();
+                } catch (err) {
+                  console.error('Error toggling fabric status:', err);
+                  setError('Failed to update fabric status. Please try again.');
+                }
+              }}
             />
             
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Box sx={{ ...layoutUtils.centeredFlex, mt: theme.customSpacing.section * 1.5 }}>
               <Pagination
                 count={totalPages}
                 page={page + 1}

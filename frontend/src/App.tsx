@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Box } from '@mui/material';
 
 // Context Providers
 import { AuthProvider } from './contexts/AuthContext';
@@ -16,6 +16,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
+import EmailVerification from './pages/EmailVerification';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import MarketplacesPage from './pages/MarketplacesPage';
@@ -34,17 +37,27 @@ const UserManagement = React.lazy(() => import('./components/admin/UserManagemen
 const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <CssBaseline />
+      <CssBaseline enableColorScheme />
       <AuthProvider>
         <Router>
-          <Routes>
+          <Box sx={{ 
+            bgcolor: 'background.default', 
+            color: 'text.primary',
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <Routes>
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             
             {/* Auth routes - accessible only when not authenticated */}
             <Route element={<ProtectedRoute requireAuth={false} />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Route>
             
             {/* Protected routes - require authentication */}
@@ -79,7 +92,8 @@ const App: React.FC = () => {
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="*" element={<NotFound />} />
             </Route>
-          </Routes>
+            </Routes>
+          </Box>
         </Router>
       </AuthProvider>
     </ThemeProvider>

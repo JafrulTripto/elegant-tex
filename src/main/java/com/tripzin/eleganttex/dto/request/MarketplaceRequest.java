@@ -27,5 +27,8 @@ public class MarketplaceRequest {
     private Long imageId;
     
     @Builder.Default
+    private boolean active = true;
+    
+    @Builder.Default
     private Set<Long> memberIds = new HashSet<>();
 }

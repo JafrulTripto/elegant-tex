@@ -18,10 +18,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Edit as EditIcon, Save as SaveIcon, Lock as LockIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Save as SaveIcon, Lock as LockIcon, PhotoCamera } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import userService from '../services/user.service';
+import FileUpload from '../components/common/FileUpload';
+import ImagePreview from '../components/common/ImagePreview';
 
 const Profile: React.FC = () => {
   const { authState, loadUser } = useAuth();
@@ -32,6 +36,9 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -137,6 +144,25 @@ const Profile: React.FC = () => {
     }
   };
   
+  const handleProfileImageUpload = async (file: File) => {
+    if (!user) return;
+    
+    try {
+      setUploadLoading(true);
+      setUploadError(null);
+      
+      await userService.uploadProfileImage(user.id, file);
+      await loadUser(); // Reload user data to get updated profileImageId
+      
+      setSuccess('Profile image updated successfully');
+      setShowUploadDialog(false);
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to upload profile image');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+  
   if (!user) {
     return (
       <Box
@@ -177,18 +203,45 @@ const Profile: React.FC = () => {
             />
             <Divider />
             <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-              <Avatar
-                sx={{
-                  width: 120,
-                  height: 120,
-                  fontSize: '3rem',
-                  mb: 2,
-                  bgcolor: 'primary.main',
-                }}
-              >
-                {user.phone.charAt(0).toUpperCase()}
-              </Avatar>
-              <Typography variant="body1">
+              <Box sx={{ position: 'relative' }}>
+                {user.profileImageId ? (
+                  <ImagePreview
+                    imageId={user.profileImageId}
+                    alt={`${user.firstName} ${user.lastName}`}
+                    width={120}
+                    height={120}
+                    borderRadius="50%"
+                    fallbackText={user.phone.charAt(0).toUpperCase()}
+                  />
+                ) : (
+                  <Avatar
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      fontSize: '3rem',
+                      mb: 2,
+                      bgcolor: 'primary.main',
+                    }}
+                  >
+                    {user.phone.charAt(0).toUpperCase()}
+                  </Avatar>
+                )}
+                <Tooltip title="Change profile picture">
+                  <IconButton 
+                    sx={{ 
+                      position: 'absolute', 
+                      bottom: 0, 
+                      right: 0,
+                      bgcolor: 'background.paper',
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                    onClick={() => setShowUploadDialog(true)}
+                  >
+                    <PhotoCamera />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Typography variant="body1" sx={{ mt: 2 }}>
                 {user.firstName} {user.lastName}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -361,6 +414,35 @@ const Profile: React.FC = () => {
           <Button onClick={handlePasswordSubmit} disabled={loading}>
             {loading ? 'Changing...' : 'Change Password'}
           </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Profile Image Upload Dialog */}
+      <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
+        <DialogTitle>Upload Profile Picture</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Select an image file to use as your profile picture.
+          </DialogContentText>
+          
+          {uploadError && (
+            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+              {uploadError}
+            </Alert>
+          )}
+          
+          <FileUpload
+            onFileSelected={handleProfileImageUpload}
+            accept="image/*"
+            maxSize={2 * 1024 * 1024} // 2MB
+            label="Select a profile image"
+            buttonText="Choose Image"
+            isLoading={uploadLoading}
+            error={uploadError || undefined}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowUploadDialog(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>

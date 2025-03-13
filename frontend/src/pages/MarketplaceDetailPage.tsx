@@ -21,12 +21,16 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  useTheme,
 } from '@mui/material';
+import { spacing, layoutUtils } from '../theme/styleUtils';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import { Marketplace } from '../types/marketplace';
-import { getMarketplaceById, updateMarketplace, deleteMarketplace } from '../services/marketplace.service';
+import { getMarketplaceById, updateMarketplace, deleteMarketplace, toggleMarketplaceActive } from '../services/marketplace.service';
 import MarketplaceForm from '../components/marketplaces/MarketplaceForm';
 import ImagePreview from '../components/common/ImagePreview';
 import { getFileUrl } from '../services/fileStorage.service';
@@ -157,10 +161,12 @@ const MarketplaceDetailPage: React.FC = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
+  const theme = useTheme();
+
   if (loading) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+        <Box sx={{ ...layoutUtils.centeredFlex, my: theme.customSpacing.section * 3 }}>
           <CircularProgress />
         </Box>
       </Container>
@@ -170,14 +176,14 @@ const MarketplaceDetailPage: React.FC = () => {
   if (error || !marketplace) {
     return (
       <Container maxWidth="lg">
-        <Box sx={{ textAlign: 'center', my: 8 }}>
+        <Box sx={{ textAlign: 'center', my: theme.customSpacing.section * 3 }}>
           <Typography color="error" variant="h6">
             {error || 'Marketplace not found'}
           </Typography>
           <Button
             variant="outlined"
             onClick={() => navigate('/marketplaces')}
-            sx={{ mt: 2 }}
+            sx={{ mt: theme.customSpacing.element }}
             startIcon={<ArrowBackIcon />}
           >
             Back to Marketplaces
@@ -189,8 +195,8 @@ const MarketplaceDetailPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ my: theme.customSpacing.section * 1.5 }}>
+        <Box sx={{ ...layoutUtils.spaceBetweenFlex, mb: theme.customSpacing.section }}>
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
@@ -200,6 +206,32 @@ const MarketplaceDetailPage: React.FC = () => {
           </Button>
           
           <Box>
+            <Tooltip title={marketplace.active ? "Set Inactive" : "Set Active"}>
+              <IconButton 
+                color={marketplace.active ? "success" : "default"} 
+                onClick={async () => {
+                  try {
+                    const updatedMarketplace = await toggleMarketplaceActive(parseInt(id!));
+                    setMarketplace(updatedMarketplace);
+                    setSnackbar({
+                      open: true,
+                      message: `Marketplace is now ${updatedMarketplace.active ? 'active' : 'inactive'}`,
+                      severity: 'success',
+                    });
+                  } catch (err) {
+                    console.error('Error toggling marketplace status:', err);
+                    setSnackbar({
+                      open: true,
+                      message: 'Failed to update marketplace status',
+                      severity: 'error',
+                    });
+                  }
+                }}
+                sx={{ mr: 1 }}
+              >
+                {marketplace.active ? <ToggleOnIcon /> : <ToggleOffIcon />}
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Edit Marketplace">
               <IconButton color="primary" onClick={handleEditClick} sx={{ mr: 1 }}>
                 <EditIcon />
@@ -213,7 +245,7 @@ const MarketplaceDetailPage: React.FC = () => {
           </Box>
         </Box>
         
-        <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
+        <Paper elevation={2} sx={{ ...spacing.container(theme), mb: theme.customSpacing.section * 1.5 }}>
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
               <ImagePreview
@@ -227,11 +259,19 @@ const MarketplaceDetailPage: React.FC = () => {
             </Grid>
             
             <Grid item xs={12} md={8}>
-              <Typography variant="h4" component="h1" gutterBottom>
-                {marketplace.name}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: theme.customSpacing.item }}>
+                <Typography variant="h4" component="h1">
+                  {marketplace.name}
+                </Typography>
+                <Chip 
+                  label={marketplace.active ? "Active" : "Inactive"} 
+                  color={marketplace.active ? "success" : "default"}
+                  size="small"
+                  sx={{ ml: 2 }}
+                />
+              </Box>
               
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: theme.customSpacing.section }}>
                 <Typography variant="subtitle1" color="text.secondary" gutterBottom>
                   Page URL
                 </Typography>
@@ -269,12 +309,12 @@ const MarketplaceDetailPage: React.FC = () => {
           </Grid>
         </Paper>
         
-        <Paper elevation={2} sx={{ p: 3 }}>
+        <Paper elevation={2} sx={{ ...spacing.container(theme) }}>
           <Typography variant="h6" gutterBottom>
             Members ({marketplace.members.length})
           </Typography>
           
-          <Divider sx={{ mb: 2 }} />
+          <Divider sx={{ mb: theme.customSpacing.element }} />
           
           {marketplace.members.length === 0 ? (
             <Typography color="text.secondary">No members yet</Typography>
@@ -311,6 +351,7 @@ const MarketplaceDetailPage: React.FC = () => {
               name: marketplace.name,
               pageUrl: marketplace.pageUrl,
               imageId: marketplace.imageId,
+              active: marketplace.active,
               memberIds: marketplace.members.map(member => member.id),
             }}
             marketplaceId={parseInt(id!)}
@@ -337,7 +378,7 @@ const MarketplaceDetailPage: React.FC = () => {
             Are you sure you want to delete the marketplace "{marketplace.name}"? This action cannot be undone.
           </Typography>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
+          <Box sx={{ ...layoutUtils.endFlex, mt: theme.customSpacing.section, gap: theme.customSpacing.element }}>
             <Button
               variant="outlined"
               onClick={handleCloseDeleteDialog}

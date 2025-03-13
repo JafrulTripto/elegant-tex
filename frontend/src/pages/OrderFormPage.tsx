@@ -95,11 +95,20 @@ const OrderFormPage: React.FC = () => {
       setError(null);
       
       try {
-        // Load marketplaces
-        const marketplacesResponse = await marketplaceService.getMarketplaces();
-        setMarketplaces(marketplacesResponse.content);
+        // Check if user is authenticated
+        if (!authState.user) {
+          setError('User not authenticated. Please log in again.');
+          setLoading(false);
+          return;
+        }
         
-        // Load initial fabrics with pagination
+        // Load active marketplaces associated with the current user
+        const userMarketplaces = await marketplaceService.getUserMarketplaces(authState.user.id);
+        // Filter only active marketplaces
+        const activeMarketplaces = userMarketplaces.filter(marketplace => marketplace.active);
+        setMarketplaces(activeMarketplaces);
+        
+        // Load initial active fabrics with pagination
         await loadFabrics(0);
         
         // If edit mode, load order data
@@ -135,11 +144,11 @@ const OrderFormPage: React.FC = () => {
             deliveryDate: orderData.deliveryDate,
             products: transformedProducts
           });
-        } else if (marketplacesResponse.content.length > 0) {
+        } else if (userMarketplaces.length > 0) {
           // Set default marketplace if available
           setFormData(prev => ({
             ...prev,
-            marketplaceId: marketplacesResponse.content[0].id
+            marketplaceId: userMarketplaces[0].id
           }));
         }
       } catch (err) {
@@ -161,14 +170,29 @@ const OrderFormPage: React.FC = () => {
     try {
       const response = await fabricService.getFabrics(page, fabricPageSize);
       
+      // Filter only active fabrics
+      const activeFabrics = response.content.filter((fabric: Fabric) => fabric.active);
+      
       if (page === 0) {
-        setFabrics(response.content);
+        setFabrics(activeFabrics);
       } else {
-        setFabrics(prev => [...prev, ...response.content]);
+        setFabrics(prev => [...prev, ...activeFabrics]);
       }
       
-      setHasMoreFabrics(!response.last);
-      setFabricPage(page);
+      // If we filtered out some fabrics, we might need to load more to fill the page
+      const filteredOutCount = response.content.length - activeFabrics.length;
+      if (filteredOutCount > 0 && !response.last) {
+        // Load more fabrics to compensate for filtered out inactive ones
+        const nextPage = page + 1;
+        const nextResponse = await fabricService.getFabrics(nextPage, filteredOutCount);
+        const nextActiveFabrics = nextResponse.content.filter((fabric: Fabric) => fabric.active);
+        setFabrics(prev => [...prev, ...nextActiveFabrics]);
+        setHasMoreFabrics(!nextResponse.last);
+        setFabricPage(nextPage);
+      } else {
+        setHasMoreFabrics(!response.last);
+        setFabricPage(page);
+      }
     } catch (error) {
       console.error('Error loading fabrics:', error);
     } finally {

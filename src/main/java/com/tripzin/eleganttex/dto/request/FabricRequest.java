@@ -21,5 +21,8 @@ public class FabricRequest {
     private Long imageId;
     
     @Builder.Default
+    private boolean active = true;
+    
+    @Builder.Default
     private Set<String> tagNames = new HashSet<>();
 }

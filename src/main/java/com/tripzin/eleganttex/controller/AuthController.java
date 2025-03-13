@@ -1,8 +1,10 @@
 package com.tripzin.eleganttex.controller;
 
 import com.tripzin.eleganttex.dto.request.EmailVerificationRequest;
+import com.tripzin.eleganttex.dto.request.ForgotPasswordRequest;
 import com.tripzin.eleganttex.dto.request.LoginRequest;
 import com.tripzin.eleganttex.dto.request.ResendVerificationRequest;
+import com.tripzin.eleganttex.dto.request.ResetPasswordRequest;
 import com.tripzin.eleganttex.dto.request.SignupRequest;
 import com.tripzin.eleganttex.dto.request.TokenRefreshRequest;
 import com.tripzin.eleganttex.dto.response.JwtResponse;
@@ -49,5 +51,15 @@ public class AuthController {
     @PostMapping("/resend-verification")
     public ResponseEntity<MessageResponse> resendVerificationEmail(@Valid @RequestBody ResendVerificationRequest request) {
         return ResponseEntity.ok(authService.resendVerificationEmail(request.getEmail()));
+    }
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.forgotPassword(request.getEmail()));
+    }
+    
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(authService.resetPassword(request.getToken(), request.getPassword()));
     }
 }

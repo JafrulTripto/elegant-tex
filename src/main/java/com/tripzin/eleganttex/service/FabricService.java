@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +35,55 @@ public class FabricService {
                 .map(FabricResponse::fromEntity);
     }
     
+    public Page<FabricResponse> getAllFabrics(Pageable pageable, boolean activeOnly) {
+        if (activeOnly) {
+            return fabricRepository.findByActiveTrue(pageable)
+                    .map(FabricResponse::fromEntity);
+        } else {
+            return getAllFabrics(pageable);
+        }
+    }
+    
+    /**
+     * Search fabrics by query string
+     * The search is performed on fabric name and tag names
+     * 
+     * @param query the search query
+     * @param pageable pagination information
+     * @return a page of fabric responses matching the search criteria
+     */
+    public Page<FabricResponse> searchFabrics(String query, Pageable pageable) {
+        if (!StringUtils.hasText(query)) {
+            return getAllFabrics(pageable);
+        }
+        
+        return fabricRepository.findDistinctByNameContainingIgnoreCaseOrTags_NameContainingIgnoreCase(
+                query, query, pageable)
+                .map(FabricResponse::fromEntity);
+    }
+    
+    /**
+     * Search fabrics by query string with option to filter by active status
+     * 
+     * @param query the search query
+     * @param pageable pagination information
+     * @param activeOnly if true, only active fabrics will be returned
+     * @return a page of fabric responses matching the search criteria
+     */
+    public Page<FabricResponse> searchFabrics(String query, Pageable pageable, boolean activeOnly) {
+        if (!StringUtils.hasText(query)) {
+            return getAllFabrics(pageable, activeOnly);
+        }
+        
+        if (activeOnly) {
+            return fabricRepository.findDistinctByNameContainingIgnoreCaseOrTags_NameContainingIgnoreCaseAndActiveTrue(
+                    query, query, pageable)
+                    .map(FabricResponse::fromEntity);
+        } else {
+            return searchFabrics(query, pageable);
+        }
+    }
+    
     public FabricResponse getFabricById(Long id) {
         Fabric fabric = findFabricById(id);
         return FabricResponse.fromEntity(fabric);
@@ -44,6 +94,7 @@ public class FabricService {
         Fabric fabric = new Fabric();
         fabric.setName(request.getName());
         fabric.setImageId(request.getImageId());
+        fabric.setActive(request.isActive());
         
         // Process tags
         if (request.getTagNames() != null && !request.getTagNames().isEmpty()) {
@@ -69,6 +120,7 @@ public class FabricService {
         
         fabric.setName(request.getName());
         fabric.setImageId(newImageId);
+        fabric.setActive(request.isActive());
         
         // Process tags
         if (request.getTagNames() != null) {
@@ -134,6 +186,20 @@ public class FabricService {
      */
     private boolean isReferencedByOrderProducts(Long fabricId) {
         return orderProductRepository.existsByFabricId(fabricId);
+    }
+    
+    /**
+     * Toggle the active status of a fabric
+     * 
+     * @param id the fabric ID
+     * @return the updated fabric response
+     */
+    @Transactional
+    public FabricResponse toggleFabricActive(Long id) {
+        Fabric fabric = findFabricById(id);
+        fabric.setActive(!fabric.getActive());
+        Fabric updatedFabric = fabricRepository.save(fabric);
+        return FabricResponse.fromEntity(updatedFabric);
     }
     
     private Fabric findFabricById(Long id) {

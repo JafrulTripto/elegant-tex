@@ -21,6 +21,7 @@ import {
   MenuItem,
   Tooltip,
 } from '@mui/material';
+import ImagePreview from '../components/common/ImagePreview';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
@@ -38,6 +39,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
+import { styleUtils } from '../theme/styleUtils';
+import { FooterBox, FooterText } from '../components/common/StyledComponents';
 
 const drawerWidth = 240;
 
@@ -88,7 +91,7 @@ const MainLayout: React.FC = () => {
       <List>
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/dashboard')}>
-            <ListItemIcon>
+            <ListItemIcon color="secondary">
               <DashboardIcon />
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
@@ -96,7 +99,7 @@ const MainLayout: React.FC = () => {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/profile')}>
-            <ListItemIcon>
+            <ListItemIcon color="secondary">
               <PersonIcon />
             </ListItemIcon>
             <ListItemText primary="Profile" />
@@ -104,7 +107,7 @@ const MainLayout: React.FC = () => {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/marketplaces')}>
-            <ListItemIcon>
+            <ListItemIcon color="secondary">
               <StorefrontIcon />
             </ListItemIcon>
             <ListItemText primary="Marketplaces" />
@@ -112,7 +115,7 @@ const MainLayout: React.FC = () => {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/fabrics')}>
-            <ListItemIcon>
+            <ListItemIcon color="secondary">
               <CategoryIcon />
             </ListItemIcon>
             <ListItemText primary="Fabrics" />
@@ -120,7 +123,7 @@ const MainLayout: React.FC = () => {
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/orders')}>
-            <ListItemIcon>
+            <ListItemIcon color="secondary">
               <ShoppingCartIcon />
             </ListItemIcon>
             <ListItemText primary="Orders" />
@@ -130,7 +133,7 @@ const MainLayout: React.FC = () => {
           <>
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigate('/admin/users')}>
-                <ListItemIcon>
+                <ListItemIcon color="secondary">
                   <PeopleIcon />
                 </ListItemIcon>
                 <ListItemText primary="User Management" />
@@ -138,7 +141,7 @@ const MainLayout: React.FC = () => {
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigate('/admin/settings')}>
-                <ListItemIcon>
+                <ListItemIcon color="secondary">
                   <SettingsIcon />
                 </ListItemIcon>
                 <ListItemText primary="Settings" />
@@ -155,10 +158,7 @@ const MainLayout: React.FC = () => {
       <CssBaseline />
       <AppBar
         position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
+        sx={styleUtils.appBar(drawerWidth)}
       >
         <Toolbar>
           <IconButton
@@ -193,9 +193,22 @@ const MainLayout: React.FC = () => {
                 onClick={handleProfileMenuOpen}
                 color="inherit"
               >
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  {authState.user?.phone.charAt(0).toUpperCase()}
-                </Avatar>
+                {authState.user?.profileImageId ? (
+                  <Box sx={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden' }}>
+                    <ImagePreview
+                      imageId={authState.user.profileImageId}
+                      alt={`${authState.user.firstName || ''} ${authState.user.lastName || ''}`}
+                      width={32}
+                      height={32}
+                      borderRadius={0}
+                      fallbackText={authState.user.phone.charAt(0).toUpperCase()}
+                    />
+                  </Box>
+                ) : (
+                  <Avatar sx={{ width: 32, height: 32 }}>
+                    {authState.user?.phone.charAt(0).toUpperCase()}
+                  </Avatar>
+                )}
               </IconButton>
               <Menu
                 id="menu-appbar"
@@ -212,17 +225,32 @@ const MainLayout: React.FC = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
               >
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  navigate('/profile');
-                }}>
-                  <ListItemIcon>
-                    <AccountIcon fontSize="small" />
+                <MenuItem 
+                  onClick={() => {
+                    handleMenuClose();
+                    navigate('/profile');
+                  }}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <ListItemIcon color="secondary">
+                    {authState.user?.profileImageId ? (
+                      <Box sx={{ width: 24, height: 24, borderRadius: '50%', overflow: 'hidden' }}>
+                        <ImagePreview
+                          imageId={authState.user.profileImageId}
+                          alt="Profile"
+                          width={24}
+                          height={24}
+                          borderRadius={0}
+                        />
+                      </Box>
+                    ) : (
+                      <AccountIcon fontSize="small" />
+                    )}
                   </ListItemIcon>
                   Profile
                 </MenuItem>
                 <MenuItem onClick={handleLogout}>
-                  <ListItemIcon>
+                  <ListItemIcon color="secondary">
                     <LogoutIcon fontSize="small" />
                   </ListItemIcon>
                   Logout
@@ -286,22 +314,14 @@ const MainLayout: React.FC = () => {
         <Box sx={{ flexGrow: 1 }}>
           <Outlet />
         </Box>
-        <Box
-          component="footer"
-          sx={{
-            py: 3,
-            px: 2,
-            mt: 'auto',
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light'
-                ? theme.palette.grey[200]
-                : theme.palette.grey[800],
-          }}
-        >
-          <Typography variant="body2" color="text.secondary" align="center">
+        <FooterBox component="footer">
+          <FooterText 
+            variant="body2" 
+            align="center"
+          >
             © {new Date().getFullYear()} Elegant-Tex. All rights reserved.
-          </Typography>
-        </Box>
+          </FooterText>
+        </FooterBox>
       </Box>
     </Box>
   );

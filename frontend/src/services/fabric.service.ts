@@ -7,10 +7,30 @@ export const getFabrics = async (
   page = 0,
   size = 10,
   sortBy = 'id',
-  sortDir = 'asc'
+  sortDir = 'asc',
+  query?: string,
+  activeOnly = false
+) => {
+  let url = `${BASE_URL}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}&activeOnly=${activeOnly}`;
+  
+  if (query && query.trim() !== '') {
+    url += `&query=${encodeURIComponent(query.trim())}`;
+  }
+  
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const searchFabrics = async (
+  query: string,
+  page = 0,
+  size = 10,
+  sortBy = 'id',
+  sortDir = 'asc',
+  activeOnly = false
 ) => {
   const response = await api.get(
-    `${BASE_URL}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
+    `${BASE_URL}/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}&activeOnly=${activeOnly}`
   );
   return response.data;
 };
@@ -35,6 +55,11 @@ export const deleteFabric = async (id: number) => {
   return response.data;
 };
 
+export const toggleFabricActive = async (id: number) => {
+  const response = await api.patch(`${BASE_URL}/${id}/toggle-active`);
+  return response.data as Fabric;
+};
+
 export const uploadFabricImage = async (fabricId: number, file: File) => {
   const formData = new FormData();
   formData.append('file', file);
@@ -55,6 +80,7 @@ const fabricService = {
   updateFabric,
   deleteFabric,
   uploadFabricImage,
+  toggleFabricActive,
 };
 
 export default fabricService;

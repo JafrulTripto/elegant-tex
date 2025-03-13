@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import {
-  Avatar,
-  Button,
   TextField,
   FormControlLabel,
   Checkbox,
@@ -11,12 +9,14 @@ import {
   Box,
   Typography,
   Container,
-  Paper,
   Alert,
   Stack,
+  useTheme,
 } from '@mui/material';
-import { LockOutlined as LockOutlinedIcon, Psychology as PsychologyIcon } from '@mui/icons-material';
+import { Psychology as PsychologyIcon } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
+import ResendVerificationDialog from '../components/common/ResendVerificationDialog';
+import { AuthCard, LogoAvatar, LogoContainer, GradientButton } from '../components/common/StyledComponents';
 
 const Login: React.FC = () => {
   const { login, authState } = useAuth();
@@ -28,9 +28,17 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openResendVerification, setOpenResendVerification] = useState(false);
   
   // Get the redirect path from location state or default to dashboard
   const from = (location.state as any)?.from?.pathname || '/dashboard';
+  
+  // Check if we should open the resend verification dialog
+  useEffect(() => {
+    if (location.state && (location.state as any).openResendVerification) {
+      setOpenResendVerification(true);
+    }
+  }, [location.state]);
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -46,47 +54,29 @@ const Login: React.FC = () => {
       await login(username, password);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || err.response.data.message || 'Failed to login. Please check your credentials.');
+      setError(err.message || err.response?.data?.message || 'Failed to login. Please check your credentials.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleOpenResendVerification = () => {
+    setOpenResendVerification(true);
+  };
+
+  const handleCloseResendVerification = () => {
+    setOpenResendVerification(false);
+    // Clear the state so if the user navigates away and back, it doesn't reopen
+    navigate(location.pathname, { replace: true });
+  };
   
   return (
     <Container component="main" maxWidth="xs">
-      <Paper
-        elevation={3}
-        className="techminds-card"
-        sx={{
-          mt: 8,
-          p: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          borderRadius: 2,
-          borderTop: '4px solid #1976d2',
-          borderBottom: '4px solid #9c27b0',
-        }}
-      >
-        <Box 
-          className="techminds-logo-container"
-          sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center',
-            mb: 3
-          }}
-        >
-          <Avatar 
-            sx={{ 
-              m: 1, 
-              bgcolor: 'primary.main',
-              width: 56,
-              height: 56
-            }}
-          >
+        <AuthCard elevation={3} className="techminds-card">
+        <LogoContainer className="techminds-logo-container">
+          <LogoAvatar>
             <PsychologyIcon fontSize="large" />
-          </Avatar>
+          </LogoAvatar>
           <Typography 
             component="h1" 
             variant="h4"
@@ -100,7 +90,7 @@ const Login: React.FC = () => {
           <Typography variant="subtitle1" color="text.secondary" align="center">
             Empowering Technical Excellence
           </Typography>
-        </Box>
+        </LogoContainer>
         
         <Typography component="h2" variant="h5" sx={{ mb: 2 }}>
           Sign in to your account
@@ -151,22 +141,14 @@ const Login: React.FC = () => {
             }
             label="Remember me"
           />
-          <Button
+          <GradientButton
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ 
-              mt: 3, 
-              mb: 2,
-              background: 'linear-gradient(45deg, #1976d2 30%, #9c27b0 90%)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1565c0 30%, #7b1fa2 90%)',
-              }
-            }}
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Signing in...' : 'Sign In'}
-          </Button>
+          </GradientButton>
           <Grid container>
             <Grid item xs>
               <Link component={RouterLink} to="/forgot-password" variant="body2">
@@ -179,8 +161,24 @@ const Login: React.FC = () => {
               </Link>
             </Grid>
           </Grid>
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Link 
+              component="button" 
+              variant="body2" 
+              onClick={handleOpenResendVerification}
+              sx={{ textDecoration: 'none' }}
+            >
+              Need to verify your email?
+            </Link>
+          </Box>
         </Box>
-      </Paper>
+      </AuthCard>
+
+      {/* Resend Verification Dialog */}
+      <ResendVerificationDialog 
+        open={openResendVerification} 
+        onClose={handleCloseResendVerification} 
+      />
     </Container>
   );
 };

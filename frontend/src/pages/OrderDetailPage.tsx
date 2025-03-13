@@ -35,7 +35,7 @@ import {
 import { format } from 'date-fns';
 import { Order, OrderStatus } from '../types/order';
 import * as orderService from '../services/order.service';
-import ImagePreview from '../components/common/ImagePreview';
+import OrderImagePreview from '../components/orders/OrderImagePreview';
 
 const ORDER_STATUS_STEPS: OrderStatus[] = [
   'Created',
@@ -566,11 +566,12 @@ const OrderDetailPage: React.FC = () => {
                           </Typography>
                           <Box display="flex" flexWrap="wrap" gap={1}>
                             {product.images.map((image) => (
-                              <ImagePreview
+                              <OrderImagePreview
                                 key={image.id}
                                 imageId={image.imageId}
                                 width={100}
                                 height={100}
+                                showDeleteButton={false}
                               />
                             ))}
                           </Box>

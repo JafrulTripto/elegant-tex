@@ -5,6 +5,7 @@ export interface Marketplace {
   name: string;
   pageUrl: string;
   imageId?: number;
+  active: boolean;
   members: User[];
   createdAt: string;
   updatedAt: string;
@@ -14,5 +15,6 @@ export interface MarketplaceFormData {
   name: string;
   pageUrl: string;
   imageId?: number;
+  active: boolean;
   memberIds: number[];
 }

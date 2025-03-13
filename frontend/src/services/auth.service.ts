@@ -7,6 +7,8 @@ import {
   TokenRefreshResponse,
   EmailVerificationRequest,
   ResendVerificationRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
   MessageResponse
 } from '../types';
 import { saveTokens, clearTokens } from './api';
@@ -57,6 +59,22 @@ class AuthService {
    */
   async resendVerification(request: ResendVerificationRequest): Promise<MessageResponse> {
     const response = await api.post<MessageResponse>('/auth/resend-verification', request);
+    return response.data;
+  }
+
+  /**
+   * Request password reset email
+   */
+  async forgotPassword(request: ForgotPasswordRequest): Promise<MessageResponse> {
+    const response = await api.post<MessageResponse>('/auth/forgot-password', request);
+    return response.data;
+  }
+
+  /**
+   * Reset password with token
+   */
+  async resetPassword(request: ResetPasswordRequest): Promise<MessageResponse> {
+    const response = await api.post<MessageResponse>('/auth/reset-password', request);
     return response.data;
   }
 

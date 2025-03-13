@@ -10,6 +10,7 @@ import com.tripzin.eleganttex.entity.ERole;
 import com.tripzin.eleganttex.entity.Role;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.entity.VerificationToken;
+import com.tripzin.eleganttex.entity.VerificationToken.TokenType;
 import com.tripzin.eleganttex.exception.BadRequestException;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.exception.TokenRefreshException;
@@ -214,5 +215,55 @@ public class AuthService {
         String newAccessToken = jwtUtils.generateAccessToken(userDetails);
         
         return new TokenRefreshResponse(newAccessToken, requestRefreshToken, "Bearer");
+    }
+    
+    @Transactional
+    public MessageResponse forgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        
+        // Delete existing tokens
+        List<VerificationToken> existingTokens = tokenRepository.findByUserAndTokenType(
+                user, TokenType.PASSWORD_RESET);
+        tokenRepository.deleteAll(existingTokens);
+        
+        // Create new token
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = VerificationToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(1)) // Password reset tokens expire in 1 hour
+                .tokenType(TokenType.PASSWORD_RESET)
+                .build();
+        
+        tokenRepository.save(verificationToken);
+        
+        // Send password reset email
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
+        
+        return MessageResponse.success("Password reset email sent successfully!");
+    }
+    
+    @Transactional
+    public MessageResponse resetPassword(String token, String newPassword) {
+        VerificationToken verificationToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new BadRequestException("Invalid reset token"));
+        
+        if (verificationToken.getTokenType() != TokenType.PASSWORD_RESET) {
+            throw new BadRequestException("Invalid token type");
+        }
+        
+        if (verificationToken.isExpired()) {
+            tokenRepository.delete(verificationToken);
+            throw new BadRequestException("Reset token has expired");
+        }
+        
+        User user = verificationToken.getUser();
+        user.setPassword(encoder.encode(newPassword));
+        userRepository.save(user);
+        
+        tokenRepository.delete(verificationToken);
+        
+        return MessageResponse.success("Password has been reset successfully!");
     }
 }

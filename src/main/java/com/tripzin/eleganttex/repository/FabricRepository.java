@@ -15,4 +15,18 @@ public interface FabricRepository extends JpaRepository<Fabric, Long> {
     Page<Fabric> findAll(@NonNull Pageable pageable);
     List<Fabric> findByTagsId(Long tagId);
     boolean existsByImageId(Long imageId);
+    
+    // Search fabrics by name (case-insensitive)
+    Page<Fabric> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    
+    // Search fabrics by name or tag name
+    Page<Fabric> findDistinctByNameContainingIgnoreCaseOrTags_NameContainingIgnoreCase(
+        String name, String tagName, Pageable pageable);
+    
+    // Find active fabrics
+    Page<Fabric> findByActiveTrue(Pageable pageable);
+    
+    // Search active fabrics by name or tag name
+    Page<Fabric> findDistinctByNameContainingIgnoreCaseOrTags_NameContainingIgnoreCaseAndActiveTrue(
+        String name, String tagName, Pageable pageable);
 }

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +36,15 @@ public class MarketplaceService {
                 .map(MarketplaceResponse::fromEntity);
     }
     
+    public Page<MarketplaceResponse> getAllMarketplaces(Pageable pageable, boolean activeOnly) {
+        if (activeOnly) {
+            return marketplaceRepository.findByActiveTrue(pageable)
+                    .map(MarketplaceResponse::fromEntity);
+        } else {
+            return getAllMarketplaces(pageable);
+        }
+    }
+    
     public MarketplaceResponse getMarketplaceById(Long id) {
         Marketplace marketplace = findMarketplaceById(id);
         return MarketplaceResponse.fromEntity(marketplace);
@@ -44,6 +54,52 @@ public class MarketplaceService {
         return marketplaceRepository.findByMembersId(userId).stream()
                 .map(MarketplaceResponse::fromEntity)
                 .collect(Collectors.toList());
+    }
+    
+    public List<MarketplaceResponse> getActiveMarketplacesByMemberId(Long userId) {
+        return marketplaceRepository.findByMembersIdAndActiveTrue(userId).stream()
+                .map(MarketplaceResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Search marketplaces by query string
+     * The search is performed on marketplace name and page URL
+     * 
+     * @param query the search query
+     * @param pageable pagination information
+     * @return a page of marketplace responses matching the search criteria
+     */
+    public Page<MarketplaceResponse> searchMarketplaces(String query, Pageable pageable) {
+        if (!StringUtils.hasText(query)) {
+            return getAllMarketplaces(pageable);
+        }
+        
+        return marketplaceRepository.findDistinctByNameContainingIgnoreCaseOrPageUrlContainingIgnoreCase(
+                query, query, pageable)
+                .map(MarketplaceResponse::fromEntity);
+    }
+    
+    /**
+     * Search marketplaces by query string with option to filter by active status
+     * 
+     * @param query the search query
+     * @param pageable pagination information
+     * @param activeOnly if true, only active marketplaces will be returned
+     * @return a page of marketplace responses matching the search criteria
+     */
+    public Page<MarketplaceResponse> searchMarketplaces(String query, Pageable pageable, boolean activeOnly) {
+        if (!StringUtils.hasText(query)) {
+            return getAllMarketplaces(pageable, activeOnly);
+        }
+        
+        if (activeOnly) {
+            return marketplaceRepository.findDistinctByNameContainingIgnoreCaseOrPageUrlContainingIgnoreCaseAndActiveTrue(
+                    query, query, pageable)
+                    .map(MarketplaceResponse::fromEntity);
+        } else {
+            return searchMarketplaces(query, pageable);
+        }
     }
     
     @Transactional
@@ -62,6 +118,7 @@ public class MarketplaceService {
         marketplace.setName(request.getName());
         marketplace.setPageUrl(request.getPageUrl());
         marketplace.setImageId(request.getImageId());
+        marketplace.setActive(request.isActive());
         
         // Add members
         Set<User> members = new HashSet<>();
@@ -102,6 +159,7 @@ public class MarketplaceService {
         marketplace.setName(request.getName());
         marketplace.setPageUrl(request.getPageUrl());
         marketplace.setImageId(newImageId);
+        marketplace.setActive(request.isActive());
         
         // Update members
         if (request.getMemberIds() != null) {
@@ -175,6 +233,20 @@ public class MarketplaceService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         
         marketplace.removeMember(user);
+        Marketplace updatedMarketplace = marketplaceRepository.save(marketplace);
+        return MarketplaceResponse.fromEntity(updatedMarketplace);
+    }
+    
+    /**
+     * Toggle the active status of a marketplace
+     * 
+     * @param id the marketplace ID
+     * @return the updated marketplace response
+     */
+    @Transactional
+    public MarketplaceResponse toggleMarketplaceActive(Long id) {
+        Marketplace marketplace = findMarketplaceById(id);
+        marketplace.setActive(!marketplace.getActive());
         Marketplace updatedMarketplace = marketplaceRepository.save(marketplace);
         return MarketplaceResponse.fromEntity(updatedMarketplace);
     }

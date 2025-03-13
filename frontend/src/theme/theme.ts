@@ -1,6 +1,55 @@
 import { createTheme } from '@mui/material/styles';
 import { PaletteMode } from '@mui/material';
 
+// Define custom theme extensions
+declare module '@mui/material/styles' {
+  interface Theme {
+    customColors: {
+      navyBlue: string;
+      teal: string;
+      lightGray: string;
+      pink: string;
+      navyBlueDark: string;
+      tealDark: string;
+      pinkDark: string;
+    };
+    customSpacing: {
+      container: number;
+      section: number;
+      element: number;
+      item: number;
+    };
+  }
+  interface ThemeOptions {
+    customColors?: {
+      navyBlue?: string;
+      teal?: string;
+      lightGray?: string;
+      pink?: string;
+      navyBlueDark?: string;
+      tealDark?: string;
+      pinkDark?: string;
+    };
+    customSpacing?: {
+      container?: number;
+      section?: number;
+      element?: number;
+      item?: number;
+    };
+  }
+}
+
+// Define custom colors
+const customColors = {
+  navyBlue: '#364F6B',
+  teal: '#3FC1C9',
+  lightGray: '#F5F5F5',
+  pink: '#FC5185',
+  navyBlueDark: '#283A50',
+  tealDark: '#2D9BA2',
+  pinkDark: '#E03A6C',
+};
+
 // Common typography settings
 const typography = {
   fontFamily: [
@@ -35,6 +84,14 @@ const typography = {
   },
 };
 
+// Define standard spacing values
+const customSpacingValues = {
+  container: 3, // Standard padding for containers (Paper, Card)
+  section: 3,   // Standard margin between sections
+  element: 2,   // Standard margin between elements within a section
+  item: 1,      // Standard margin between small items
+};
+
 // Common component overrides
 const components = {
   MuiButton: {
@@ -50,6 +107,65 @@ const components = {
       root: {
         borderRadius: 12,
         boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
+        padding: 0, // Reset padding to use consistent values
+      } as any,
+    },
+  },
+  MuiCardContent: {
+    styleOverrides: {
+      root: {
+        padding: 24, // 3 * 8px = 24px (MUI's spacing unit is 8px)
+        '&:last-child': {
+          paddingBottom: 24,
+        },
+      } as any,
+    },
+  },
+  MuiPaper: {
+    styleOverrides: {
+      root: {
+        padding: 0, // Reset padding to use consistent values
+      } as any,
+    },
+  },
+  MuiTextField: {
+    styleOverrides: {
+      root: {
+        marginTop: 16, // 2 * 8px = 16px
+        marginBottom: 16,
+      } as any,
+    },
+  },
+  MuiFormControl: {
+    styleOverrides: {
+      root: {
+        marginTop: 16,
+        marginBottom: 16,
+      } as any,
+    },
+  },
+  MuiGrid: {
+    styleOverrides: {
+      container: {
+        // Default grid spacing will be handled by the spacing prop
+      } as any,
+    },
+  },
+  MuiTypography: {
+    styleOverrides: {
+      gutterBottom: {
+        marginBottom: 16, // Consistent gutterBottom margin
+      } as any,
+      h6: {
+        marginBottom: 16, // Consistent heading margin
+      } as any,
+    },
+  },
+  MuiDivider: {
+    styleOverrides: {
+      root: {
+        marginTop: 16,
+        marginBottom: 16,
       } as any,
     },
   },
@@ -59,14 +175,14 @@ const components = {
 const lightPalette = {
   mode: 'light' as PaletteMode,
   primary: {
-    main: '#1976d2',
-    light: '#42a5f5',
-    dark: '#1565c0',
+    main: '#364F6B',
+    light: '#4A6583',
+    dark: '#283A50',
   },
   secondary: {
-    main: '#9c27b0',
-    light: '#ba68c8',
-    dark: '#7b1fa2',
+    main: '#FC5185',
+    light: '#FD739D',
+    dark: '#E03A6C',
   },
   error: {
     main: '#d32f2f',
@@ -75,13 +191,13 @@ const lightPalette = {
     main: '#ed6c02',
   },
   info: {
-    main: '#0288d1',
+    main: '#3FC1C9',
   },
   success: {
     main: '#2e7d32',
   },
   background: {
-    default: '#f5f5f5',
+    default: '#F5F5F5',
     paper: '#ffffff',
   },
   text: {
@@ -94,14 +210,14 @@ const lightPalette = {
 const darkPalette = {
   mode: 'dark' as PaletteMode,
   primary: {
-    main: '#90caf9',
-    light: '#e3f2fd',
-    dark: '#42a5f5',
+    main: '#3FC1C9',
+    light: '#65CDD3',
+    dark: '#2D9BA2',
   },
   secondary: {
-    main: '#ce93d8',
-    light: '#f3e5f5',
-    dark: '#ab47bc',
+    main: '#FC5185',
+    light: '#FD739D',
+    dark: '#E03A6C',
   },
   error: {
     main: '#f44336',
@@ -110,18 +226,18 @@ const darkPalette = {
     main: '#ffa726',
   },
   info: {
-    main: '#29b6f6',
+    main: '#64B5F6',
   },
   success: {
     main: '#66bb6a',
   },
   background: {
-    default: '#121212',
-    paper: '#1e1e1e',
+    default: '#1A2533', // Darker version of #364F6B
+    paper: '#253547',   // Slightly lighter than background
   },
   text: {
-    primary: '#ffffff',
-    secondary: 'rgba(255, 255, 255, 0.7)',
+    primary: '#F5F5F5',
+    secondary: 'rgba(245, 245, 245, 0.7)',
   },
 };
 
@@ -130,6 +246,8 @@ export const lightTheme = createTheme({
   palette: lightPalette,
   typography,
   components,
+  customColors,
+  customSpacing: customSpacingValues,
 });
 
 // Create dark theme
@@ -137,6 +255,8 @@ export const darkTheme = createTheme({
   palette: darkPalette,
   typography,
   components,
+  customColors,
+  customSpacing: customSpacingValues,
 });
 
 // Default theme (for backward compatibility)

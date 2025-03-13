@@ -10,7 +10,11 @@ import {
   Chip,
   CircularProgress,
   FormHelperText,
+  FormControlLabel,
+  Switch,
+  useTheme,
 } from '@mui/material';
+import { spacing, layoutUtils } from '../../theme/styleUtils';
 import { FabricFormData } from '../../types/fabric';
 import { searchTags } from '../../services/tag.service';
 import FileUpload from '../common/FileUpload';
@@ -35,6 +39,7 @@ const FabricForm: React.FC<FabricFormProps> = ({
   const [formData, setFormData] = useState<FabricFormData>({
     name: initialData?.name || '',
     imageId: initialData?.imageId,
+    active: initialData?.active !== undefined ? initialData.active : true,
     tagNames: initialData?.tagNames || [],
   });
 
@@ -62,10 +67,19 @@ const FabricForm: React.FC<FabricFormProps> = ({
         setSearchingTags(true);
         const tags = await searchTags(tagInputValue);
         console.log('Tags search result:', tags);
-        setTagOptions(tags.map(tag => tag.name));
+        
+        // Make sure we have valid tags before mapping
+        if (Array.isArray(tags) && tags.length > 0) {
+          setTagOptions(tags.map(tag => tag.name));
+        } else {
+          console.log('No tags found or invalid response format');
+          setTagOptions([]);
+        }
+        
         setSearchingTags(false);
       } catch (err) {
         console.error('Error searching tags:', err);
+        setTagOptions([]); // Reset options on error
         setSearchingTags(false);
       }
     };
@@ -168,14 +182,16 @@ const FabricForm: React.FC<FabricFormProps> = ({
     };
   }, [tempImagePreview]);
 
+  const theme = useTheme();
+  
   return (
-    <Paper elevation={2} sx={{ p: 3 }}>
+    <Paper elevation={2} sx={{ ...spacing.container(theme) }}>
       <Typography variant="h6" component="h2" gutterBottom>
         {fabricId ? 'Edit Fabric' : 'Create Fabric'}
       </Typography>
       
       <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Grid container spacing={3}>
+        <Grid container spacing={theme.customSpacing.element * 4}>
           <Grid item xs={12} md={8}>
             <TextField
               name="name"
@@ -190,6 +206,20 @@ const FabricForm: React.FC<FabricFormProps> = ({
               margin="normal"
             />
             
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.active}
+                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                  name="active"
+                  color="primary"
+                  disabled={isSubmitting}
+                />
+              }
+              label={formData.active ? "Active" : "Inactive"}
+              sx={{ mt: theme.customSpacing.element, mb: theme.customSpacing.item }}
+            />
+            
             <Autocomplete
               multiple
               freeSolo
@@ -200,6 +230,19 @@ const FabricForm: React.FC<FabricFormProps> = ({
               inputValue={tagInputValue}
               onInputChange={(event, newInputValue) => {
                 setTagInputValue(newInputValue);
+              }}
+              filterOptions={(options, params) => {
+                const filtered = options.filter(option => 
+                  option.toLowerCase().includes(params.inputValue.toLowerCase())
+                );
+                
+                // Add the option to create a new tag if it doesn't exist
+                const inputValue = params.inputValue.trim();
+                if (inputValue !== '' && !options.includes(inputValue)) {
+                  filtered.push(inputValue);
+                }
+                
+                return filtered;
               }}
               renderInput={(params) => (
                 <TextField
@@ -227,11 +270,13 @@ const FabricForm: React.FC<FabricFormProps> = ({
                 ))
               }
               disabled={isSubmitting}
+              disableCloseOnSelect
+              openOnFocus
             />
           </Grid>
           
           <Grid item xs={12} md={4}>
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: theme.customSpacing.element }}>
               <Typography variant="subtitle1" gutterBottom>
                 Fabric Image
               </Typography>
@@ -279,12 +324,12 @@ const FabricForm: React.FC<FabricFormProps> = ({
         </Grid>
         
         {submitError && (
-          <Typography color="error" sx={{ mt: 2 }}>
+          <Typography color="error" sx={{ mt: theme.customSpacing.element }}>
             {submitError}
           </Typography>
         )}
         
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Box sx={{ mt: theme.customSpacing.section, ...layoutUtils.endFlex }}>
           <Button
             type="submit"
             variant="contained"

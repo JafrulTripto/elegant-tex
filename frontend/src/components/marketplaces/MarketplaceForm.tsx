@@ -10,7 +10,11 @@ import {
   Chip,
   CircularProgress,
   FormHelperText,
+  FormControlLabel,
+  Switch,
+  useTheme,
 } from '@mui/material';
+import { spacing, layoutUtils } from '../../theme/styleUtils';
 import { User } from '../../types';
 import { MarketplaceFormData } from '../../types/marketplace';
 import { userService } from '../../services/user.service';
@@ -37,6 +41,7 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
     name: initialData?.name || '',
     pageUrl: initialData?.pageUrl || '',
     imageId: initialData?.imageId,
+    active: initialData?.active !== undefined ? initialData.active : true,
     memberIds: initialData?.memberIds || [],
   });
 
@@ -172,14 +177,16 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
     };
   }, [tempImagePreview]);
 
+  const theme = useTheme();
+  
   return (
-    <Paper elevation={2} sx={{ p: 3 }}>
+    <Paper elevation={2} sx={{ ...spacing.container(theme) }}>
       <Typography variant="h6" component="h2" gutterBottom>
         {marketplaceId ? 'Edit Marketplace' : 'Create Marketplace'}
       </Typography>
       
       <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Grid container spacing={3}>
+        <Grid container spacing={theme.customSpacing.element * 4}>
           <Grid item xs={12} md={8}>
             <TextField
               name="name"
@@ -205,6 +212,20 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
               helperText={errors.pageUrl || 'Enter the full URL including http:// or https://'}
               disabled={isSubmitting}
               margin="normal"
+            />
+            
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.active}
+                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                  name="active"
+                  color="primary"
+                  disabled={isSubmitting}
+                />
+              }
+              label={formData.active ? "Active" : "Inactive"}
+              sx={{ mt: theme.customSpacing.element, mb: theme.customSpacing.item }}
             />
             
             <Autocomplete
@@ -243,7 +264,7 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
           </Grid>
           
           <Grid item xs={12} md={4}>
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: theme.customSpacing.element }}>
               <Typography variant="subtitle1" gutterBottom>
                 Marketplace Image
               </Typography>
@@ -291,12 +312,12 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
         </Grid>
         
         {submitError && (
-          <Typography color="error" sx={{ mt: 2 }}>
+          <Typography color="error" sx={{ mt: theme.customSpacing.element }}>
             {submitError}
           </Typography>
         )}
         
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Box sx={{ mt: theme.customSpacing.section, ...layoutUtils.endFlex }}>
           <Button
             type="submit"
             variant="contained"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   IconButton,
@@ -7,15 +7,20 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Typography
+  Typography,
+  Tooltip,
+  Stack
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
   ZoomIn as ZoomInIcon,
-  BrokenImage as BrokenImageIcon
+  BrokenImage as BrokenImageIcon,
+  ZoomOut as ZoomOutIcon,
+  Fullscreen as FullscreenIcon,
+  FullscreenExit as FullscreenExitIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import api from '../../services/api';
+import { getFileUrl } from '../../services/fileStorage.service';
 
 interface OrderImagePreviewProps {
   imageUrl?: string;
@@ -62,12 +67,33 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   showDeleteButton = true,
   showZoomButton = true
 }) => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
-  // Determine the source URL
-  const src = imageUrl || (imageId ? `/files/${imageId}` : '');
+  // State for image URL
+  const [src, setSrc] = useState<string>('');
+  
+  // Set up the image URL
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    
+    if (imageUrl) {
+      setSrc(imageUrl);
+    } else if (imageId) {
+      const url = getFileUrl(imageId);
+      if (url) {
+        setSrc(url);
+      } else {
+        setError(true);
+        setLoading(false);
+      }
+    } else {
+      setError(true);
+      setLoading(false);
+    }
+  }, [imageUrl, imageId]);
 
   const handleImageError = () => {
     setError(true);
@@ -165,25 +191,137 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
       <Dialog
         open={dialogOpen}
         onClose={handleCloseDialog}
-        maxWidth="lg"
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '90vh',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }
+        }}
       >
-        <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
+        <DialogContent 
+          sx={{ 
+            p: 0, 
+            overflow: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            flexGrow: 1
+          }}
+        >
+          {/* Image viewer controls */}
           <Box
-            component="img"
-            src={src}
-            alt={imageName || 'Image preview'}
             sx={{
-              maxWidth: '100%',
-              maxHeight: '80vh',
-              display: 'block',
-              margin: '0 auto'
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              borderRadius: 1,
+              p: 0.5
             }}
-          />
+          >
+            <Stack direction="row" spacing={1}>
+              <ViewerControls src={src} />
+            </Stack>
+          </Box>
+          
+          <ImageViewer src={src} alt={imageName || 'Image preview'} />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Close</Button>
         </DialogActions>
       </Dialog>
+    </>
+  );
+};
+
+// Image viewer with original size support
+const ImageViewer = ({ src, alt }: { src: string, alt: string }) => {
+  const [originalSize, setOriginalSize] = useState(false);
+  
+  return (
+    <Box
+      component="img"
+      src={src}
+      alt={alt}
+      sx={{
+        display: 'block',
+        margin: '0 auto',
+        ...(originalSize 
+          ? { 
+              width: 'auto', 
+              height: 'auto', 
+              maxWidth: 'none', 
+              maxHeight: 'none' 
+            } 
+          : { 
+              maxWidth: '100%', 
+              maxHeight: '100%', 
+              objectFit: 'contain' 
+            }
+        )
+      }}
+      onClick={() => setOriginalSize(!originalSize)}
+    />
+  );
+};
+
+// Controls for the image viewer
+const ViewerControls = ({ src }: { src: string }) => {
+  const [originalSize, setOriginalSize] = useState(false);
+  
+  const handleToggleSize = () => {
+    setOriginalSize(!originalSize);
+    
+    // Find the image element and update its style
+    const imageElement = document.querySelector('.MuiDialog-root img') as HTMLImageElement;
+    if (imageElement) {
+      if (!originalSize) {
+        // Switch to original size
+        imageElement.style.maxWidth = 'none';
+        imageElement.style.maxHeight = 'none';
+        imageElement.style.width = 'auto';
+        imageElement.style.height = 'auto';
+      } else {
+        // Switch to fit screen
+        imageElement.style.maxWidth = '100%';
+        imageElement.style.maxHeight = '100%';
+        imageElement.style.width = 'auto';
+        imageElement.style.height = 'auto';
+      }
+    }
+  };
+  
+  const handleOpenInNewTab = () => {
+    window.open(src, '_blank');
+  };
+  
+  return (
+    <>
+      <Tooltip title={originalSize ? "Fit to screen" : "Original size"}>
+        <IconButton 
+          size="small" 
+          onClick={handleToggleSize}
+          sx={{ color: 'white' }}
+        >
+          {originalSize ? <FullscreenExitIcon /> : <FullscreenIcon />}
+        </IconButton>
+      </Tooltip>
+      
+      <Tooltip title="Open in new tab">
+        <IconButton 
+          size="small" 
+          onClick={handleOpenInNewTab}
+          sx={{ color: 'white' }}
+        >
+          <ZoomOutIcon />
+        </IconButton>
+      </Tooltip>
     </>
   );
 };

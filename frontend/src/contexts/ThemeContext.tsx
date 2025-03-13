@@ -34,9 +34,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem('themeMode', newMode);
   };
 
-  // Update localStorage when the mode changes
+  // Update localStorage and set CSS variables when the mode changes
   useEffect(() => {
     localStorage.setItem('themeMode', mode);
+    
+    // Set CSS variables for scrollbar colors based on theme
+    if (mode === 'dark') {
+      document.documentElement.style.setProperty('--scrollbar-track', '#1A2533');
+      document.documentElement.style.setProperty('--scrollbar-thumb', '#3FC1C9');
+      document.documentElement.style.setProperty('--scrollbar-thumb-hover', '#2D9BA2');
+    } else {
+      document.documentElement.style.setProperty('--scrollbar-track', '#f1f1f1');
+      document.documentElement.style.setProperty('--scrollbar-thumb', '#888');
+      document.documentElement.style.setProperty('--scrollbar-thumb-hover', '#555');
+    }
   }, [mode]);
 
   return (

@@ -31,6 +31,10 @@ public class Fabric {
     @Column(name = "image_id")
     private Long imageId;
     
+    @Column(name = "active", nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+    
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

@@ -19,6 +19,7 @@ public class FabricResponse {
     private Long id;
     private String name;
     private Long imageId;
+    private boolean active;
     private Set<TagDTO> tags;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -28,6 +29,7 @@ public class FabricResponse {
                 .id(fabric.getId())
                 .name(fabric.getName())
                 .imageId(fabric.getImageId())
+                .active(fabric.getActive())
                 .tags(fabric.getTags().stream()
                         .map(TagDTO::fromEntity)
                         .collect(Collectors.toSet()))

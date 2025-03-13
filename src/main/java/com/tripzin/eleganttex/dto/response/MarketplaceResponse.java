@@ -21,6 +21,7 @@ public class MarketplaceResponse {
     private String name;
     private String pageUrl;
     private Long imageId;
+    private boolean active;
     private Set<UserSummaryDTO> members;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -31,6 +32,7 @@ public class MarketplaceResponse {
                 .name(marketplace.getName())
                 .pageUrl(marketplace.getPageUrl())
                 .imageId(marketplace.getImageId())
+                .active(marketplace.getActive())
                 .members(marketplace.getMembers().stream()
                         .map(UserSummaryDTO::fromEntity)
                         .collect(Collectors.toSet()))
