@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 @AllArgsConstructor
 @Getter
 public class UserDetailsImpl implements UserDetails {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Long id;
@@ -38,7 +40,7 @@ public class UserDetailsImpl implements UserDetails {
         // Process each role
         user.getRoles().forEach(role -> {
             // Add role as an authority with ROLE_ prefix
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().name()));
+            authorities.add(new SimpleGrantedAuthority(role.getName().name()));
             
             // Add all permissions from the role as authorities
             role.getPermissions().forEach(permission -> {
@@ -71,21 +73,6 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public String getUsername() {
         return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
     }
 
     @Override

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { getFileUrl } from '../../services/fileStorage.service';
-import { API_BASE_URL } from '../../config/env';
-import { FileStorage } from '../../services/fileStorage.service';
+import { getFileUrl } from '@/services/fileStorage.service.ts';
+
 
 interface ImagePreviewProps {
   imageId?: number | null;

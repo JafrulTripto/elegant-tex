@@ -28,7 +28,6 @@ import {
   People as PeopleIcon,
   ExitToApp as LogoutIcon,
   AccountCircle as AccountIcon,
-  Assignment as AssignmentIcon,
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
   Settings as SettingsIcon,
