@@ -51,7 +51,7 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
   };
   
   return (
-    <Grid container spacing={theme.customSpacing.section * 4}>
+    <Grid container spacing={theme.customSpacing.section * 1}>
       {fabrics.map((fabric) => (
         <Grid item xs={12} sm={6} md={3} key={fabric.id}>
           <Paper 

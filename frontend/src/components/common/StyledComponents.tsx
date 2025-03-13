@@ -51,7 +51,7 @@ export const LogoContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const FooterBox = styled(Box)(({ theme }) => ({
-  padding: `${theme.spacing(3)} ${theme.spacing(2)}`,
+  padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
   marginTop: 'auto',
   backgroundColor: theme.palette.mode === 'light' 
     ? theme.customColors.lightGray 

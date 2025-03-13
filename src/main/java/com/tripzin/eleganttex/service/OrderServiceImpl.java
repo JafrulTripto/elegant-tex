@@ -1,6 +1,5 @@
 package com.tripzin.eleganttex.service;
 
-import com.tripzin.eleganttex.dto.UserDTO;
 import com.tripzin.eleganttex.dto.request.OrderProductRequest;
 import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.*;

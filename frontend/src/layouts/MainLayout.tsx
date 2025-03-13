@@ -52,6 +52,8 @@ const MainLayout: React.FC = () => {
   
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const isActive = (path: string) => location.pathname === path;
   
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -77,6 +79,10 @@ const MainLayout: React.FC = () => {
       setMobileOpen(false);
     }
   };
+
+  const navStyle = (path: string) =>{
+    return {color : isActive(path) ? theme.customColors.pinkDark : 'inherit' }
+  }
   
   const isAdmin = authState.user?.roles.some((role: string) => role === 'ROLE_ADMIN');
   
@@ -92,7 +98,7 @@ const MainLayout: React.FC = () => {
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/dashboard')}>
             <ListItemIcon color="secondary">
-              <DashboardIcon />
+              <DashboardIcon style={navStyle('/dashboard')}/>
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItemButton>
@@ -100,7 +106,7 @@ const MainLayout: React.FC = () => {
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/profile')}>
             <ListItemIcon color="secondary">
-              <PersonIcon />
+              <PersonIcon style={navStyle('/profile')}/>
             </ListItemIcon>
             <ListItemText primary="Profile" />
           </ListItemButton>
@@ -108,7 +114,7 @@ const MainLayout: React.FC = () => {
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/marketplaces')}>
             <ListItemIcon color="secondary">
-              <StorefrontIcon />
+              <StorefrontIcon style={navStyle('/marketplaces')}/>
             </ListItemIcon>
             <ListItemText primary="Marketplaces" />
           </ListItemButton>
@@ -116,7 +122,7 @@ const MainLayout: React.FC = () => {
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/fabrics')}>
             <ListItemIcon color="secondary">
-              <CategoryIcon />
+              <CategoryIcon style={navStyle('/fabrics')}/>
             </ListItemIcon>
             <ListItemText primary="Fabrics" />
           </ListItemButton>
@@ -124,7 +130,7 @@ const MainLayout: React.FC = () => {
         <ListItem disablePadding>
           <ListItemButton onClick={() => handleNavigate('/orders')}>
             <ListItemIcon color="secondary">
-              <ShoppingCartIcon />
+              <ShoppingCartIcon style={navStyle('/orders')}/>
             </ListItemIcon>
             <ListItemText primary="Orders" />
           </ListItemButton>
@@ -134,7 +140,7 @@ const MainLayout: React.FC = () => {
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigate('/admin/users')}>
                 <ListItemIcon color="secondary">
-                  <PeopleIcon />
+                  <PeopleIcon style={navStyle('/admin/users')}/>
                 </ListItemIcon>
                 <ListItemText primary="User Management" />
               </ListItemButton>
@@ -142,7 +148,7 @@ const MainLayout: React.FC = () => {
             <ListItem disablePadding>
               <ListItemButton onClick={() => handleNavigate('/admin/settings')}>
                 <ListItemIcon color="secondary">
-                  <SettingsIcon />
+                  <SettingsIcon style={navStyle('/admin/settings')}/>
                 </ListItemIcon>
                 <ListItemText primary="Settings" />
               </ListItemButton>
@@ -319,7 +325,7 @@ const MainLayout: React.FC = () => {
             variant="body2" 
             align="center"
           >
-            © {new Date().getFullYear()} Elegant-Tex. All rights reserved.
+            © {new Date().getFullYear()} Tripzin. All rights reserved.
           </FooterText>
         </FooterBox>
       </Box>
