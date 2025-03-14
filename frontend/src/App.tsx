@@ -27,6 +27,7 @@ import FabricsPage from './pages/FabricsPage';
 import OrdersPage from './pages/OrdersPage';
 import OrderFormPage from './pages/OrderFormPage';
 import OrderDetailPage from './pages/OrderDetailPage';
+import CustomersPage from './pages/CustomersPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 
@@ -72,6 +73,7 @@ const App: React.FC = () => {
                 <Route path="/orders/new" element={<OrderFormPage />} />
                 <Route path="/orders/:id" element={<OrderDetailPage />} />
                 <Route path="/orders/:id/edit" element={<OrderFormPage />} />
+                <Route path="/customers" element={<CustomersPage />} />
               </Route>
               
               {/* Admin routes */}

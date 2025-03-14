@@ -16,10 +16,10 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace WHERE o.id = :id")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.customer WHERE o.id = :id")
     Optional<Order> findByIdWithMarketplace(@Param("id") Long id);
     
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.products p LEFT JOIN FETCH p.fabric WHERE o.id = :id")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.products p LEFT JOIN FETCH p.fabric WHERE o.id = :id")
     Optional<Order> findByIdWithProductsAndFabrics(@Param("id") Long id);
     
     Page<Order> findByMarketplaceId(Long marketplaceId, Pageable pageable);
@@ -30,12 +30,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     Page<Order> findByCreatedById(Long userId, Pageable pageable);
     
-    @Query("SELECT o FROM Order o WHERE " +
+    @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
            "(:status IS NULL OR o.status = :status) AND " +
            "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
            "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +
            "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
-           "(:customerName IS NULL OR LOWER(CAST(o.customerName as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%')))")
+           "(:customerName IS NULL OR LOWER(CAST(c.name as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%')))")
     Page<Order> findByFilters(
             @Param("status") String status,
             @Param("startDate") LocalDate startDate,
@@ -44,7 +44,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("customerName") String customerName,
             Pageable pageable);
             
-    @Query("SELECT o FROM Order o WHERE " +
+    @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
            "(:status IS NULL OR o.status = :status) AND " +
            "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
            "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +

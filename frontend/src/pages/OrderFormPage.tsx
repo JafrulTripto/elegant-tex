@@ -33,6 +33,7 @@ import {
 import { DELIVERY_CHANNELS, OrderFormData, OrderProductFormData } from '../types/order';
 import { Marketplace } from '../types/marketplace';
 import { Fabric } from '../types/fabric';
+import { Customer, CustomerRequest } from '../types/customer';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
 import * as fabricService from '../services/fabric.service';
@@ -40,6 +41,7 @@ import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
 import OrderFileUpload from '../components/orders/OrderFileUpload';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
+import CustomerSelection from '../components/customers/CustomerSelection';
 
 const PRODUCT_TYPES = [
   'T-Shirt',
@@ -63,11 +65,14 @@ const OrderFormPage: React.FC = () => {
   // Form state
   const [formData, setFormData] = useState<OrderFormData>({
     marketplaceId: 0,
-    customerName: '',
-    customerPhone: '',
-    customerAddress: '',
-    customerAlternativePhone: '',
-    customerFacebookId: '',
+    customerId: undefined,
+    customerData: {
+      name: '',
+      phone: '',
+      address: '',
+      alternativePhone: '',
+      facebookId: ''
+    },
     deliveryChannel: '',
     deliveryCharge: 0,
     deliveryDate: new Date().toISOString().split('T')[0],
@@ -128,17 +133,12 @@ const OrderFormPage: React.FC = () => {
             existingImages: product.images.map(img => ({
               id: img.id,
               imageId: img.imageId,
-              imageUrl: `/files/${img.imageId}`
+              imageUrl: getFileUrl(img.imageId) || ''
             }))
-          }));
-          
+          }));          
           setFormData({
             marketplaceId: orderData.marketplace.id,
-            customerName: orderData.customerName,
-            customerPhone: orderData.customerPhone,
-            customerAddress: orderData.customerAddress,
-            customerAlternativePhone: orderData.customerAlternativePhone || '',
-            customerFacebookId: orderData.customerFacebookId || '',
+            customerId: orderData.customer.id,
             deliveryChannel: orderData.deliveryChannel,
             deliveryCharge: orderData.deliveryCharge,
             deliveryDate: orderData.deliveryDate,
@@ -342,6 +342,30 @@ const OrderFormPage: React.FC = () => {
     });
   };
 
+  // Handle customer selection
+  const handleCustomerSelected = (customer: Customer | null) => {
+    setFormData(prev => ({
+      ...prev,
+      customerId: customer?.id,
+      customerData: customer ? undefined : {
+        name: '',
+        phone: '',
+        address: '',
+        alternativePhone: '',
+        facebookId: ''
+      }
+    }));
+  };
+
+  // Handle customer data change
+  const handleCustomerDataChange = (customerData: CustomerRequest) => {
+    setFormData(prev => ({
+      ...prev,
+      customerId: undefined,
+      customerData
+    }));
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -352,8 +376,8 @@ const OrderFormPage: React.FC = () => {
       return;
     }
     
-    if (!formData.customerName || !formData.customerPhone || !formData.customerAddress) {
-      setError('Please fill in all required customer fields');
+    if (!formData.customerId && (!formData.customerData || !formData.customerData.name || !formData.customerData.phone || !formData.customerData.address)) {
+      setError('Please select a customer or fill in all required customer fields');
       return;
     }
     
@@ -473,62 +497,13 @@ const OrderFormPage: React.FC = () => {
               </Paper>
             </Grid>
 
-            {/* Customer Information */}
+            {/* Customer Selection */}
             <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Customer Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Customer Name"
-                      value={formData.customerName}
-                      onChange={(e) => handleChange('customerName', e.target.value)}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Phone Number"
-                      value={formData.customerPhone}
-                      onChange={(e) => handleChange('customerPhone', e.target.value)}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Alternative Phone (Optional)"
-                      value={formData.customerAlternativePhone}
-                      onChange={(e) => handleChange('customerAlternativePhone', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Facebook ID (Optional)"
-                      value={formData.customerFacebookId}
-                      onChange={(e) => handleChange('customerFacebookId', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Address"
-                      multiline
-                      rows={3}
-                      value={formData.customerAddress}
-                      onChange={(e) => handleChange('customerAddress', e.target.value)}
-                      required
-                    />
-                  </Grid>
-                </Grid>
-              </Paper>
+              <CustomerSelection
+                onCustomerSelected={handleCustomerSelected}
+                onCustomerDataChange={handleCustomerDataChange}
+                initialCustomerId={formData.customerId}
+              />
             </Grid>
 
             {/* Delivery Information */}

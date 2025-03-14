@@ -9,11 +9,8 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
   // Convert OrderFormData to OrderRequest
   const orderRequest: OrderRequest = {
     marketplaceId: orderData.marketplaceId,
-    customerName: orderData.customerName,
-    customerPhone: orderData.customerPhone,
-    customerAddress: orderData.customerAddress,
-    customerAlternativePhone: orderData.customerAlternativePhone,
-    customerFacebookId: orderData.customerFacebookId,
+    customerId: orderData.customerId,
+    customerData: orderData.customerData,
     deliveryChannel: orderData.deliveryChannel,
     deliveryCharge: orderData.deliveryCharge,
     deliveryDate: orderData.deliveryDate,
@@ -71,11 +68,8 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
   // Convert OrderFormData to OrderRequest
   const orderRequest: OrderRequest = {
     marketplaceId: orderData.marketplaceId,
-    customerName: orderData.customerName,
-    customerPhone: orderData.customerPhone,
-    customerAddress: orderData.customerAddress,
-    customerAlternativePhone: orderData.customerAlternativePhone,
-    customerFacebookId: orderData.customerFacebookId,
+    customerId: orderData.customerId,
+    customerData: orderData.customerData,
     deliveryChannel: orderData.deliveryChannel,
     deliveryCharge: orderData.deliveryCharge,
     deliveryDate: orderData.deliveryDate,

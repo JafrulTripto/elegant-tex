@@ -1,6 +1,7 @@
 package com.tripzin.eleganttex.dto.request;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,23 +25,17 @@ public class OrderRequest {
     @NotNull(message = "Marketplace ID is required")
     private Long marketplaceId;
     
-    @NotBlank(message = "Customer name is required")
-    @Size(max = 255, message = "Customer name must be less than 255 characters")
-    private String customerName;
+    // Either customerId or customerData must be provided
+    private Long customerId;
     
-    @NotBlank(message = "Customer phone is required")
-    @Size(max = 20, message = "Customer phone must be less than 20 characters")
-    private String customerPhone;
+    // Customer data for creating a new customer if needed
+    private CustomerRequest customerData;
     
-    @NotBlank(message = "Customer address is required")
-    @Size(max = 500, message = "Customer address must be less than 500 characters")
-    private String customerAddress;
-    
-    @Size(max = 20, message = "Customer alternative phone must be less than 20 characters")
-    private String customerAlternativePhone;
-    
-    @Size(max = 255, message = "Customer Facebook ID must be less than 255 characters")
-    private String customerFacebookId;
+    // Custom validation to ensure either customerId or customerData is provided
+    @AssertTrue(message = "Either customerId or customerData must be provided")
+    private boolean isCustomerInfoValid() {
+        return customerId != null || customerData != null;
+    }
     
     @NotBlank(message = "Delivery channel is required")
     @Size(max = 50, message = "Delivery channel must be less than 50 characters")

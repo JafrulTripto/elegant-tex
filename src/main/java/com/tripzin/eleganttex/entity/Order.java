@@ -25,25 +25,17 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(name = "order_number", unique = true)
+    private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "marketplace_id", nullable = false)
     private Marketplace marketplace;
 
-    @Column(name = "customer_name", nullable = false)
-    private String customerName;
-
-    @Column(name = "customer_phone", nullable = false)
-    private String customerPhone;
-
-    @Column(name = "customer_address", nullable = false)
-    private String customerAddress;
-
-    @Column(name = "customer_alternative_phone")
-    private String customerAlternativePhone;
-
-    @Column(name = "customer_facebook_id")
-    private String customerFacebookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
 
     @Column(name = "delivery_channel", nullable = false)
     private String deliveryChannel;

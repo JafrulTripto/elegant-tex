@@ -5,67 +5,80 @@ import {
   Card,
   CardContent,
   Container,
-  Grid,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
   Typography,
   Chip,
   Tooltip,
-  Stack
+  Stack,
+  Snackbar,
+  Alert
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import { 
+  DataGrid, 
+  GridColDef,
+  GridRenderCellParams,
+  GridSortModel,
+  GridCallbackDetails,
+  GridPaginationModel,
+  GridRowParams
+} from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FilterList as FilterListIcon,
   FileDownload as FileDownloadIcon
 } from '@mui/icons-material';
+import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'date-fns';
 import orderService from '../services/order.service';
 import { Order, OrderStatus, OrderFilterParams, OrderStatusCount } from '../types/order';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
-import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
-import OrderFilterDialog from '../components/orders/OrderFilterDialog';
 
 const OrdersPage: React.FC = () => {
   const { authState } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [totalItems, setTotalItems] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
-  const [orderBy, setOrderBy] = useState<string>('createdAt');
-  const [orderDirection, setOrderDirection] = useState<'asc' | 'desc'>('desc');
-  const [filterDialogOpen, setFilterDialogOpen] = useState<boolean>(false);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10
+  });
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    {
+      field: 'createdAt',
+      sort: 'desc'
+    }
+  ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filters, setFilters] = useState<OrderFilterParams>({});
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const sort = `${orderBy},${orderDirection}`;
+      const sort = sortModel.length > 0 
+        ? `${sortModel[0].field},${sortModel[0].sort}` 
+        : 'createdAt,desc';
+      
       const response = await orderService.getOrdersByFilters({
         ...filters,
-        page,
-        size: rowsPerPage,
+        page: paginationModel.page,
+        size: paginationModel.pageSize,
         sort
       });
       setOrders(response.content);
       setTotalItems(response.totalElements);
+      setError(null);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setError('Failed to load orders. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -77,58 +90,48 @@ const OrdersPage: React.FC = () => {
       setStatusCounts(counts);
     } catch (error) {
       console.error('Error fetching status counts:', error);
+      setError('Failed to load status counts. Please try again.');
     }
   };
 
   useEffect(() => {
     fetchOrders();
     fetchStatusCounts();
-  }, [page, rowsPerPage, orderBy, orderDirection, filters]);
+  }, [paginationModel.page, paginationModel.pageSize, sortModel, filters]);
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+  const handlePaginationModelChange = (model: GridPaginationModel) => {
+    setPaginationModel(model);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleSortModelChange = (model: GridSortModel, details: GridCallbackDetails) => {
+    setSortModel(model);
   };
 
-  const handleFilterApply = (newFilters: OrderFilterParams) => {
-    setFilters(newFilters);
-    setPage(0);
-    setFilterDialogOpen(false);
-  };
 
-  const handleFilterClear = () => {
-    setFilters({});
-    setPage(0);
-    setFilterDialogOpen(false);
-  };
 
-  const handleDeleteClick = (orderId: number) => {
-    setSelectedOrderId(orderId);
+  const handleDeleteClick = (order: Order) => {
+    setSelectedOrder(order);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (selectedOrderId) {
-      try {
-        await orderService.deleteOrder(selectedOrderId);
-        fetchOrders();
-        fetchStatusCounts();
-      } catch (error) {
-        console.error('Error deleting order:', error);
-      }
+    if (!selectedOrder) return;
+    
+    try {
+      await orderService.deleteOrder(selectedOrder.id);
+      setDeleteDialogOpen(false);
+      fetchOrders(); // Refresh the list
+      setError(null);
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      setError('Failed to delete order. Please try again.');
     }
-    setDeleteDialogOpen(false);
-    setSelectedOrderId(null);
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-    setSelectedOrderId(null);
+  const handleCloseError = () => {
+    setError(null);
   };
+
 
   const handleExportExcel = async () => {
     try {
@@ -161,23 +164,124 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    // Debug: Log the first order to see its structure
+    if (orders.length > 0) {
+      console.log('First order:', orders[0]);
+    }
+  }, [orders]);
+
+  const columns: GridColDef[] = [
+    { field: 'orderNumber', headerName: 'Order Number', flex: 1 },
+    { 
+      field: 'marketplace', 
+      headerName: 'Marketplace', 
+      flex: 1,
+      valueGetter: (params: any) => {
+        const marketplace = params.name;
+        return marketplace ?? '';
+      }
+    },
+    { 
+      field: 'customer', 
+      headerName: 'Customer', 
+      flex: 1,
+      valueGetter: (params: any) => {
+        const customer = params.name;
+        return customer ?? '';
+      }
+    },
+    { 
+      field: 'deliveryDate', 
+      headerName: 'Delivery Date', 
+      flex: 1,
+      valueFormatter: (params: any) => {
+        if (!params) return '';
+        try {
+          return format(new Date(params), 'MMM dd, yyyy');
+        } catch (e) {
+          return 'Invalid Date';
+        }
+      }
+    },
+    { 
+      field: 'status', 
+      headerName: 'Status', 
+      flex: 1,
+      renderCell: (params: any) => (
+        <Chip
+          label={params.value as string}
+          color={getStatusChipColor(params.value as OrderStatus) as any}
+          size="small"
+        />
+      )
+    },
+    { 
+      field: 'createdAt', 
+      headerName: 'Created At', 
+      flex: 1,
+      valueFormatter: (params: any) => {
+        if (!params) return '';
+        try {
+          return format(new Date(params), 'MMM dd, yyyy');
+        } catch (e) {
+          return 'Invalid Date';
+        }
+      }
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      flex: 1,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box>
+          <Tooltip title="View">
+            <IconButton
+              component={RouterLink}
+              to={`/orders/${params.row.id}`}
+              size="small"
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {authState.user?.roles?.includes('ORDER_UPDATE') && (
+            <Tooltip title="Edit">
+              <IconButton
+                component={RouterLink}
+                to={`/orders/${params.row.id}/edit`}
+                size="small"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {authState.user?.roles?.includes('ORDER_DELETE') && (
+            <Tooltip title="Delete">
+              <IconButton
+                onClick={() => handleDeleteClick(params.row)}
+                size="small"
+                color="error"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      )
+    }
+  ];
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 4 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h4" component="h1" gutterBottom>
                 Orders
               </Typography>
               <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={<FilterListIcon />}
-                  onClick={() => setFilterDialogOpen(true)}
-                >
-                  Filter
-                </Button>
                 <Button
                   variant="outlined"
                   startIcon={<FileDownloadIcon />}
@@ -199,10 +303,10 @@ const OrdersPage: React.FC = () => {
           </Grid>
 
           {/* Status Cards */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Grid container spacing={2}>
               {statusCounts.map((statusCount) => (
-                <Grid item xs={12} sm={6} md={2.4} key={statusCount.status}>
+                <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={statusCount.status}>
                   <OrderStatsCard
                     status={statusCount.status}
                     count={statusCount.count}
@@ -213,119 +317,61 @@ const OrdersPage: React.FC = () => {
             </Grid>
           </Grid>
 
-          {/* Orders Table */}
-          <Grid item xs={12}>
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Marketplace</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell>Delivery Date</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Created At</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">
-                        Loading...
-                      </TableCell>
-                    </TableRow>
-                  ) : orders.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">
-                        No orders found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    orders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell>{order.id}</TableCell>
-                        <TableCell>{order.marketplace.name}</TableCell>
-                        <TableCell>{order.customerName}</TableCell>
-                        <TableCell>
-                          {format(new Date(order.deliveryDate), 'MMM dd, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={order.status}
-                            color={getStatusChipColor(order.status as OrderStatus) as any}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="View">
-                            <IconButton
-                              component={RouterLink}
-                              to={`/orders/${order.id}`}
-                              size="small"
-                            >
-                              <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          {authState.user?.roles?.includes('ORDER_UPDATE') && (
-                            <Tooltip title="Edit">
-                              <IconButton
-                                component={RouterLink}
-                                to={`/orders/${order.id}/edit`}
-                                size="small"
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          {authState.user?.roles?.includes('ORDER_DELETE') && (
-                            <Tooltip title="Delete">
-                              <IconButton
-                                onClick={() => handleDeleteClick(order.id)}
-                                size="small"
-                                color="error"
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={totalItems}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+          {/* Orders DataGrid */}
+          <Grid size={{ xs: 12 }}>
+            <Paper sx={{ height: 600, width: '100%' }}>
+              <DataGrid
+                rows={orders}
+                columns={columns}
+                pagination
+                paginationMode="server"
+                rowCount={totalItems}
+                pageSizeOptions={[5, 10, 25]}
+                paginationModel={paginationModel}
+                onPaginationModelChange={handlePaginationModelChange}
+                sortingMode="server"
+                sortModel={sortModel}
+                onSortModelChange={handleSortModelChange}
+                filterMode="server"
+                initialState={{
+                  sorting: {
+                    sortModel: [{ field: 'createdAt', sort: 'desc' }]
+                  },
+                  pagination: {
+                    paginationModel: { page: 0, pageSize: 10 }
+                  }
+                }}
+                disableRowSelectionOnClick
+                loading={loading}
+                getRowId={(row) => row.id}
               />
-            </TableContainer>
+            </Paper>
           </Grid>
         </Grid>
       </Box>
+      {/* Delete Dialog */}
+      {selectedOrder && (
+        <OrderDeleteDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleDeleteConfirm}
+          orderNumber={selectedOrder.orderNumber}
+          orderCustomerName={selectedOrder.customer?.name}
+          loading={loading}
+        />
+      )}
 
-      <OrderFilterDialog
-        open={filterDialogOpen}
-        onClose={() => setFilterDialogOpen(false)}
-        onApplyFilter={handleFilterApply}
-        marketplaces={[]}
-        currentFilters={filters}
-      />
-
-      <OrderDeleteDialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={async () => await handleDeleteConfirm()}
-        orderNumber={selectedOrderId || ''}
-      />
+      {/* Error Snackbar */}
+      <Snackbar 
+        open={!!error} 
+        autoHideDuration={6000} 
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

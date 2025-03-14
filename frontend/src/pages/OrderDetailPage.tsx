@@ -7,7 +7,6 @@ import {
   CardContent,
   Container,
   Divider,
-  Grid,
   Paper,
   Typography,
   Chip,
@@ -26,16 +25,20 @@ import {
   DialogContent,
   DialogTitle
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
   PictureAsPdf as PdfIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { Order, OrderStatus } from '../types/order';
 import * as orderService from '../services/order.service';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
+import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
+import { useAuth } from '../hooks/useAuth';
 
 const ORDER_STATUS_STEPS: OrderStatus[] = [
   'Created',
@@ -47,6 +50,7 @@ const ORDER_STATUS_STEPS: OrderStatus[] = [
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { authState } = useAuth();
   
   // State
   const [order, setOrder] = useState<Order | null>(null);
@@ -57,6 +61,8 @@ const OrderDetailPage: React.FC = () => {
   const [statusNotes, setStatusNotes] = useState<string>('');
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
   const [generatingPdf, setGeneratingPdf] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
   
   // Load order data
   useEffect(() => {
@@ -137,17 +143,33 @@ const OrderDetailPage: React.FC = () => {
   
   // Handle PDF generation
   const handleGeneratePdf = async () => {
-    if (!id) return;
+    if (!id || !order) return;
     
     setGeneratingPdf(true);
     try {
       const pdfBlob = await orderService.generateOrderPdf(parseInt(id));
-      orderService.downloadBlob(pdfBlob, `order-${id}.pdf`);
+      orderService.downloadBlob(pdfBlob, `order-${order.orderNumber}.pdf`);
     } catch (err) {
       console.error('Error generating PDF:', err);
       setError('Failed to generate PDF. Please try again later.');
     } finally {
       setGeneratingPdf(false);
+    }
+  };
+  
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!id || !order) return;
+    
+    setDeleting(true);
+    try {
+      await orderService.deleteOrder(parseInt(id));
+      navigate('/orders', { state: { message: `Order #${order.orderNumber} deleted successfully` } });
+    } catch (err) {
+      console.error('Error deleting order:', err);
+      setError('Failed to delete order. Please try again later.');
+      setDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
   
@@ -201,7 +223,7 @@ const OrderDetailPage: React.FC = () => {
               Back
             </Button>
             <Typography variant="h4" component="h1">
-              Order #{order.id}
+              Order #{order.orderNumber}
             </Typography>
           </Box>
           <Box>
@@ -221,6 +243,16 @@ const OrderDetailPage: React.FC = () => {
               sx={{ mr: 1 }}
             >
               {generatingPdf ? 'Generating...' : 'Download PDF'}
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={deleting}
+              sx={{ mr: 1 }}
+            >
+              {deleting ? 'Deleting...' : 'Delete Order'}
             </Button>
             <Button
               variant="contained"
@@ -267,24 +299,24 @@ const OrderDetailPage: React.FC = () => {
             {order.statusHistory.map((history) => (
               <Box key={history.id} mb={1}>
                 <Grid container spacing={2}>
-                  <Grid item xs={3} sm={2}>
+                  <Grid size={{ xs: 3, sm: 2 }}>
                     <Typography variant="body2" color="textSecondary">
                       {format(new Date(history.timestamp), 'PP p')}
                     </Typography>
                   </Grid>
-                  <Grid item xs={4} sm={2}>
+                  <Grid size={{ xs: 4, sm: 2 }}>
                     <Chip
                       label={history.status}
                       color={getStatusColor(history.status) as any}
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={5} sm={3}>
+                  <Grid size={{ xs: 5, sm: 3 }}>
                     <Typography variant="body2">
                       {history.updatedBy.firstName} {history.updatedBy.lastName}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     {history.notes && (
                       <Typography variant="body2" color="textSecondary">
                         {history.notes}
@@ -300,7 +332,7 @@ const OrderDetailPage: React.FC = () => {
         {/* Order Details */}
         <Grid container spacing={3}>
           {/* Left Column */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             {/* Customer Information */}
             <Paper sx={{ p: 3, mb: 3 }}>
               <Typography variant="h6" gutterBottom>
@@ -309,66 +341,66 @@ const OrderDetailPage: React.FC = () => {
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Name
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
-                    {order.customerName}
+                    {order.customer.name}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Phone
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
-                    {order.customerPhone}
+                    {order.customer.phone}
                   </Typography>
                 </Grid>
                 
-                {order.customerAlternativePhone && (
+                {order.customer.alternativePhone && (
                   <>
-                    <Grid item xs={4}>
+                    <Grid size={{ xs: 4 }}>
                       <Typography variant="body2" color="textSecondary">
                         Alternative Phone
                       </Typography>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid size={{ xs: 8 }}>
                       <Typography variant="body1">
-                        {order.customerAlternativePhone}
+                        {order.customer.alternativePhone}
                       </Typography>
                     </Grid>
                   </>
                 )}
                 
-                {order.customerFacebookId && (
+                {order.customer.facebookId && (
                   <>
-                    <Grid item xs={4}>
+                    <Grid size={{ xs: 4 }}>
                       <Typography variant="body2" color="textSecondary">
                         Facebook ID
                       </Typography>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid size={{ xs: 8 }}>
                       <Typography variant="body1">
-                        {order.customerFacebookId}
+                        {order.customer.facebookId}
                       </Typography>
                     </Grid>
                   </>
                 )}
                 
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Address
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
-                    {order.customerAddress}
+                    {order.customer.address}
                   </Typography>
                 </Grid>
               </Grid>
@@ -382,45 +414,45 @@ const OrderDetailPage: React.FC = () => {
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Marketplace
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
                     {order.marketplace.name}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Delivery Channel
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
                     {order.deliveryChannel}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Delivery Charge
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
                     ${order.deliveryCharge.toFixed(2)}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
                     Delivery Date
                   </Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
                     {format(new Date(order.deliveryDate), 'PP')}
                   </Typography>
@@ -436,44 +468,44 @@ const OrderDetailPage: React.FC = () => {
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Products Subtotal
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body1" align="right">
                     ${order.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Delivery Charge
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body1" align="right">
                     ${order.deliveryCharge.toFixed(2)}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Divider sx={{ my: 1 }} />
                 </Grid>
                 
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle1" fontWeight="bold">
                     Total
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle1" fontWeight="bold" align="right">
                     ${calculateTotal().toFixed(2)}
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Box mt={1}>
                     <Typography variant="body2" color="textSecondary">
                       Created by {order.createdBy.firstName} {order.createdBy.lastName} on {format(new Date(order.createdAt), 'PP p')}
@@ -485,7 +517,7 @@ const OrderDetailPage: React.FC = () => {
           </Grid>
           
           {/* Right Column - Products */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Products
@@ -500,45 +532,45 @@ const OrderDetailPage: React.FC = () => {
                     </Typography>
                     
                     <Grid container spacing={2}>
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <Typography variant="body2" color="textSecondary">
                           Fabric
                         </Typography>
                       </Grid>
-                      <Grid item xs={8}>
+                      <Grid size={{ xs: 8 }}>
                         <Typography variant="body1">
                           {product.fabric.name}
                         </Typography>
                       </Grid>
                       
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <Typography variant="body2" color="textSecondary">
                           Quantity
                         </Typography>
                       </Grid>
-                      <Grid item xs={8}>
+                      <Grid size={{ xs: 8 }}>
                         <Typography variant="body1">
                           {product.quantity}
                         </Typography>
                       </Grid>
                       
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <Typography variant="body2" color="textSecondary">
                           Price
                         </Typography>
                       </Grid>
-                      <Grid item xs={8}>
+                      <Grid size={{ xs: 8 }}>
                         <Typography variant="body1">
                           ${product.price.toFixed(2)} per unit
                         </Typography>
                       </Grid>
                       
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <Typography variant="body2" color="textSecondary">
                           Subtotal
                         </Typography>
                       </Grid>
-                      <Grid item xs={8}>
+                      <Grid size={{ xs: 8 }}>
                         <Typography variant="body1" fontWeight="bold">
                           ${(product.price * product.quantity).toFixed(2)}
                         </Typography>
@@ -546,12 +578,12 @@ const OrderDetailPage: React.FC = () => {
                       
                       {product.description && (
                         <>
-                          <Grid item xs={12}>
+                          <Grid size={{ xs: 12 }}>
                             <Typography variant="body2" color="textSecondary">
                               Description
                             </Typography>
                           </Grid>
-                          <Grid item xs={12}>
+                          <Grid size={{ xs: 12 }}>
                             <Typography variant="body2">
                               {product.description}
                             </Typography>
@@ -560,7 +592,7 @@ const OrderDetailPage: React.FC = () => {
                       )}
                       
                       {product.images.length > 0 && (
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Typography variant="body2" color="textSecondary" gutterBottom>
                             Images
                           </Typography>
@@ -632,6 +664,16 @@ const OrderDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <OrderDeleteDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        orderNumber={order?.orderNumber || ''}
+        orderCustomerName={order?.customer?.name}
+        loading={deleting}
+      />
     </Container>
   );
 };

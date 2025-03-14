@@ -18,12 +18,9 @@ import java.util.List;
 public class OrderResponse {
 
     private Long id;
+    private String orderNumber;
     private MarketplaceResponse marketplace;
-    private String customerName;
-    private String customerPhone;
-    private String customerAddress;
-    private String customerAlternativePhone;
-    private String customerFacebookId;
+    private CustomerResponse customer;
     private String deliveryChannel;
     private BigDecimal deliveryCharge;
     private LocalDate deliveryDate;

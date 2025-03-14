@@ -78,7 +78,6 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   useEffect(() => {
     setLoading(true);
     setError(false);
-    
     if (imageUrl) {
       setSrc(imageUrl);
     } else if (imageId) {
@@ -112,6 +111,7 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
     setDialogOpen(false);
   };
 
+  // set the box image if the src is present
   return (
     <>
       <ImageContainer sx={{ width, height }}>
@@ -127,7 +127,7 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
           </Box>
         )}
         
-        {error ? (
+        {error || !src ? (
           <Box
             display="flex"
             flexDirection="column"

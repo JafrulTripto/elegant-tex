@@ -1,14 +1,12 @@
 import { Marketplace } from './marketplace';
 import { Fabric } from './fabric';
+import { Customer } from './customer';
 
 export interface Order {
   id: number;
+  orderNumber: string;
   marketplace: Marketplace;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  customerAlternativePhone?: string;
-  customerFacebookId?: string;
+  customer: Customer;
   deliveryChannel: string;
   deliveryCharge: number;
   deliveryDate: string;
@@ -67,11 +65,14 @@ export interface OrderStatusHistory {
 
 export interface OrderFormData {
   marketplaceId: number;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  customerAlternativePhone?: string;
-  customerFacebookId?: string;
+  customerId?: number;
+  customerData?: {
+    name: string;
+    phone: string;
+    address: string;
+    alternativePhone?: string;
+    facebookId?: string;
+  };
   deliveryChannel: string;
   deliveryCharge: number;
   deliveryDate: string;
@@ -183,11 +184,14 @@ export const PRODUCT_TYPES = [
 
 export interface OrderRequest {
   marketplaceId: number;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  customerAlternativePhone?: string;
-  customerFacebookId?: string;
+  customerId?: number;
+  customerData?: {
+    name: string;
+    phone: string;
+    address: string;
+    alternativePhone?: string;
+    facebookId?: string;
+  };
   deliveryChannel: string;
   deliveryCharge: number;
   deliveryDate: string;
