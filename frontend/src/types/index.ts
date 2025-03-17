@@ -98,3 +98,27 @@ export interface ApiError {
   message: string;
   details?: string;
 }
+
+// Pagination types
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+// User filter types
+export interface UserFilterParams {
+  search?: string;
+  emailVerified?: boolean;
+  accountVerified?: boolean;
+  roles?: string[];
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDir?: string;
+}

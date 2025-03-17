@@ -27,18 +27,24 @@ import {
   Alert,
   Snackbar,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  InputAdornment,
+  Pagination,
+  Stack
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   CheckCircle as VerifiedIcon,
-  Cancel as UnverifiedIcon
+  Cancel as UnverifiedIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import api from '../../services/api';
-import { User, Role } from '../../types';
+import userService from '../../services/user.service';
+import { User, Role, UserFilterParams } from '../../types';
 
 interface UserFormData {
   phone: string;
@@ -67,20 +73,33 @@ const UserManagement: React.FC = () => {
     roleIds: [],
     accountVerified: true
   });
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterParams, setFilterParams] = useState<UserFilterParams>({
+    search: '',
+    emailVerified: undefined,
+    accountVerified: undefined,
+    roles: [],
+    page: 0,
+    size: 10,
+    sortBy: 'id',
+    sortDir: 'asc'
+  });
+  const [totalPages, setTotalPages] = useState<number>(1);
 
-  // Fetch users and roles
+  // Fetch roles and initial users
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Fetch users
-        const usersResponse = await api.get('/users');
-        setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
-        
         // Fetch roles
         const rolesResponse = await api.get('/api/roles');
         setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
+        
+        // Fetch users with search and filter
+        await fetchUsers();
         
         setLoading(false);
       } catch (err) {
@@ -95,6 +114,54 @@ const UserManagement: React.FC = () => {
     
     fetchData();
   }, []);
+  
+  // Fetch users with search and filter
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      
+      // Create filter params with search term
+      const params: UserFilterParams = {
+        ...filterParams,
+        search: searchTerm || undefined
+      };
+      
+      // Fetch users with search and filter
+      const response = await userService.searchUsers(params);
+      console.log('User search response:', response);
+      
+      // Handle both response structures (direct Page<User> or ApiResponse<Page<User>>)
+      if (response.data) {
+        // Use type assertion to handle potential response structure mismatch
+        const responseData = response.data as any;
+        
+        if (responseData.content) {
+          // Direct Page<User> response
+          setUsers(responseData.content);
+          setTotalPages(responseData.totalPages);
+        } else if (responseData.data && responseData.data.content) {
+          // ApiResponse<Page<User>> response
+          setUsers(responseData.data.content);
+          setTotalPages(responseData.data.totalPages);
+        } else {
+          setUsers([]);
+          setTotalPages(1);
+        }
+      } else {
+        setUsers([]);
+        setTotalPages(1);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Failed to fetch users');
+      } else {
+        setError('An unexpected error occurred');
+      }
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,6 +218,27 @@ const UserManagement: React.FC = () => {
     setOpenDialog(false);
   };
 
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+  
+  // Handle search form submit
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchUsers();
+  };
+  
+  // Handle page change
+  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+    setFilterParams(prev => ({
+      ...prev,
+      page: page - 1
+    }));
+    fetchUsers();
+  };
+
+
   // Save user (create or update)
   const handleSaveUser = async () => {
     try {
@@ -174,8 +262,7 @@ const UserManagement: React.FC = () => {
       }
       
       // Refresh users
-      const usersResponse = await api.get('/users');
-      setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+      fetchUsers();
       
       setLoading(false);
       setOpenDialog(false);
@@ -201,8 +288,7 @@ const UserManagement: React.FC = () => {
       await api.delete(`/users/${userId}`);
       
       // Refresh users
-      const usersResponse = await api.get('/users');
-      setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+      fetchUsers();
       
       setLoading(false);
       setSuccess('User deleted successfully');
@@ -224,8 +310,7 @@ const UserManagement: React.FC = () => {
       await api.post(`/users/${userId}/verify`);
       
       // Refresh users
-      const usersResponse = await api.get('/users');
-      setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+      fetchUsers();
       
       setLoading(false);
       setSuccess('User verified successfully');
@@ -257,6 +342,51 @@ const UserManagement: React.FC = () => {
           Add User
         </Button>
       </Box>
+      
+      {/* Search and filter UI */}
+      <Box sx={{ mb: 2 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={12}>
+            <form onSubmit={handleSearchSubmit}>
+              <TextField
+                fullWidth
+                placeholder="Search by name, email, or phone"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button type="submit" variant="contained" size="small">
+                        Search
+                      </Button>
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </form>
+          </Grid>
+        </Grid>
+      </Box>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Stack spacing={2}>
+            <Pagination
+              count={totalPages}
+              page={filterParams.page !== undefined ? filterParams.page + 1 : 1}
+              onChange={handlePageChange}
+              color="primary"
+              disabled={loading}
+            />
+          </Stack>
+        </Box>
+      )}
       
       {loading && users.length === 0 ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -344,6 +474,21 @@ const UserManagement: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Stack spacing={2}>
+            <Pagination
+              count={totalPages}
+              page={filterParams.page !== undefined ? filterParams.page + 1 : 1}
+              onChange={handlePageChange}
+              color="primary"
+              disabled={loading}
+            />
+          </Stack>
+        </Box>
       )}
       
       {/* User Dialog */}

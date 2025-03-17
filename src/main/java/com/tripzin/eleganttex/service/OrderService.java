@@ -41,4 +41,18 @@ public interface OrderService {
     ResponseEntity<Resource> generateOrdersExcel(String status, LocalDate startDate, LocalDate endDate);
     
     List<Map<String, Object>> getOrderStatusCounts();
+    
+    /**
+     * Get order statistics by user for the current month or year
+     * @param currentMonth true for current month, false for current year
+     * @return List of maps containing user information, order count, and total amount
+     */
+    List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth);
+    
+    /**
+     * Get order statistics by marketplace for the current month or year
+     * @param currentMonth true for current month, false for current year
+     * @return List of maps containing marketplace information and total amount
+     */
+    List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth);
 }

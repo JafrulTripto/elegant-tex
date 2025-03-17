@@ -7,7 +7,6 @@ import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
-import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -44,7 +43,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -103,7 +101,9 @@ public class OrderServiceImpl implements OrderService {
         // Add delivery charge to total
         totalAmount = totalAmount.add(orderRequest.getDeliveryCharge());
         
-        // Create order
+        // Create order with a temporary order number to avoid constraint violation
+        String tempOrderNumber = "TEMP-" + System.currentTimeMillis();
+        
         Order order = Order.builder()
                 .marketplace(marketplace)
                 .customer(customer)
@@ -113,6 +113,7 @@ public class OrderServiceImpl implements OrderService {
                 .status("Created")
                 .totalAmount(totalAmount) // Set the calculated total amount
                 .createdBy(currentUser)
+                .orderNumber(tempOrderNumber) // Set temporary order number
                 .build();
         
         // Save the order first to get the ID
@@ -122,7 +123,7 @@ public class OrderServiceImpl implements OrderService {
         String orderNumber = String.format("ET-ORD-%04d", savedOrder.getId());
         savedOrder.setOrderNumber(orderNumber);
         
-        // Save again with the order number
+        // Save again with the proper order number
         savedOrder = orderRepository.save(savedOrder);
         
         // Create initial status history
@@ -154,9 +155,6 @@ public class OrderServiceImpl implements OrderService {
             // Handle existing images
             if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
                 for (Long imageId : productRequest.getImageIds()) {
-                    // Verify image exists
-                    FileStorage fileStorage = fileStorageRepository.findById(imageId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
                     
                     OrderProductImage image = OrderProductImage.builder()
                             .orderProduct(savedProduct)
@@ -879,6 +877,119 @@ public class OrderServiceImpl implements OrderService {
         log.info("Getting order status counts");
         
         return orderRepository.getOrderStatusCounts();
+    }
+    
+    @Override
+    public List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth) {
+        log.info("Getting user order statistics for {}", currentMonth ? "current month" : "current year");
+        
+        LocalDate now = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate = now;
+        
+        if (currentMonth) {
+            // Current month: from first day of current month to today
+            startDate = now.withDayOfMonth(1);
+        } else {
+            // Current year: from first day of current year to today
+            startDate = now.withDayOfYear(1);
+        }
+        
+        log.info("Date range: {} to {}", startDate, endDate);
+        
+        // Get all orders in the date range
+        List<Order> orders = orderRepository.findByCreatedAtBetween(
+                startDate.atStartOfDay(), 
+                endDate.atTime(23, 59, 59)
+        );
+        
+        // Group orders by user and calculate statistics
+        Map<Long, Map<String, Object>> userStatsMap = new HashMap<>();
+        
+        for (Order order : orders) {
+            Long userId = order.getCreatedBy().getId();
+            
+            // Initialize user stats if not exists
+            if (!userStatsMap.containsKey(userId)) {
+                Map<String, Object> userStats = new HashMap<>();
+                userStats.put("userId", userId);
+                userStats.put("firstName", order.getCreatedBy().getFirstName());
+                userStats.put("lastName", order.getCreatedBy().getLastName());
+                userStats.put("email", order.getCreatedBy().getEmail());
+                userStats.put("orderCount", 0);
+                userStats.put("totalAmount", BigDecimal.ZERO);
+                
+                userStatsMap.put(userId, userStats);
+            }
+            
+            // Update user stats
+            Map<String, Object> userStats = userStatsMap.get(userId);
+            int orderCount = (int) userStats.get("orderCount");
+            BigDecimal totalAmount = (BigDecimal) userStats.get("totalAmount");
+            
+            userStats.put("orderCount", orderCount + 1);
+            userStats.put("totalAmount", totalAmount.add(order.getTotalAmount()));
+        }
+        
+        // Convert map to list and sort by order count (descending)
+        List<Map<String, Object>> result = new ArrayList<>(userStatsMap.values());
+        result.sort((a, b) -> Integer.compare((int) b.get("orderCount"), (int) a.get("orderCount")));
+        
+        return result;
+    }
+    
+    @Override
+    public List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth) {
+        log.info("Getting marketplace order statistics for {}", currentMonth ? "current month" : "current year");
+        
+        LocalDate now = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate = now;
+        
+        if (currentMonth) {
+            // Current month: from first day of current month to today
+            startDate = now.withDayOfMonth(1);
+        } else {
+            // Current year: from first day of current year to today
+            startDate = now.withDayOfYear(1);
+        }
+        
+        log.info("Date range: {} to {}", startDate, endDate);
+        
+        // Get all orders in the date range
+        List<Order> orders = orderRepository.findByCreatedAtBetween(
+                startDate.atStartOfDay(), 
+                endDate.atTime(23, 59, 59)
+        );
+        
+        // Group orders by marketplace and calculate statistics
+        Map<Long, Map<String, Object>> marketplaceStatsMap = new HashMap<>();
+        
+        for (Order order : orders) {
+            Long marketplaceId = order.getMarketplace().getId();
+            
+            // Initialize marketplace stats if not exists
+            if (!marketplaceStatsMap.containsKey(marketplaceId)) {
+                Map<String, Object> marketplaceStats = new HashMap<>();
+                marketplaceStats.put("marketplaceId", marketplaceId);
+                marketplaceStats.put("name", order.getMarketplace().getName());
+                marketplaceStats.put("totalAmount", BigDecimal.ZERO);
+                
+                marketplaceStatsMap.put(marketplaceId, marketplaceStats);
+            }
+            
+            // Update marketplace stats
+            Map<String, Object> marketplaceStats = marketplaceStatsMap.get(marketplaceId);
+            BigDecimal totalAmount = (BigDecimal) marketplaceStats.get("totalAmount");
+            
+            marketplaceStats.put("totalAmount", totalAmount.add(order.getTotalAmount()));
+        }
+        
+        // Convert map to list and sort by total amount (descending)
+        List<Map<String, Object>> result = new ArrayList<>(marketplaceStatsMap.values());
+        result.sort((a, b) -> ((BigDecimal) b.get("totalAmount")).compareTo((BigDecimal) a.get("totalAmount")));
+        
+        return result;
     }
     
     /**

@@ -159,4 +159,20 @@ public class OrderController {
         List<Map<String, Object>> statusCounts = orderService.getOrderStatusCounts();
         return ResponseEntity.ok(statusCounts);
     }
+    
+    @GetMapping("/user-statistics")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<List<Map<String, Object>>> getUserOrderStatistics(
+            @RequestParam(defaultValue = "true") boolean currentMonth) {
+        List<Map<String, Object>> userStats = orderService.getUserOrderStatistics(currentMonth);
+        return ResponseEntity.ok(userStats);
+    }
+    
+    @GetMapping("/marketplace-statistics")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<List<Map<String, Object>>> getMarketplaceOrderStatistics(
+            @RequestParam(defaultValue = "true") boolean currentMonth) {
+        List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatistics(currentMonth);
+        return ResponseEntity.ok(marketplaceStats);
+    }
 }

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Container,
   IconButton,
   Paper,
@@ -22,7 +20,6 @@ import {
   GridSortModel,
   GridCallbackDetails,
   GridPaginationModel,
-  GridRowParams
 } from '@mui/x-data-grid';
 import {
   Add as AddIcon,

@@ -11,6 +11,7 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
     marketplaceId: orderData.marketplaceId,
     customerId: orderData.customerId,
     customerData: orderData.customerData,
+    // customerValidation is only used for frontend validation and doesn't need to be sent to the backend
     deliveryChannel: orderData.deliveryChannel,
     deliveryCharge: orderData.deliveryCharge,
     deliveryDate: orderData.deliveryDate,
@@ -70,6 +71,7 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
     marketplaceId: orderData.marketplaceId,
     customerId: orderData.customerId,
     customerData: orderData.customerData,
+    // customerValidation is only used for frontend validation and doesn't need to be sent to the backend
     deliveryChannel: orderData.deliveryChannel,
     deliveryCharge: orderData.deliveryCharge,
     deliveryDate: orderData.deliveryDate,
@@ -159,6 +161,20 @@ export const getOrderStatusCounts = async (): Promise<OrderStatusCount[]> => {
   return response.data;
 };
 
+export const getUserOrderStatistics = async (currentMonth = true): Promise<any[]> => {
+  const response = await api.get(`${BASE_URL}/user-statistics`, {
+    params: { currentMonth }
+  });
+  return response.data;
+};
+
+export const getMarketplaceOrderStatistics = async (currentMonth = true): Promise<any[]> => {
+  const response = await api.get(`${BASE_URL}/marketplace-statistics`, {
+    params: { currentMonth }
+  });
+  return response.data;
+};
+
 export const downloadBlob = (blob: Blob, fileName: string): void => {
   // Create a URL for the blob
   const url = window.URL.createObjectURL(blob);
@@ -190,6 +206,8 @@ const orderService = {
   generateOrderPdf,
   generateOrdersExcel,
   getOrderStatusCounts,
+  getUserOrderStatistics,
+  getMarketplaceOrderStatistics,
   downloadBlob
 };
 

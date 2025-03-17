@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,4 +64,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     @Query(value = "SELECT o.status, COUNT(o.id) FROM orders o GROUP BY o.status", nativeQuery = true)
     List<Object[]> countByStatusGrouped();
+    
+    /**
+     * Find orders created between the given date-time range
+     * @param startDateTime start date-time (inclusive)
+     * @param endDateTime end date-time (inclusive)
+     * @return list of orders
+     */
+    @Query("SELECT o FROM Order o WHERE o.createdAt >= :startDateTime AND o.createdAt <= :endDateTime")
+    List<Order> findByCreatedAtBetween(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime);
 }

@@ -20,7 +20,8 @@ import {
   CircularProgress,
   InputAdornment,
   Autocomplete,
-  Avatar
+  Avatar,
+  FormHelperText
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -30,31 +31,104 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import { Formik, Form, Field, FieldProps, FormikHelpers } from 'formik';
+import * as Yup from 'yup';
 import { DELIVERY_CHANNELS, OrderFormData, OrderProductFormData } from '../types/order';
+import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
 import { Fabric } from '../types/fabric';
 import { Customer, CustomerRequest } from '../types/customer';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
 import * as fabricService from '../services/fabric.service';
+import * as productTypeService from '../services/productType.service';
 import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
 import OrderFileUpload from '../components/orders/OrderFileUpload';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
 import CustomerSelection from '../components/customers/CustomerSelection';
 
-const PRODUCT_TYPES = [
-  'T-Shirt',
-  'Polo Shirt',
-  'Hoodie',
-  'Sweatshirt',
-  'Jacket',
-  'Pants',
-  'Shorts',
-  'Dress',
-  'Skirt',
-  'Other'
-];
+// Customer data validation schema
+const CustomerDataSchema = Yup.object().shape({
+  name: Yup.string().required('Customer name is required'),
+  phone: Yup.string().required('Customer phone is required'),
+  address: Yup.string().required('Customer address is required'),
+  alternativePhone: Yup.string().notRequired(),
+  facebookId: Yup.string().notRequired()
+});
+
+// Validation schema for order form
+const OrderValidationSchema = Yup.object().shape({
+  marketplaceId: Yup.number()
+    .required('Marketplace is required')
+    .min(1, 'Please select a marketplace'),
+  
+  customerId: Yup.number().nullable(),
+  
+  customerData: Yup.object().nullable(),
+  
+  // Custom test to validate customer information
+  // Either customerId must be provided OR customerData must be complete
+  customerValidation: Yup.mixed().test(
+    'customer-validation',
+    'Please select a customer or fill in all required customer fields',
+    function() {
+      const { customerId, customerData } = this.parent;
+      
+      // If customerId is provided, we're good
+      if (customerId) return true;
+      
+      // If no customerId, then customerData must be complete
+      if (customerData && 
+          customerData.name && 
+          customerData.phone && 
+          customerData.address) {
+        return true;
+      }
+      
+      // Neither condition met, validation fails
+      return false;
+    }
+  ),
+  
+  deliveryChannel: Yup.string()
+    .required('Delivery channel is required'),
+  
+  deliveryCharge: Yup.number()
+    .required('Delivery charge is required')
+    .min(0, 'Delivery charge must be a positive number'),
+  
+  deliveryDate: Yup.date()
+    .required('Delivery date is required'),
+  
+  products: Yup.array().of(
+    Yup.object().shape({
+      productType: Yup.string()
+        .required('Product type is required'),
+      
+      fabricId: Yup.number()
+        .required('Fabric is required')
+        .min(1, 'Please select a fabric'),
+      
+      quantity: Yup.number()
+        .required('Quantity is required')
+        .min(1, 'Quantity must be at least 1'),
+      
+      price: Yup.number()
+        .required('Price is required')
+        .min(0.01, 'Price must be greater than 0'),
+      
+      description: Yup.string()
+        .notRequired(),
+      
+      imageIds: Yup.array()
+        .notRequired(),
+      
+      tempImages: Yup.array()
+        .notRequired()
+    })
+  ).min(1, 'At least one product is required')
+});
 
 const OrderFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -62,8 +136,8 @@ const OrderFormPage: React.FC = () => {
   const { authState } = useAuth();
   const isEditMode = Boolean(id);
 
-  // Form state
-  const [formData, setFormData] = useState<OrderFormData>({
+  // Initial form values
+  const initialValues: OrderFormData = {
     marketplaceId: 0,
     customerId: undefined,
     customerData: {
@@ -73,25 +147,39 @@ const OrderFormPage: React.FC = () => {
       alternativePhone: '',
       facebookId: ''
     },
+    customerValidation: undefined, // Added for validation purposes
     deliveryChannel: '',
     deliveryCharge: 0,
     deliveryDate: new Date().toISOString().split('T')[0],
     products: [createEmptyProduct()]
-  });
+  };
 
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
-  const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [formValues, setFormValues] = useState<OrderFormData>(initialValues);
   
   // Fabric pagination state
   const [fabricPage, setFabricPage] = useState<number>(0);
   const [fabricPageSize] = useState<number>(50);
   const [hasMoreFabrics, setHasMoreFabrics] = useState<boolean>(true);
   const [loadingFabrics, setLoadingFabrics] = useState<boolean>(false);
-  const [fabricSearch, setFabricSearch] = useState<string>('');
+
+  // Create empty product
+  function createEmptyProduct(): OrderProductFormData {
+    return {
+      productType: '',
+      fabricId: 0,
+      quantity: 1,
+      price: 0,
+      description: '',
+      imageIds: [],
+      tempImages: []
+    };
+  }
 
   // Load data on mount
   useEffect(() => {
@@ -116,6 +204,10 @@ const OrderFormPage: React.FC = () => {
         // Load initial active fabrics with pagination
         await loadFabrics(0);
         
+        // Load active product types
+        const productTypesData = await productTypeService.getActiveProductTypes();
+        setProductTypes(productTypesData);
+        
         // If edit mode, load order data
         if (isEditMode && id) {
           const orderData = await orderService.getOrderById(parseInt(id));
@@ -135,10 +227,12 @@ const OrderFormPage: React.FC = () => {
               imageId: img.imageId,
               imageUrl: getFileUrl(img.imageId) || ''
             }))
-          }));          
-          setFormData({
+          }));
+          
+          setFormValues({
             marketplaceId: orderData.marketplace.id,
             customerId: orderData.customer.id,
+            customerValidation: undefined, // Added for validation purposes
             deliveryChannel: orderData.deliveryChannel,
             deliveryCharge: orderData.deliveryCharge,
             deliveryDate: orderData.deliveryDate,
@@ -146,7 +240,7 @@ const OrderFormPage: React.FC = () => {
           });
         } else if (userMarketplaces.length > 0) {
           // Set default marketplace if available
-          setFormData(prev => ({
+          setFormValues(prev => ({
             ...prev,
             marketplaceId: userMarketplaces[0].id
           }));
@@ -160,7 +254,7 @@ const OrderFormPage: React.FC = () => {
     };
     
     loadData();
-  }, [id, isEditMode]);
+  }, [id, isEditMode, authState.user]);
   
   // Function to load fabrics with pagination
   const loadFabrics = async (page: number) => {
@@ -214,9 +308,11 @@ const OrderFormPage: React.FC = () => {
   };
   
   // Function to render fabric option with image
-  const renderFabricOption = (props: React.HTMLAttributes<HTMLLIElement>, fabric: Fabric) => (
-    <li {...props}>
-      <Box display="flex" alignItems="center" gap={1}>
+  const renderFabricOption = (props: React.ComponentPropsWithRef<'li'>, fabric: Fabric) => {
+    const { key, ...otherProps } = props;
+    return (
+      <li key={key} {...otherProps}>
+        <Box display="flex" alignItems="center" gap={1}>
         {fabric.imageId ? (
           <Avatar 
             src={getFileUrl(fabric.imageId) || undefined}
@@ -235,175 +331,21 @@ const OrderFormPage: React.FC = () => {
           </Avatar>
         )}
         <Typography>{fabric.name}</Typography>
-      </Box>
-    </li>
-  );
-
-  // Create empty product
-  function createEmptyProduct(): OrderProductFormData {
-    return {
-      productType: '',
-      fabricId: 0,
-      quantity: 1,
-      price: 0,
-      description: '',
-      imageIds: [],
-      tempImages: []
-    };
-  }
-
-  // Handle form field changes
-  const handleChange = (field: keyof OrderFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Handle product field changes
-  const handleProductChange = (index: number, field: keyof OrderProductFormData, value: any) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
-      updatedProducts[index] = {
-        ...updatedProducts[index],
-        [field]: value
-      };
-      return {
-        ...prev,
-        products: updatedProducts
-      };
-    });
-  };
-
-  // Handle date change
-  const handleDateChange = (date: Date | null) => {
-    if (date) {
-      const formattedDate = date.toISOString().split('T')[0];
-      handleChange('deliveryDate', formattedDate);
-    }
-  };
-
-  // Add new product
-  const handleAddProduct = () => {
-    setFormData(prev => ({
-      ...prev,
-      products: [...prev.products, createEmptyProduct()]
-    }));
-  };
-
-  // Remove product
-  const handleRemoveProduct = (index: number) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
-      updatedProducts.splice(index, 1);
-      return {
-        ...prev,
-        products: updatedProducts.length ? updatedProducts : [createEmptyProduct()]
-      };
-    });
-  };
-
-  // Handle image upload
-  const handleImageUpload = (index: number, files: File[]) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
-      
-      // Replace the tempImages array with the new files array
-      // This is important because OrderFileUpload is passing the complete list of files
-      updatedProducts[index] = {
-        ...updatedProducts[index],
-        tempImages: files // Use the files directly, don't append to existing
-      };
-      
-      return {
-        ...prev,
-        products: updatedProducts
-      };
-    });
-  };
-
-  // Remove uploaded image
-  const handleRemoveImage = (productIndex: number, imageIndex: number) => {
-    setFormData(prev => {
-      const updatedProducts = [...prev.products];
-      // Create a new array for tempImages
-      const tempImages = [...(updatedProducts[productIndex].tempImages || [])];
-      // Remove the image at the specified index
-      tempImages.splice(imageIndex, 1);
-      // Update the product with the new tempImages array
-      updatedProducts[productIndex] = {
-        ...updatedProducts[productIndex],
-        tempImages
-      };
-      return {
-        ...prev,
-        products: updatedProducts
-      };
-    });
-  };
-
-  // Handle customer selection
-  const handleCustomerSelected = (customer: Customer | null) => {
-    setFormData(prev => ({
-      ...prev,
-      customerId: customer?.id,
-      customerData: customer ? undefined : {
-        name: '',
-        phone: '',
-        address: '',
-        alternativePhone: '',
-        facebookId: ''
-      }
-    }));
-  };
-
-  // Handle customer data change
-  const handleCustomerDataChange = (customerData: CustomerRequest) => {
-    setFormData(prev => ({
-      ...prev,
-      customerId: undefined,
-      customerData
-    }));
+        </Box>
+      </li>
+    );
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (!formData.marketplaceId) {
-      setError('Please select a marketplace');
-      return;
-    }
-    
-    if (!formData.customerId && (!formData.customerData || !formData.customerData.name || !formData.customerData.phone || !formData.customerData.address)) {
-      setError('Please select a customer or fill in all required customer fields');
-      return;
-    }
-    
-    if (!formData.deliveryChannel || !formData.deliveryDate) {
-      setError('Please fill in all required delivery fields');
-      return;
-    }
-    
-    const invalidProducts = formData.products.some(
-      p => !p.productType || !p.fabricId || p.quantity < 1 || p.price <= 0
-    );
-    
-    if (invalidProducts) {
-      setError('Please fill in all required product fields');
-      return;
-    }
-    
-    setSubmitting(true);
+  const handleSubmit = async (values: OrderFormData, { setSubmitting }: FormikHelpers<OrderFormData>) => {
     setError(null);
     
     try {
-      // Submit form with the current formData (no need to convert to base64)
+      // Submit form with the current values
       if (isEditMode && id) {
-        await orderService.updateOrder(parseInt(id), formData);
+        await orderService.updateOrder(parseInt(id), values);
       } else {
-        await orderService.createOrder(formData);
+        await orderService.createOrder(values);
       }
       
       // Navigate to orders page
@@ -428,13 +370,13 @@ const OrderFormPage: React.FC = () => {
   };
 
   // Calculate total price
-  const calculateTotal = () => {
-    const productsTotal = formData.products.reduce(
+  const calculateTotal = (products: OrderProductFormData[], deliveryCharge: number) => {
+    const productsTotal = products.reduce(
       (sum, product) => sum + product.price * product.quantity,
       0
     );
     
-    return productsTotal + formData.deliveryCharge;
+    return productsTotal + deliveryCharge;
   };
 
   if (loading) {
@@ -467,316 +409,451 @@ const OrderFormPage: React.FC = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* Marketplace Selection */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Marketplace
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
+        <Formik
+          initialValues={formValues}
+          validationSchema={OrderValidationSchema}
+          onSubmit={handleSubmit}
+          enableReinitialize
+        >
+          {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isSubmitting }) => (
+            <Form noValidate>
+              <Grid container spacing={3}>
+                {/* Marketplace Selection */}
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Marketplace
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
 
-                <FormControl fullWidth>
-                  <InputLabel id="marketplace-label">Select Marketplace</InputLabel>
-                  <Select
-                    labelId="marketplace-label"
-                    id="marketplace"
-                    value={formData.marketplaceId || ''}
-                    label="Select Marketplace"
-                    onChange={(e) => handleChange('marketplaceId', e.target.value)}
-                    required
-                  >
-                    {marketplaces.map((marketplace) => (
-                      <MenuItem key={marketplace.id} value={marketplace.id}>
-                        {marketplace.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Paper>
-            </Grid>
-
-            {/* Customer Selection */}
-            <Grid item xs={12}>
-              <CustomerSelection
-                onCustomerSelected={handleCustomerSelected}
-                onCustomerDataChange={handleCustomerDataChange}
-                initialCustomerId={formData.customerId}
-              />
-            </Grid>
-
-            {/* Delivery Information */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Delivery Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel id="delivery-channel-label">Delivery Channel</InputLabel>
-                      <Select
-                        labelId="delivery-channel-label"
-                        id="deliveryChannel"
-                        value={formData.deliveryChannel}
-                        label="Delivery Channel"
-                        onChange={(e) => handleChange('deliveryChannel', e.target.value)}
+                    <FormControl 
+                      fullWidth 
+                      error={touched.marketplaceId && Boolean(errors.marketplaceId)}
+                    >
+                      <InputLabel id="marketplace-label">Select Marketplace</InputLabel>
+                      <Field
+                        name="marketplaceId"
+                        as={Select}
+                        labelId="marketplace-label"
+                        id="marketplace"
+                        label="Select Marketplace"
                         required
                       >
-                        {DELIVERY_CHANNELS.map((channel) => (
-                          <MenuItem key={channel} value={channel}>
-                            {channel}
+                        {marketplaces.map((marketplace) => (
+                          <MenuItem key={marketplace.id} value={marketplace.id}>
+                            {marketplace.name}
                           </MenuItem>
                         ))}
-                      </Select>
+                      </Field>
+                      {touched.marketplaceId && errors.marketplaceId && (
+                        <FormHelperText>{errors.marketplaceId as string}</FormHelperText>
+                      )}
                     </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Delivery Charge"
-                      type="number"
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                      }}
-                      value={formData.deliveryCharge}
-                      onChange={(e) => handleChange('deliveryCharge', parseFloat(e.target.value) || 0)}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Delivery Date"
-                        value={formData.deliveryDate ? new Date(formData.deliveryDate) : null}
-                        onChange={handleDateChange}
-                        slotProps={{ textField: { fullWidth: true, required: true } }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
+                  </Paper>
                 </Grid>
-              </Paper>
-            </Grid>
 
-            {/* Products */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">Products</Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={handleAddProduct}
-                  >
-                    Add Product
-                  </Button>
-                </Box>
-                <Divider sx={{ mb: 2 }} />
+                {/* Customer Selection */}
+                <Grid item xs={12}>
+                  <CustomerSelection
+                    onCustomerSelected={(customer) => {
+                      setFieldValue('customerId', customer?.id);
+                      setFieldValue('customerData', customer ? undefined : {
+                        name: '',
+                        phone: '',
+                        address: '',
+                        alternativePhone: '',
+                        facebookId: ''
+                      });
+                    }}
+                    onCustomerDataChange={(customerData) => {
+                      setFieldValue('customerId', undefined);
+                      setFieldValue('customerData', customerData);
+                    }}
+                    initialCustomerId={values.customerId}
+                  />
+                  {errors.customerValidation && (
+                    <Alert severity="error" sx={{ mt: 1 }}>
+                      {errors.customerValidation as string}
+                    </Alert>
+                  )}
+                </Grid>
 
-                {formData.products.map((product, index) => (
-                  <Card key={index} sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0' }}>
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Typography variant="subtitle1">Product #{index + 1}</Typography>
-                        {formData.products.length > 1 && (
-                          <IconButton
-                            color="error"
-                            onClick={() => handleRemoveProduct(index)}
+                {/* Delivery Information */}
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Delivery Information
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <FormControl 
+                          fullWidth
+                          error={touched.deliveryChannel && Boolean(errors.deliveryChannel)}
+                        >
+                          <InputLabel id="delivery-channel-label">Delivery Channel</InputLabel>
+                          <Field
+                            name="deliveryChannel"
+                            as={Select}
+                            labelId="delivery-channel-label"
+                            id="deliveryChannel"
+                            label="Delivery Channel"
+                            required
                           >
-                            <DeleteIcon />
-                          </IconButton>
-                        )}
-                      </Box>
+                            {DELIVERY_CHANNELS.map((channel) => (
+                              <MenuItem key={channel} value={channel}>
+                                {channel}
+                              </MenuItem>
+                            ))}
+                          </Field>
+                          {touched.deliveryChannel && errors.deliveryChannel && (
+                            <FormHelperText>{errors.deliveryChannel as string}</FormHelperText>
+                          )}
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Field name="deliveryCharge">
+                          {({ field, meta }: FieldProps) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              label="Delivery Charge"
+                              type="number"
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                inputProps: { step: 0.01 } // Remove min to use Formik/Yup validation instead
+                              }}
+                              error={meta.touched && Boolean(meta.error)}
+                              helperText={meta.touched && meta.error}
+                              required
+                            />
+                          )}
+                        </Field>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                          <DatePicker
+                            label="Delivery Date"
+                            value={values.deliveryDate ? new Date(values.deliveryDate) : null}
+                            onChange={(date) => {
+                              if (date) {
+                                setFieldValue('deliveryDate', date.toISOString().split('T')[0]);
+                              }
+                            }}
+                            slotProps={{ 
+                              textField: { 
+                                fullWidth: true, 
+                                required: true,
+                                error: touched.deliveryDate && Boolean(errors.deliveryDate),
+                                helperText: touched.deliveryDate && (errors.deliveryDate as string)
+                              } 
+                            }}
+                          />
+                        </LocalizationProvider>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                </Grid>
+
+                {/* Products */}
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 3 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h6">Products</Typography>
+                      <Button
+                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        onClick={() => {
+                          const updatedProducts = [...values.products, createEmptyProduct()];
+                          setFieldValue('products', updatedProducts);
+                        }}
+                      >
+                        Add Product
+                      </Button>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {values.products.map((product, index) => (
+                      <Card key={index} sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0' }}>
+                        <CardContent>
+                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                            <Typography variant="subtitle1">Product #{index + 1}</Typography>
+                            {values.products.length > 1 && (
+                              <IconButton
+                                color="error"
+                                onClick={() => {
+                                  const updatedProducts = [...values.products];
+                                  updatedProducts.splice(index, 1);
+                                  setFieldValue('products', updatedProducts.length ? updatedProducts : [createEmptyProduct()]);
+                                }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                          </Box>
+
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl 
+                                fullWidth
+                                error={
+                                  touched.products && 
+                                  Array.isArray(touched.products) &&
+                                  touched.products[index] && 
+                                  touched.products[index]?.productType && 
+                                  Boolean(errors.products && 
+                                  Array.isArray(errors.products) &&
+                                  errors.products[index] && 
+                                  typeof errors.products[index] === 'object' &&
+                                  'productType' in errors.products[index])
+                                }
+                              >
+                                <InputLabel id={`product-type-label-${index}`}>Product Type</InputLabel>
+                                <Field
+                                  name={`products[${index}].productType`}
+                                  as={Select}
+                                  labelId={`product-type-label-${index}`}
+                                  id={`productType-${index}`}
+                                  label="Product Type"
+                                  required
+                                >
+                                  {productTypes.map((type) => (
+                                    <MenuItem key={type.id} value={type.name}>
+                                      {type.name}
+                                    </MenuItem>
+                                  ))}
+                                </Field>
+                                {touched.products && 
+                                 Array.isArray(touched.products) &&
+                                 touched.products[index] && 
+                                 touched.products[index]?.productType && 
+                                 errors.products && 
+                                 Array.isArray(errors.products) &&
+                                 errors.products[index] && 
+                                 typeof errors.products[index] === 'object' &&
+                                 'productType' in errors.products[index] && (
+                                  <FormHelperText>{(errors.products[index] as any).productType}</FormHelperText>
+                                )}
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <Autocomplete
+                                id={`fabric-${index}`}
+                                options={fabrics}
+                                getOptionLabel={(option) => option.name}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                value={fabrics.find(f => f.id === product.fabricId) || null}
+                                onChange={(_, newValue) => {
+                                  setFieldValue(`products[${index}].fabricId`, newValue?.id || 0);
+                                }}
+                                renderInput={(params) => (
+                                  <TextField 
+                                    {...params} 
+                                    label="Fabric" 
+                                    required
+                                    error={
+                                      touched.products && 
+                                      Array.isArray(touched.products) &&
+                                      touched.products[index] && 
+                                      touched.products[index]?.fabricId && 
+                                      Boolean(errors.products && 
+                                      Array.isArray(errors.products) &&
+                                      errors.products[index] && 
+                                      typeof errors.products[index] === 'object' &&
+                                      'fabricId' in errors.products[index])
+                                    }
+                                    helperText={
+                                      touched.products && 
+                                      Array.isArray(touched.products) &&
+                                      touched.products[index] && 
+                                      touched.products[index]?.fabricId && 
+                                      errors.products && 
+                                      Array.isArray(errors.products) &&
+                                      errors.products[index] && 
+                                      typeof errors.products[index] === 'object' &&
+                                      'fabricId' in errors.products[index] ?
+                                      (errors.products[index] as any).fabricId : undefined
+                                    }
+                                  />
+                                )}
+                                renderOption={renderFabricOption}
+                                ListboxProps={{
+                                  onScroll: handleFabricListScroll
+                                }}
+                                loading={loadingFabrics}
+                                loadingText="Loading fabrics..."
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <Field name={`products[${index}].quantity`}>
+                                {({ field, meta }: FieldProps) => (
+                                  <TextField
+                                    {...field}
+                                    fullWidth
+                                    label="Quantity"
+                                    type="number"
+                                    InputProps={{ 
+                                      inputProps: { min: 0 } // Use Formik/Yup validation instead of browser validation
+                                    }}
+                                    error={meta.touched && Boolean(meta.error)}
+                                    helperText={meta.touched && meta.error}
+                                    required
+                                  />
+                                )}
+                              </Field>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <Field name={`products[${index}].price`}>
+                                {({ field, meta }: FieldProps) => (
+                                  <TextField
+                                    {...field}
+                                    fullWidth
+                                    label="Price"
+                                    type="number"
+                                    InputProps={{
+                                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                      inputProps: { step: 0.01 } // Remove min to use Formik/Yup validation instead
+                                    }}
+                                    error={meta.touched && Boolean(meta.error)}
+                                    helperText={meta.touched && meta.error}
+                                    required
+                                  />
+                                )}
+                              </Field>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Field name={`products[${index}].description`}>
+                                {({ field, meta }: FieldProps) => (
+                                  <TextField
+                                    {...field}
+                                    fullWidth
+                                    label="Description (Optional)"
+                                    multiline
+                                    rows={2}
+                                    error={meta.touched && Boolean(meta.error)}
+                                    helperText={meta.touched && meta.error}
+                                  />
+                                )}
+                              </Field>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Typography variant="subtitle2" gutterBottom>
+                                Product Images (Optional)
+                              </Typography>
+                              
+                              {/* Display existing images if any */}
+                              {product.existingImages && product.existingImages.length > 0 && (
+                                <Box mb={2}>
+                                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                                    Existing Images:
+                                  </Typography>
+                                  <Box display="flex" flexWrap="wrap" gap={1}>
+                                    {product.existingImages.map((image, imgIndex) => (
+                                      <OrderImagePreview
+                                        key={`existing-${imgIndex}-${image.imageId}`}
+                                        imageId={image.imageId}
+                                        width={100}
+                                        height={100}
+                                        showDeleteButton={true}
+                                        onDelete={() => {
+                                          // Remove from imageIds
+                                          const updatedImageIds = [...(product.imageIds || [])];
+                                          const idIndex = updatedImageIds.indexOf(image.imageId);
+                                          if (idIndex !== -1) {
+                                            updatedImageIds.splice(idIndex, 1);
+                                          }
+                                          
+                                          // Remove from existingImages
+                                          const updatedExistingImages = [...(product.existingImages || [])];
+                                          updatedExistingImages.splice(imgIndex, 1);
+                                          
+                                          // Update the product
+                                          setFieldValue(`products[${index}].imageIds`, updatedImageIds);
+                                          setFieldValue(`products[${index}].existingImages`, updatedExistingImages);
+                                        }}
+                                      />
+                                    ))}
+                                  </Box>
+                                </Box>
+                              )}
+                              
+                              {/* Upload new images */}
+                              <Typography variant="body2" color="textSecondary" gutterBottom>
+                                {product.existingImages && product.existingImages.length > 0 ? 'Add New Images:' : 'Upload Images:'}
+                              </Typography>
+                              <OrderFileUpload
+                                onFileSelect={(files: File[]) => {
+                                  setFieldValue(`products[${index}].tempImages`, files);
+                                }}
+                                selectedFiles={product.tempImages || []}
+                                onRemoveFile={(imgIndex) => {
+                                  const tempImages = [...(product.tempImages || [])];
+                                  tempImages.splice(imgIndex, 1);
+                                  setFieldValue(`products[${index}].tempImages`, tempImages);
+                                }}
+                                accept="image/*"
+                                multiple
+                                maxFileSize={5} // 5MB max file size
+                              />
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    ))}
+
+                    {errors.products && typeof errors.products === 'string' && (
+                      <Alert severity="error" sx={{ mt: 1, mb: 2 }}>
+                        {errors.products}
+                      </Alert>
+                    )}
+
+                    {/* Order Summary */}
+                    <Box mt={3}>
+                      <Typography variant="h6" gutterBottom>
+                        Order Summary
+                      </Typography>
+                      <Divider sx={{ mb: 2 }} />
 
                       <Grid container spacing={2}>
                         <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth>
-                            <InputLabel id={`product-type-label-${index}`}>Product Type</InputLabel>
-                            <Select
-                              labelId={`product-type-label-${index}`}
-                              id={`productType-${index}`}
-                              value={product.productType}
-                              label="Product Type"
-                              onChange={(e) => handleProductChange(index, 'productType', e.target.value)}
-                              required
-                            >
-                              {PRODUCT_TYPES.map((type) => (
-                                <MenuItem key={type} value={type}>
-                                  {type}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
+                          <Typography variant="body1">
+                            Products Subtotal: ${values.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
+                          </Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                          <Autocomplete
-                            id={`fabric-${index}`}
-                            options={fabrics}
-                            getOptionLabel={(option) => option.name}
-                            isOptionEqualToValue={(option, value) => option.id === value.id}
-                            value={fabrics.find(f => f.id === product.fabricId) || null}
-                            onChange={(_, newValue) => handleProductChange(index, 'fabricId', newValue?.id || 0)}
-                            renderInput={(params) => (
-                              <TextField {...params} label="Fabric" required />
-                            )}
-                            renderOption={renderFabricOption}
-                            ListboxProps={{
-                              onScroll: handleFabricListScroll
-                            }}
-                            loading={loadingFabrics}
-                            loadingText="Loading fabrics..."
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Quantity"
-                            type="number"
-                            value={product.quantity}
-                            onChange={(e) => handleProductChange(index, 'quantity', parseInt(e.target.value) || 1)}
-                            InputProps={{ inputProps: { min: 1 } }}
-                            required
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField
-                            fullWidth
-                            label="Price"
-                            type="number"
-                            InputProps={{
-                              startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                              inputProps: { min: 0, step: 0.01 }
-                            }}
-                            value={product.price}
-                            onChange={(e) => handleProductChange(index, 'price', parseFloat(e.target.value) || 0)}
-                            required
-                          />
+                          <Typography variant="body1">
+                            Delivery Charge: ${values.deliveryCharge.toFixed(2)}
+                          </Typography>
                         </Grid>
                         <Grid item xs={12}>
-                          <TextField
-                            fullWidth
-                            label="Description (Optional)"
-                            multiline
-                            rows={2}
-                            value={product.description}
-                            onChange={(e) => handleProductChange(index, 'description', e.target.value)}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Typography variant="subtitle2" gutterBottom>
-                            Product Images (Optional)
+                          <Typography variant="h6">
+                            Total: ${calculateTotal(values.products, values.deliveryCharge).toFixed(2)}
                           </Typography>
-                          
-                          {/* Display existing images if any */}
-                          {product.existingImages && product.existingImages.length > 0 && (
-                            <Box mb={2}>
-                              <Typography variant="body2" color="textSecondary" gutterBottom>
-                                Existing Images:
-                              </Typography>
-                              <Box display="flex" flexWrap="wrap" gap={1}>
-                                {product.existingImages.map((image, imgIndex) => (
-                                  <OrderImagePreview
-                                    key={`existing-${imgIndex}-${image.imageId}`}
-                                    imageId={image.imageId}
-                                    width={100}
-                                    height={100}
-                                    showDeleteButton={true}
-                                    onDelete={() => {
-                                      // Remove from imageIds
-                                      const updatedProducts = [...formData.products];
-                                      const updatedImageIds = [...(updatedProducts[index].imageIds || [])];
-                                      const idIndex = updatedImageIds.indexOf(image.imageId);
-                                      if (idIndex !== -1) {
-                                        updatedImageIds.splice(idIndex, 1);
-                                      }
-                                      
-                                      // Remove from existingImages
-                                      const updatedExistingImages = [...(updatedProducts[index].existingImages || [])];
-                                      updatedExistingImages.splice(imgIndex, 1);
-                                      
-                                      // Update the product
-                                      updatedProducts[index] = {
-                                        ...updatedProducts[index],
-                                        imageIds: updatedImageIds,
-                                        existingImages: updatedExistingImages
-                                      };
-                                      
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        products: updatedProducts
-                                      }));
-                                    }}
-                                  />
-                                ))}
-                              </Box>
-                            </Box>
-                          )}
-                          
-                          {/* Upload new images */}
-                          <Typography variant="body2" color="textSecondary" gutterBottom>
-                            {product.existingImages && product.existingImages.length > 0 ? 'Add New Images:' : 'Upload Images:'}
-                          </Typography>
-                          <OrderFileUpload
-                            onFileSelect={(files: File[]) => handleImageUpload(index, files)}
-                            selectedFiles={product.tempImages || []}
-                            onRemoveFile={(imgIndex) => handleRemoveImage(index, imgIndex)}
-                            accept="image/*"
-                            multiple
-                            maxFileSize={5} // 5MB max file size
-                          />
                         </Grid>
                       </Grid>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </Box>
+                  </Paper>
+                </Grid>
 
-                {/* Order Summary */}
-                <Box mt={3}>
-                  <Typography variant="h6" gutterBottom>
-                    Order Summary
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1">
-                        Products Subtotal: ${formData.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body1">
-                        Delivery Charge: ${formData.deliveryCharge.toFixed(2)}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="h6">
-                        Total: ${calculateTotal().toFixed(2)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Paper>
-            </Grid>
-
-            {/* Submit Button */}
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="flex-end">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  type="submit"
-                  disabled={submitting}
-                >
-                  {submitting ? 'Saving...' : isEditMode ? 'Update Order' : 'Create Order'}
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
+                {/* Submit Button */}
+                <Grid item xs={12}>
+                  <Box display="flex" justifyContent="flex-end">
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="large"
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Saving...' : isEditMode ? 'Update Order' : 'Create Order'}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Form>
+          )}
+        </Formik>
       </Box>
     </Container>
   );

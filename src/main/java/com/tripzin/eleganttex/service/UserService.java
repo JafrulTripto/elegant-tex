@@ -12,10 +12,17 @@ import com.tripzin.eleganttex.repository.UserRepository;
 import com.tripzin.eleganttex.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -137,5 +144,67 @@ public class UserService {
         userRepository.save(user);
         
         return MessageResponse.success("User account verified successfully");
+    }
+    
+    public Page<UserDTO> searchUsers(
+            String search,
+            Boolean emailVerified,
+            Boolean accountVerified,
+            List<String> roles,
+            int page,
+            int size,
+            String sortBy,
+            String sortDir) {
+        
+        // Create pageable
+        Sort sort = Sort.by(sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        // Search users without role filtering
+        Page<User> userPage = userRepository.searchUsers(search, emailVerified, accountVerified, pageable);
+        
+        // If roles filter is provided, filter the results in memory
+        if (roles != null && !roles.isEmpty()) {
+            // Convert role strings to ERole enum values
+            Set<ERole> roleEnums = roles.stream()
+                    .map(role -> {
+                        try {
+                            return ERole.valueOf(role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            log.warn("Invalid role name: {}", role);
+                            return null;
+                        }
+                    })
+                    .filter(role -> role != null)
+                    .collect(Collectors.toSet());
+            
+            // Filter users by roles
+            List<User> filteredUsers = userPage.getContent().stream()
+                    .filter(user -> {
+                        // Check if user has any of the specified roles
+                        return user.getRoles().stream()
+                                .anyMatch(role -> roleEnums.contains(role.getName()));
+                    })
+                    .collect(Collectors.toList());
+            
+            // Create a new page with filtered users
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), filteredUsers.size());
+            
+            // Handle case where start might be out of bounds
+            if (start >= filteredUsers.size()) {
+                List<UserDTO> emptyDtoList = new ArrayList<>();
+                return new PageImpl<>(emptyDtoList, pageable, filteredUsers.size());
+            }
+            
+            List<User> pageContent = filteredUsers.subList(start, end);
+            Page<User> filteredPage = new PageImpl<>(pageContent, pageable, filteredUsers.size());
+            
+            // Convert to DTOs
+            return filteredPage.map(UserDTO::fromEntity);
+        }
+        
+        // Convert to DTOs
+        return userPage.map(UserDTO::fromEntity);
     }
 }

@@ -8,6 +8,7 @@ import com.tripzin.eleganttex.service.FileStorageService;
 import com.tripzin.eleganttex.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -65,6 +66,22 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> verifyUserAccount(@PathVariable Long id) {
         return ResponseEntity.ok(userService.verifyAccount(id));
+    }
+    
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserDTO>> searchUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean emailVerified,
+            @RequestParam(required = false) Boolean accountVerified,
+            @RequestParam(required = false) List<String> roles,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        
+        return ResponseEntity.ok(userService.searchUsers(
+                search, emailVerified, accountVerified, roles, page, size, sortBy, sortDir));
     }
     
     @PostMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

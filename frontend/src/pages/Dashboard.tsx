@@ -34,6 +34,8 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
+import UserOrdersTable from '../components/orders/UserOrdersTable';
+import MarketplaceComparisonChart from '../components/orders/MarketplaceComparisonChart';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
 import { OrderStatusCount, Order, ORDER_STATUS_COLORS } from '../types/order';
@@ -301,19 +303,38 @@ const Dashboard: React.FC = () => {
             </Grid>
           </Grid>
           
+          {/* User Order Statistics */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <UserOrdersTable />
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Marketplace Comparison Chart */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <MarketplaceComparisonChart />
+              </CardContent>
+            </Card>
+          </Grid>
+          
           {/* Recent Orders */}
           <Grid item xs={12} md={6}>
-            <Card>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader title="Recent Orders" />
               <Divider />
-              <CardContent sx={{ maxHeight: 400, overflow: 'auto' }}>
+              <CardContent sx={{ flexGrow: 1, overflow: 'auto', minHeight: 300 }}>
                 {recentOrders.length > 0 ? (
                   <List>
                     {recentOrders.map((order) => (
                       <React.Fragment key={order.id}>
                         <ListItem
-                          button
+                          component="div"
                           onClick={() => handleOrderClick(order.id)}
+                          sx={{ cursor: 'pointer' }}
                           secondaryAction={
                             <Tooltip title={order.status}>
                               <Chip
@@ -333,7 +354,7 @@ const Dashboard: React.FC = () => {
                             </Avatar>
                           </ListItemAvatar>
                           <ListItemText
-                            primary={`Order #${order.id} - ${order.customerName}`}
+                            primary={`Order #${order.id} - ${order.customer.name}`}
                             secondary={`${formatDate(order.createdAt)} • $${order.totalAmount.toFixed(2)}`}
                           />
                         </ListItem>
@@ -352,17 +373,18 @@ const Dashboard: React.FC = () => {
           
           {/* Marketplaces */}
           <Grid item xs={12} md={6}>
-            <Card>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader title="Your Marketplaces" />
               <Divider />
-              <CardContent sx={{ maxHeight: 400, overflow: 'auto' }}>
+              <CardContent sx={{ flexGrow: 1, overflow: 'auto', minHeight: 300 }}>
                 {marketplaces.length > 0 ? (
                   <List>
                     {marketplaces.map((marketplace) => (
                       <React.Fragment key={marketplace.id}>
                         <ListItem
-                          button
+                          component="div"
                           onClick={() => handleMarketplaceClick(marketplace.id)}
+                          sx={{ cursor: 'pointer' }}
                         >
                           <ListItemAvatar>
                             <Avatar sx={{ bgcolor: 'secondary.main' }}>
@@ -389,7 +411,7 @@ const Dashboard: React.FC = () => {
           
           {/* User Profile Card */}
           <Grid item xs={12} md={6}>
-            <Card elevation={2} sx={{ borderRadius: 2 }}>
+            <Card elevation={2} sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader
                 avatar={
                   <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -453,7 +475,7 @@ const Dashboard: React.FC = () => {
           
           {/* Account Status Card */}
           <Grid item xs={12} md={6}>
-            <Card elevation={2} sx={{ borderRadius: 2 }}>
+            <Card elevation={2} sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader
                 title="Account Status"
                 subheader="Overview of your account"

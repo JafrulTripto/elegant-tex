@@ -1,7 +1,5 @@
 import api from './api';
-import { User } from '../types';
-import { ApiResponse } from '../types';
-import { MessageResponse } from '../types';
+import { User, ApiResponse, MessageResponse, UserFilterParams, Page } from '../types';
 
 export const userService = {
   getCurrentUser: async () => {
@@ -48,6 +46,23 @@ export const userService = {
       currentPassword,
       newPassword
     });
+  },
+  
+  searchUsers: async (params: UserFilterParams) => {
+    const queryParams = new URLSearchParams();
+    
+    if (params.search) queryParams.append('search', params.search);
+    if (params.emailVerified !== undefined) queryParams.append('emailVerified', params.emailVerified.toString());
+    if (params.accountVerified !== undefined) queryParams.append('accountVerified', params.accountVerified.toString());
+    if (params.roles && params.roles.length > 0) {
+      params.roles.forEach(role => queryParams.append('roles', role));
+    }
+    if (params.page !== undefined) queryParams.append('page', params.page.toString());
+    if (params.size !== undefined) queryParams.append('size', params.size.toString());
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortDir) queryParams.append('sortDir', params.sortDir);
+    
+    return api.get<ApiResponse<Page<User>>>(`/users/search?${queryParams.toString()}`);
   }
 };
 

@@ -73,6 +73,7 @@ export interface OrderFormData {
     alternativePhone?: string;
     facebookId?: string;
   };
+  customerValidation?: any; // Added for validation purposes
   deliveryChannel: string;
   deliveryCharge: number;
   deliveryDate: string;
@@ -166,21 +167,7 @@ export const DELIVERY_CHANNELS = [
   'Third-party Delivery'
 ];
 
-export const PRODUCT_TYPES = [
-  'Shirt',
-  'Pants',
-  'Dress',
-  'Skirt',
-  'Blouse',
-  'Jacket',
-  'Coat',
-  'Sweater',
-  'T-shirt',
-  'Jeans',
-  'Suit',
-  'Uniform',
-  'Other'
-];
+// Product types are now managed in the database and accessed via API
 
 export interface OrderRequest {
   marketplaceId: number;
@@ -192,6 +179,7 @@ export interface OrderRequest {
     alternativePhone?: string;
     facebookId?: string;
   };
+  customerValidation?: any; // Added for validation purposes
   deliveryChannel: string;
   deliveryCharge: number;
   deliveryDate: string;
