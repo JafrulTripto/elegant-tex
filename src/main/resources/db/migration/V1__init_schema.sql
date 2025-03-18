@@ -97,3 +97,9 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
      (SELECT id FROM permissions WHERE name = 'MANAGE_ROLES')),
     ((SELECT id FROM roles WHERE name = 'ROLE_ADMIN'), 
      (SELECT id FROM permissions WHERE name = 'VERIFY_USERS'));
+
+INSERT INTO users (first_name, last_name, email, phone, password, email_verified, account_verified)
+VALUES ('Jafrul', 'Hossain', 'jafrultripto@gmail.com', '+8801832958858', 
+        '$2y$10$YOWchtXnKdBOFLynBRFrsu4nlEa0pCyJDfJMa60VEnzo.GWxxl6Fu', 
+        TRUE, TRUE)
+ON CONFLICT (email) DO NOTHING;

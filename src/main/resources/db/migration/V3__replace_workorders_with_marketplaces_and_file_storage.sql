@@ -1,6 +1,3 @@
--- Drop work_orders table
-DROP TABLE IF EXISTS work_orders;
-
 -- Create file_storage table
 CREATE TABLE file_storage (
     id BIGSERIAL PRIMARY KEY,
