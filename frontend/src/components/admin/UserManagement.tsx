@@ -40,11 +40,15 @@ import {
   CheckCircle as VerifiedIcon,
   Cancel as UnverifiedIcon,
   Search as SearchIcon,
+  ArrowUpward as ArrowUpIcon,
+  ArrowDownward as ArrowDownIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import api from '../../services/api';
 import userService from '../../services/user.service';
 import { User, Role, UserFilterParams } from '../../types';
+import UserFilterDialog from './UserFilterDialog';
 
 interface UserFormData {
   phone: string;
@@ -64,6 +68,7 @@ const UserManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [openFilterDialog, setOpenFilterDialog] = useState<boolean>(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
     phone: '',
@@ -87,6 +92,7 @@ const UserManagement: React.FC = () => {
     sortDir: 'asc'
   });
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalElements, setTotalElements] = useState<number>(0);
 
   // Fetch roles and initial users
   useEffect(() => {
@@ -97,9 +103,6 @@ const UserManagement: React.FC = () => {
         // Fetch roles
         const rolesResponse = await api.get('/api/roles');
         setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
-        
-        // Fetch users with search and filter
-        await fetchUsers();
         
         setLoading(false);
       } catch (err) {
@@ -115,19 +118,18 @@ const UserManagement: React.FC = () => {
     fetchData();
   }, []);
   
+  // Fetch users when filter params change
+  useEffect(() => {
+    fetchUsers();
+  }, [filterParams]);
+  
   // Fetch users with search and filter
   const fetchUsers = async () => {
     try {
       setLoading(true);
       
-      // Create filter params with search term
-      const params: UserFilterParams = {
-        ...filterParams,
-        search: searchTerm || undefined
-      };
-      
       // Fetch users with search and filter
-      const response = await userService.searchUsers(params);
+      const response = await userService.searchUsers(filterParams);
       console.log('User search response:', response);
       
       // Handle both response structures (direct Page<User> or ApiResponse<Page<User>>)
@@ -139,10 +141,12 @@ const UserManagement: React.FC = () => {
           // Direct Page<User> response
           setUsers(responseData.content);
           setTotalPages(responseData.totalPages);
+          setTotalElements(responseData.totalElements || 0);
         } else if (responseData.data && responseData.data.content) {
           // ApiResponse<Page<User>> response
           setUsers(responseData.data.content);
           setTotalPages(responseData.data.totalPages);
+          setTotalElements(responseData.data.totalElements || 0);
         } else {
           setUsers([]);
           setTotalPages(1);
@@ -226,16 +230,64 @@ const UserManagement: React.FC = () => {
   // Handle search form submit
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchUsers();
+    // Update filter params with search term and reset to first page
+    setFilterParams(prev => ({
+      ...prev,
+      search: searchTerm || undefined,
+      page: 0
+    }));
+    // No need to call fetchUsers() here as it will be triggered by the useEffect
   };
   
   // Handle page change
-  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+  const handlePageChange = (_: React.ChangeEvent<unknown>, page: number) => {
     setFilterParams(prev => ({
       ...prev,
       page: page - 1
     }));
-    fetchUsers();
+    // No need to call fetchUsers() here as it will be triggered by the useEffect
+  };
+  
+  // Handle page size change
+  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const newSize = parseInt(event.target.value, 10);
+    setFilterParams(prev => ({
+      ...prev,
+      size: newSize,
+      page: 0 // Reset to first page when changing page size
+    }));
+  };
+  
+  // Handle sort change
+  const handleSortChange = (column: string) => {
+    setFilterParams(prev => {
+      // If already sorting by this column, toggle direction
+      if (prev.sortBy === column) {
+        return {
+          ...prev,
+          sortDir: prev.sortDir === 'asc' ? 'desc' : 'asc',
+          page: 0 // Reset to first page when changing sort
+        };
+      }
+      // Otherwise, sort by the new column in ascending order
+      return {
+        ...prev,
+        sortBy: column,
+        sortDir: 'asc',
+        page: 0 // Reset to first page when changing sort
+      };
+    });
+  };
+  
+  // Render sort icon
+  const renderSortIcon = (column: string) => {
+    if (filterParams.sortBy !== column) {
+      return null;
+    }
+    
+    return filterParams.sortDir === 'asc' ? 
+      <ArrowUpIcon fontSize="small" /> : 
+      <ArrowDownIcon fontSize="small" />;
   };
 
 
@@ -346,7 +398,7 @@ const UserManagement: React.FC = () => {
       {/* Search and filter UI */}
       <Box sx={{ mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={12}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <form onSubmit={handleSearchSubmit}>
               <TextField
                 fullWidth
@@ -370,38 +422,87 @@ const UserManagement: React.FC = () => {
               />
             </form>
           </Grid>
+          <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, mt: { xs: 1, md: 0 } }}>
+            <Button
+              variant="outlined"
+              startIcon={<FilterIcon />}
+              onClick={() => setOpenFilterDialog(true)}
+              sx={{ height: '100%' }}
+            >
+              Filters
+              {(filterParams.emailVerified !== undefined || 
+                filterParams.accountVerified !== undefined || 
+                (filterParams.roles && filterParams.roles.length > 0)) && (
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    ml: 1
+                  }}
+                >
+                  {(filterParams.emailVerified !== undefined ? 1 : 0) + 
+                   (filterParams.accountVerified !== undefined ? 1 : 0) + 
+                   (filterParams.roles && filterParams.roles.length > 0 ? 1 : 0)}
+                </Box>
+              )}
+            </Button>
+          </Grid>
         </Grid>
       </Box>
       
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <Stack spacing={2}>
-            <Pagination
-              count={totalPages}
-              page={filterParams.page !== undefined ? filterParams.page + 1 : 1}
-              onChange={handlePageChange}
-              color="primary"
-              disabled={loading}
-            />
-          </Stack>
-        </Box>
-      )}
+      {/* No pagination here - removed duplicate */}
       
-      {loading && users.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper}>
+      <TableContainer component={Paper}>
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2, position: 'relative' }}>
+            <CircularProgress size={40} sx={{ position: 'absolute', top: '50%', left: '50%', marginTop: '-20px', marginLeft: '-20px', zIndex: 1 }} />
+            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.7)', zIndex: 0 }} />
+          </Box>
+        )}
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Email</TableCell>
+                <TableCell 
+                  onClick={() => handleSortChange('firstName')}
+                  sx={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    Name {renderSortIcon('firstName')}
+                  </Box>
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSortChange('phone')}
+                  sx={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    Phone {renderSortIcon('phone')}
+                  </Box>
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSortChange('email')}
+                  sx={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    Email {renderSortIcon('email')}
+                  </Box>
+                </TableCell>
                 <TableCell>Roles</TableCell>
-                <TableCell>Status</TableCell>
+                <TableCell 
+                  onClick={() => handleSortChange('accountVerified')}
+                  sx={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    Status {renderSortIcon('accountVerified')}
+                  </Box>
+                </TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -474,11 +575,39 @@ const UserManagement: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      )}
       
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+      {/* Enhanced Pagination */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, flexWrap: 'wrap' }}>
+        {/* Pagination Info */}
+        <Box sx={{ mb: { xs: 2, md: 0 } }}>
+          {users.length > 0 && (
+            <Typography variant="body2" color="text.secondary">
+              Showing {(filterParams.page || 0) * (filterParams.size || 10) + 1} to {Math.min(((filterParams.page || 0) + 1) * (filterParams.size || 10), ((filterParams.page || 0) * (filterParams.size || 10)) + users.length)} of {totalElements} entries
+            </Typography>
+          )}
+        </Box>
+        
+        {/* Page Size Selection */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: { xs: 2, md: 0 } }}>
+          <Typography variant="body2" color="text.secondary">
+            Rows per page:
+          </Typography>
+          <FormControl size="small" variant="outlined" sx={{ minWidth: 80 }}>
+            <Select
+              value={(filterParams.size || 10).toString()}
+              onChange={(e) => handlePageSizeChange(e as React.ChangeEvent<HTMLInputElement>)}
+              disabled={loading}
+            >
+              <MenuItem value="5">5</MenuItem>
+              <MenuItem value="10">10</MenuItem>
+              <MenuItem value="25">25</MenuItem>
+              <MenuItem value="50">50</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        
+        {/* Pagination Controls */}
+        {totalPages > 0 && (
           <Stack spacing={2}>
             <Pagination
               count={totalPages}
@@ -486,10 +615,29 @@ const UserManagement: React.FC = () => {
               onChange={handlePageChange}
               color="primary"
               disabled={loading}
+              showFirstButton
+              showLastButton
+              siblingCount={1}
             />
           </Stack>
-        </Box>
-      )}
+        )}
+      </Box>
+      
+      {/* Filter Dialog */}
+      <UserFilterDialog
+        open={openFilterDialog}
+        onClose={() => setOpenFilterDialog(false)}
+        onApplyFilter={(filters) => {
+          setFilterParams(prev => ({
+            ...prev,
+            ...filters,
+            page: 0 // Reset to first page when applying filters
+          }));
+        }}
+        roles={roles}
+        currentFilters={filterParams}
+        loading={loading}
+      />
       
       {/* User Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

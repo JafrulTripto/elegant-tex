@@ -13,14 +13,11 @@ import {
   Divider,
   Paper,
   Stack,
-  useTheme,
-  Badge,
+  useTheme
 } from '@mui/material';
-import { spacing } from '../../theme/styleUtils';
 import { 
   Edit as EditIcon, 
-  Delete as DeleteIcon, 
-  LocalOffer as TagIcon,
+  Delete as DeleteIcon,
   CalendarToday as CalendarIcon,
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,

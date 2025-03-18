@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   CardHeader,
@@ -19,6 +18,7 @@ import {
   Tooltip,
   Chip,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {
   Person as PersonIcon,
   Security as SecurityIcon,
@@ -195,14 +195,14 @@ const Dashboard: React.FC = () => {
       ) : (
         <Grid container spacing={3}>
           {/* Order Statistics Section */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h5" gutterBottom>
               Order Statistics
             </Typography>
           </Grid>
           
           {/* Total Orders Card */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -223,7 +223,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Total Marketplaces Card */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -244,7 +244,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Total Revenue Card */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -265,7 +265,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Pending Deliveries Card */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -286,13 +286,13 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Order Status Cards */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom>
               Orders by Status
             </Typography>
             <Grid container spacing={2}>
               {orderStatusCounts.map((statusCount) => (
-                <Grid item xs={6} sm={4} md={2} key={statusCount.status}>
+                <Grid size={{ xs: 6, sm: 4, md: 2 }} key={statusCount.status}>
                   <OrderStatsCard
                     status={statusCount.status}
                     count={statusCount.count}
@@ -304,7 +304,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* User Order Statistics */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <UserOrdersTable />
@@ -313,7 +313,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Marketplace Comparison Chart */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <MarketplaceComparisonChart />
@@ -322,7 +322,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Recent Orders */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader title="Recent Orders" />
               <Divider />
@@ -372,7 +372,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Marketplaces */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader title="Your Marketplaces" />
               <Divider />
@@ -410,7 +410,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* User Profile Card */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card elevation={2} sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader
                 avatar={
@@ -474,7 +474,7 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Account Status Card */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card elevation={2} sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardHeader
                 title="Account Status"

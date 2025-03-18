@@ -175,4 +175,19 @@ public class OrderController {
         List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatistics(currentMonth);
         return ResponseEntity.ok(marketplaceStats);
     }
+    
+    /**
+     * Get similar orders (returned or cancelled) based on product type and fabric
+     * @param id the order ID to find similar orders for
+     * @param limit maximum number of similar orders to return (default: 5)
+     * @return list of similar orders
+     */
+    @GetMapping("/{id}/similar")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<List<OrderResponse>> getSimilarOrders(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "5") int limit) {
+        List<OrderResponse> similarOrders = orderService.findSimilarOrders(id, limit);
+        return ResponseEntity.ok(similarOrders);
+    }
 }

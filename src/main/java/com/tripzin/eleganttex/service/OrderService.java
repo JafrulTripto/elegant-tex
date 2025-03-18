@@ -55,4 +55,13 @@ public interface OrderService {
      * @return List of maps containing marketplace information and total amount
      */
     List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth);
+    
+    /**
+     * Find orders with similar products based on product type, fabric, and description
+     * Limited to returned or cancelled orders
+     * @param orderId the order ID to find similar orders for
+     * @param limit maximum number of similar orders to return
+     * @return list of similar orders
+     */
+    List<OrderResponse> findSimilarOrders(Long orderId, int limit);
 }

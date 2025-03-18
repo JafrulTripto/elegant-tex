@@ -9,12 +9,10 @@ import {
   Alert,
   CircularProgress,
   Box,
-  Typography,
-  useTheme,
+  Typography
 } from '@mui/material';
 import authService from '../../services/auth.service';
 import { AccentButton } from './StyledComponents';
-import { useAuthStyles } from '../../theme/styleUtils';
 
 interface ResendVerificationDialogProps {
   open: boolean;

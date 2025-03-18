@@ -98,7 +98,7 @@ const FabricForm: React.FC<FabricFormProps> = ({
     }
   };
 
-  const handleTagChange = (event: React.SyntheticEvent, newValue: string[]) => {
+  const handleTagChange = (_: React.SyntheticEvent, newValue: string[]) => {
     console.log('Tag selection changed:', newValue);
     setFormData(prev => ({
       ...prev,
@@ -228,7 +228,7 @@ const FabricForm: React.FC<FabricFormProps> = ({
               value={formData.tagNames}
               onChange={handleTagChange}
               inputValue={tagInputValue}
-              onInputChange={(event, newInputValue) => {
+              onInputChange={(_, newInputValue) => {
                 setTagInputValue(newInputValue);
               }}
               filterOptions={(options, params) => {

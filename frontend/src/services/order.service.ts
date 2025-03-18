@@ -112,10 +112,15 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
 };
 
 export const updateOrderStatus = async (id: number, status: string, notes?: string): Promise<Order> => {
-  const response = await api.patch(`${BASE_URL}/${id}/status`, null, {
-    params: { status, notes }
-  });
-  return response.data;
+  try {
+    const response = await api.patch(`${BASE_URL}/${id}/status`, null, {
+      params: { status, notes }
+    });
+    return response.data;
+  } catch (error) {
+    // Let the component handle the error with the specific error message
+    throw error;
+  }
 };
 
 export const deleteOrder = async (id: number): Promise<void> => {
@@ -175,6 +180,19 @@ export const getMarketplaceOrderStatistics = async (currentMonth = true): Promis
   return response.data;
 };
 
+/**
+ * Get similar orders (returned or cancelled) based on product type and fabric
+ * @param id the order ID to find similar orders for
+ * @param limit maximum number of similar orders to return (default: 5)
+ * @returns list of similar orders
+ */
+export const getSimilarOrders = async (id: number, limit: number = 5): Promise<Order[]> => {
+  const response = await api.get(`${BASE_URL}/${id}/similar`, {
+    params: { limit }
+  });
+  return response.data;
+};
+
 export const downloadBlob = (blob: Blob, fileName: string): void => {
   // Create a URL for the blob
   const url = window.URL.createObjectURL(blob);
@@ -208,6 +226,7 @@ const orderService = {
   getOrderStatusCounts,
   getUserOrderStatistics,
   getMarketplaceOrderStatistics,
+  getSimilarOrders,
   downloadBlob
 };
 

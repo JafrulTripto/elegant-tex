@@ -1,7 +1,9 @@
 package com.tripzin.eleganttex.repository;
 
 import com.tripzin.eleganttex.entity.Order;
+import com.tripzin.eleganttex.entity.OrderStatus;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,7 +27,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     Page<Order> findByMarketplaceId(Long marketplaceId, Pageable pageable);
     
-    Page<Order> findByStatus(String status, Pageable pageable);
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
     
     Page<Order> findByDeliveryDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
     
@@ -38,7 +40,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
            "(:customerName IS NULL OR LOWER(CAST(c.name as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%')))")
     Page<Order> findByFilters(
-            @Param("status") String status,
+            @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("marketplaceId") Long marketplaceId,
@@ -52,7 +54,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
            "(:createdById IS NULL OR o.createdBy.id = :createdById)")
     Page<Order> findByFiltersWithCreatedBy(
-            @Param("status") String status,
+            @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("marketplaceId") Long marketplaceId,
@@ -75,4 +77,43 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByCreatedAtBetween(
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime);
+            
+    /**
+     * Find similar orders based on product type AND fabric
+     * Limited to returned or cancelled orders
+     * @param orderId the order ID to exclude from results
+     * @param productTypes list of product types to match
+     * @param fabricIds list of fabric IDs to match
+     * @param pageable pagination information
+     * @return list of similar orders
+     */
+    @Query("SELECT DISTINCT o FROM Order o " +
+           "JOIN o.products p " +
+           "WHERE o.id <> :orderId " +
+           "AND (o.status = 'RETURNED' OR o.status = 'CANCELLED') " +
+           "AND EXISTS (SELECT 1 FROM OrderProduct op WHERE op.order = o " +
+           "            AND op.productType IN :productTypes " +
+           "            AND op.fabric.id IN :fabricIds) " +
+           "ORDER BY o.createdAt DESC")
+    List<Order> findSimilarOrders(
+            @Param("orderId") Long orderId,
+            @Param("productTypes") List<String> productTypes,
+            @Param("fabricIds") List<Long> fabricIds,
+            Pageable pageable);
+            
+    /**
+     * Find similar orders with a limit
+     * @param orderId the order ID to exclude from results
+     * @param productTypes list of product types to match
+     * @param fabricIds list of fabric IDs to match
+     * @param limit maximum number of results to return
+     * @return list of similar orders
+     */
+    default List<Order> findSimilarOrders(
+            Long orderId,
+            List<String> productTypes,
+            List<Long> fabricIds,
+            int limit) {
+        return findSimilarOrders(orderId, productTypes, fabricIds, PageRequest.of(0, limit));
+    }
 }

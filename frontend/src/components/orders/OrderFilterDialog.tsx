@@ -21,7 +21,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Close as CloseIcon, FilterList as FilterIcon } from '@mui/icons-material';
-import { OrderFilterParams, STATUS_OPTIONS } from '../../types/order';
+import { OrderFilterParams, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../../types/order';
 import { Marketplace } from '../../types/marketplace';
 import { format, parse } from 'date-fns';
 
@@ -145,9 +145,9 @@ const OrderFilterDialog: React.FC<OrderFilterDialogProps> = ({
                   disabled={loading}
                 >
                   <MenuItem value="">All Statuses</MenuItem>
-                  {STATUS_OPTIONS.map((status) => (
+                  {STATUS_OPTIONS.map((status, index) => (
                     <MenuItem key={status} value={status}>
-                      {status}
+                      {STATUS_DISPLAY_OPTIONS[index]}
                     </MenuItem>
                   ))}
                 </Select>

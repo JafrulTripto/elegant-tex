@@ -1,53 +1,53 @@
 package com.tripzin.eleganttex.service;
 
-import com.itextpdf.io.font.constants.StandardFonts;
-import com.itextpdf.io.image.ImageData;
-import com.itextpdf.io.image.ImageDataFactory;
-import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.geom.PageSize;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.SolidBorder;
-import com.itextpdf.layout.element.AreaBreak;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.element.Image;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.HorizontalAlignment;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
-import com.itextpdf.layout.properties.VerticalAlignment;
-import com.tripzin.eleganttex.config.FileStorageConfig;
 import com.tripzin.eleganttex.dto.request.OrderProductRequest;
 import com.tripzin.eleganttex.dto.request.OrderRequest;
-import com.tripzin.eleganttex.dto.response.*;
-import com.tripzin.eleganttex.entity.*;
+import com.tripzin.eleganttex.dto.response.CustomerResponse;
+import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.entity.Customer;
+import com.tripzin.eleganttex.entity.Marketplace;
+import com.tripzin.eleganttex.entity.Order;
+import com.tripzin.eleganttex.entity.OrderProduct;
+import com.tripzin.eleganttex.entity.OrderStatus;
+import com.tripzin.eleganttex.entity.OrderStatusHistory;
+import com.tripzin.eleganttex.entity.User;
+import com.tripzin.eleganttex.exception.InvalidStatusTransitionException;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
-import com.tripzin.eleganttex.repository.*;
+import com.tripzin.eleganttex.repository.MarketplaceRepository;
+import com.tripzin.eleganttex.repository.OrderProductImageRepository;
+import com.tripzin.eleganttex.repository.OrderProductRepository;
+import com.tripzin.eleganttex.repository.OrderRepository;
+import com.tripzin.eleganttex.repository.OrderStatusHistoryRepository;
+import com.tripzin.eleganttex.repository.UserRepository;
+import com.tripzin.eleganttex.service.excel.OrderExcelGenerator;
+import com.tripzin.eleganttex.service.mapper.OrderMapper;
+import com.tripzin.eleganttex.service.pdf.OrderPdfGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Implementation of the OrderService interface
+ * Optimized with design patterns and best practices
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -58,159 +58,53 @@ public class OrderServiceImpl implements OrderService {
     private final OrderProductImageRepository orderProductImageRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final MarketplaceRepository marketplaceRepository;
-    private final FabricRepository fabricRepository;
-    private final FileStorageRepository fileStorageRepository;
-    private final FileStorageService fileStorageService;
-    private final FileStorageConfig fileStorageConfig;
-    private final S3Service s3Service;
     private final UserRepository userRepository;
     private final CustomerService customerService;
+    private final OrderStatusValidationService statusValidationService;
+    
+    // Extracted components
+    private final OrderMapper orderMapper;
+    private final OrderCalculationService calculationService;
+    private final OrderProductHandler productHandler;
+    private final OrderPdfGenerator pdfGenerator;
+    private final OrderExcelGenerator excelGenerator;
 
+    /**
+     * Create a new order
+     */
     @Override
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
-        User currentUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
         log.info("Creating new order for marketplace ID: {}", orderRequest.getMarketplaceId());
         
+        // Get current user
+        User currentUser = getUserById(userId);
+        
         // Find marketplace
-        Marketplace marketplace = marketplaceRepository.findById(orderRequest.getMarketplaceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marketplace not found with ID: " + orderRequest.getMarketplaceId()));
+        Marketplace marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
         
         // Find or create customer
-        Customer customer;
-        if (orderRequest.getCustomerId() != null) {
-            // Use existing customer
-            customer = customerService.getCustomerEntityById(orderRequest.getCustomerId());
-            log.info("Using existing customer with ID: {}", customer.getId());
-        } else if (orderRequest.getCustomerData() != null) {
-            // Create new customer or find by phone
-            CustomerResponse customerResponse = customerService.findOrCreateCustomer(orderRequest.getCustomerData());
-            customer = customerService.getCustomerEntityById(customerResponse.getId());
-            log.info("Found or created customer with ID: {}", customer.getId());
-        } else {
-            throw new IllegalArgumentException("Either customerId or customerData must be provided");
-        }
+        Customer customer = getOrCreateCustomer(orderRequest);
         
-        // Calculate total amount from products
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (OrderProductRequest productRequest : orderRequest.getProducts()) {
-            BigDecimal productTotal = productRequest.getPrice().multiply(new BigDecimal(productRequest.getQuantity()));
-            totalAmount = totalAmount.add(productTotal);
-        }
-        // Add delivery charge to total
-        totalAmount = totalAmount.add(orderRequest.getDeliveryCharge());
+        // Calculate total amount
+        BigDecimal totalAmount = calculationService.calculateTotalFromRequests(orderRequest.getProducts())
+                .add(orderRequest.getDeliveryCharge());
         
-        // Create order with a temporary order number to avoid constraint violation
-        String tempOrderNumber = "TEMP-" + System.currentTimeMillis();
-        
-        Order order = Order.builder()
-                .marketplace(marketplace)
-                .customer(customer)
-                .deliveryChannel(orderRequest.getDeliveryChannel())
-                .deliveryCharge(orderRequest.getDeliveryCharge())
-                .deliveryDate(orderRequest.getDeliveryDate())
-                .status("Created")
-                .totalAmount(totalAmount) // Set the calculated total amount
-                .createdBy(currentUser)
-                .orderNumber(tempOrderNumber) // Set temporary order number
-                .build();
-        
-        // Save the order first to get the ID
-        Order savedOrder = orderRepository.save(order);
-        
-        // Generate and set the custom order number
-        String orderNumber = String.format("ET-ORD-%04d", savedOrder.getId());
-        savedOrder.setOrderNumber(orderNumber);
-        
-        // Save again with the proper order number
-        savedOrder = orderRepository.save(savedOrder);
+        // Create order with a temporary order number
+        Order order = createInitialOrder(marketplace, customer, orderRequest, totalAmount, currentUser);
         
         // Create initial status history
-        OrderStatusHistory statusHistory = OrderStatusHistory.builder()
-                .order(savedOrder)
-                .status("Created")
-                .notes("Order created")
-                .updatedBy(currentUser)
-                .build();
-        
-        orderStatusHistoryRepository.save(statusHistory);
+        createInitialStatusHistory(order, currentUser);
         
         // Create products
-        for (OrderProductRequest productRequest : orderRequest.getProducts()) {
-            Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
-            
-            OrderProduct product = OrderProduct.builder()
-                    .order(savedOrder)
-                    .productType(productRequest.getProductType())
-                    .fabric(fabric)
-                    .quantity(productRequest.getQuantity())
-                    .price(productRequest.getPrice())
-                    .description(productRequest.getDescription())
-                    .build();
-            
-            OrderProduct savedProduct = orderProductRepository.save(product);
-            
-            // Handle existing images
-            if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
-                for (Long imageId : productRequest.getImageIds()) {
-                    
-                    OrderProductImage image = OrderProductImage.builder()
-                            .orderProduct(savedProduct)
-                            .imageId(imageId)
-                            .imageUrl("/files/" + imageId)
-                            .build();
-                    
-                    orderProductImageRepository.save(image);
-                }
-            }
-            
-            // Handle new images from files
-            if (files != null && !files.isEmpty()) {
-                for (MultipartFile file : files) {
-                    try {
-                        // Save image to file storage
-                        FileStorage fileStorage = fileStorageService.storeFile(
-                                file,
-                                "ORDER_PRODUCT",
-                                savedProduct.getId()
-                        );
-                        
-                        // Create order product image
-                        OrderProductImage image = OrderProductImage.builder()
-                                .orderProduct(savedProduct)
-                                .imageId(fileStorage.getId())
-                                .imageUrl("/files/" + fileStorage.getId())
-                                .build();
-                        
-                        orderProductImageRepository.save(image);
-                    } catch (Exception e) {
-                        log.error("Error saving product image", e);
-                        // Continue with other images
-                    }
-                }
-            }
-            
-            // Handle new images from base64
-            if (productRequest.getTempImageBase64() != null && !productRequest.getTempImageBase64().isEmpty()) {
-                for (String base64Image : productRequest.getTempImageBase64()) {
-                    try {
-                        // Process base64 image
-                        // This would be implemented in a real application
-                        log.info("Processing base64 image for product ID: {}", savedProduct.getId());
-                        
-                        // For now, we'll skip this since we're using MultipartFile
-                    } catch (Exception e) {
-                        log.error("Error saving product image from base64", e);
-                    }
-                }
-            }
-        }
+        createOrderProducts(order, orderRequest.getProducts(), files);
         
-        return mapOrderToResponse(savedOrder);
+        return orderMapper.mapOrderToResponse(order);
     }
 
+    /**
+     * Get order by ID
+     */
     @Override
     public OrderResponse getOrderById(Long id) {
         log.info("Getting order by ID: {}", id);
@@ -218,228 +112,46 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
         
-        return mapOrderToResponse(order);
+        return orderMapper.mapOrderToResponse(order);
     }
 
+    /**
+     * Update an existing order
+     */
     @Override
     @Transactional
     public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
-        User currentUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
         log.info("Updating order with ID: {}", id);
         
+        // Get current user
+        User currentUser = getUserById(userId);
+        
+        // Get existing order
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
         
         // Find marketplace
-        Marketplace marketplace = marketplaceRepository.findById(orderRequest.getMarketplaceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marketplace not found with ID: " + orderRequest.getMarketplaceId()));
+        Marketplace marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
         
         // Find or update customer
-        Customer customer;
-        if (orderRequest.getCustomerId() != null) {
-            // Use existing customer
-            customer = customerService.getCustomerEntityById(orderRequest.getCustomerId());
-            log.info("Using existing customer with ID: {}", customer.getId());
-        } else if (orderRequest.getCustomerData() != null) {
-            // Create new customer or find by phone
-            CustomerResponse customerResponse = customerService.findOrCreateCustomer(orderRequest.getCustomerData());
-            customer = customerService.getCustomerEntityById(customerResponse.getId());
-            log.info("Found or created customer with ID: {}", customer.getId());
-        } else {
-            throw new IllegalArgumentException("Either customerId or customerData must be provided");
-        }
+        Customer customer = getOrCreateCustomer(orderRequest);
         
-        // Calculate total amount from products
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (OrderProductRequest productRequest : orderRequest.getProducts()) {
-            BigDecimal productTotal = productRequest.getPrice().multiply(new BigDecimal(productRequest.getQuantity()));
-            totalAmount = totalAmount.add(productTotal);
-        }
-        // Add delivery charge to total
-        totalAmount = totalAmount.add(orderRequest.getDeliveryCharge());
+        // Calculate total amount
+        BigDecimal totalAmount = calculationService.calculateTotalFromRequests(orderRequest.getProducts())
+                .add(orderRequest.getDeliveryCharge());
         
         // Update order fields
-        order.setMarketplace(marketplace);
-        order.setCustomer(customer);
-        order.setDeliveryChannel(orderRequest.getDeliveryChannel());
-        order.setDeliveryCharge(orderRequest.getDeliveryCharge());
-        order.setDeliveryDate(orderRequest.getDeliveryDate());
-        order.setTotalAmount(totalAmount); // Set the calculated total amount
+        updateOrderFields(order, marketplace, customer, orderRequest, totalAmount);
         
-        Order savedOrder = orderRepository.save(order);
+        // Update products
+        updateOrderProducts(order, orderRequest.getProducts(), files);
         
-        // Get existing products
-        List<OrderProduct> existingProducts = orderProductRepository.findByOrderId(id);
-        Map<Long, OrderProduct> existingProductMap = new HashMap<>();
-        for (OrderProduct existingProduct : existingProducts) {
-            if (existingProduct.getId() != null) {
-                existingProductMap.put(existingProduct.getId(), existingProduct);
-            }
-        }
-        
-        // Track products to keep
-        Set<Long> productsToKeep = new HashSet<>();
-        
-        // Update or create products
-        for (OrderProductRequest productRequest : orderRequest.getProducts()) {
-            OrderProduct product;
-            
-            // Check if this is an existing product or a new one
-            if (productRequest.getId() != null && existingProductMap.containsKey(productRequest.getId())) {
-                // Update existing product
-                product = existingProductMap.get(productRequest.getId());
-                productsToKeep.add(product.getId());
-                
-                // Update product fields
-                Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
-                
-                product.setProductType(productRequest.getProductType());
-                product.setFabric(fabric);
-                product.setQuantity(productRequest.getQuantity());
-                product.setPrice(productRequest.getPrice());
-                product.setDescription(productRequest.getDescription());
-                
-                // Save updated product
-                product = orderProductRepository.save(product);
-                
-                // Get existing images
-                List<OrderProductImage> existingImages = orderProductImageRepository.findByOrderProductId(product.getId());
-                Map<Long, OrderProductImage> existingImageMap = new HashMap<>();
-                for (OrderProductImage existingImage : existingImages) {
-                    existingImageMap.put(existingImage.getImageId(), existingImage);
-                }
-                
-                // Track images to keep
-                Set<Long> imagesToKeep = new HashSet<>();
-                
-                // Handle existing images
-                if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
-                    for (Long imageId : productRequest.getImageIds()) {
-                        // Check if image already exists for this product
-                        if (existingImageMap.containsKey(imageId)) {
-                            // Keep existing image
-                            imagesToKeep.add(imageId);
-                        } else {
-                            // Verify image exists
-                            FileStorage fileStorage = fileStorageRepository.findById(imageId)
-                                    .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
-                            
-                            // Create new image reference
-                            OrderProductImage image = OrderProductImage.builder()
-                                    .orderProduct(product)
-                                    .imageId(imageId)
-                                    .imageUrl("/files/" + imageId)
-                                    .build();
-                            
-                            orderProductImageRepository.save(image);
-                            imagesToKeep.add(imageId);
-                        }
-                    }
-                }
-                
-                // Remove images that are no longer needed
-                for (OrderProductImage existingImage : existingImages) {
-                    if (!imagesToKeep.contains(existingImage.getImageId())) {
-                        orderProductImageRepository.delete(existingImage);
-                    }
-                }
-            } else {
-                // Create new product
-                Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
-                
-                product = OrderProduct.builder()
-                        .order(savedOrder)
-                        .productType(productRequest.getProductType())
-                        .fabric(fabric)
-                        .quantity(productRequest.getQuantity())
-                        .price(productRequest.getPrice())
-                        .description(productRequest.getDescription())
-                        .build();
-                
-                product = orderProductRepository.save(product);
-                
-                // Handle existing images
-                if (productRequest.getImageIds() != null && !productRequest.getImageIds().isEmpty()) {
-                    for (Long imageId : productRequest.getImageIds()) {
-                        // Verify image exists
-                        FileStorage fileStorage = fileStorageRepository.findById(imageId)
-                                .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
-                        
-                        OrderProductImage image = OrderProductImage.builder()
-                                .orderProduct(product)
-                                .imageId(imageId)
-                                .imageUrl("/files/" + imageId)
-                                .build();
-                        
-                        orderProductImageRepository.save(image);
-                    }
-                }
-            }
-            
-            // Handle new images from files
-            if (files != null && !files.isEmpty()) {
-                for (MultipartFile file : files) {
-                    try {
-                        // Save image to file storage
-                        FileStorage fileStorage = fileStorageService.storeFile(
-                                file,
-                                "ORDER_PRODUCT",
-                                product.getId()
-                        );
-                        
-                        // Create order product image
-                        OrderProductImage image = OrderProductImage.builder()
-                                .orderProduct(product)
-                                .imageId(fileStorage.getId())
-                                .imageUrl("/files/" + fileStorage.getId())
-                                .build();
-                        
-                        orderProductImageRepository.save(image);
-                    } catch (Exception e) {
-                        log.error("Error saving product image", e);
-                        // Continue with other images
-                    }
-                }
-            }
-            
-            // Handle new images from base64
-            if (productRequest.getTempImageBase64() != null && !productRequest.getTempImageBase64().isEmpty()) {
-                for (String base64Image : productRequest.getTempImageBase64()) {
-                    try {
-                        // Process base64 image
-                        // This would be implemented in a real application
-                        log.info("Processing base64 image for product ID: {}", product.getId());
-                        
-                        // For now, we'll skip this since we're using MultipartFile
-                    } catch (Exception e) {
-                        log.error("Error saving product image from base64", e);
-                    }
-                }
-            }
-        }
-        
-        // Delete products that are no longer needed
-        for (OrderProduct existingProduct : existingProducts) {
-            if (existingProduct.getId() != null && !productsToKeep.contains(existingProduct.getId())) {
-                // First delete all images associated with this product
-                List<OrderProductImage> images = orderProductImageRepository.findByOrderProductId(existingProduct.getId());
-                for (OrderProductImage image : images) {
-                    orderProductImageRepository.delete(image);
-                }
-                
-                // Then delete the product
-                orderProductRepository.delete(existingProduct);
-                
-                log.info("Deleted product with ID: {} from order: {}", existingProduct.getId(), id);
-            }
-        }
-        
-        return mapOrderToResponse(savedOrder);
+        return orderMapper.mapOrderToResponse(order);
     }
 
+    /**
+     * Delete an order
+     */
     @Override
     @Transactional
     public void deleteOrder(Long id) {
@@ -453,88 +165,122 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.deleteById(id);
     }
 
+    /**
+     * Get all orders with pagination
+     */
     @Override
     public Page<OrderResponse> getAllOrders(Pageable pageable) {
         log.info("Getting all orders with pagination");
         
         return orderRepository.findAll(pageable)
-                .map(this::mapOrderToResponse);
+                .map(orderMapper::mapOrderToResponse);
     }
 
+    /**
+     * Get orders by marketplace ID
+     */
     @Override
     public Page<OrderResponse> getOrdersByMarketplaceId(Long marketplaceId, Pageable pageable) {
         log.info("Getting orders by marketplace ID: {}", marketplaceId);
         
         return orderRepository.findByMarketplaceId(marketplaceId, pageable)
-                .map(this::mapOrderToResponse);
+                .map(orderMapper::mapOrderToResponse);
     }
 
+    /**
+     * Get orders by created by user ID
+     */
     @Override
     public Page<OrderResponse> getOrdersByCreatedById(Long userId, Pageable pageable) {
         log.info("Getting orders by user ID: {}", userId);
         
         return orderRepository.findByCreatedById(userId, pageable)
-                .map(this::mapOrderToResponse);
+                .map(orderMapper::mapOrderToResponse);
     }
 
+    /**
+     * Get orders by status
+     */
     @Override
-    public Page<OrderResponse> getOrdersByStatus(String status, Pageable pageable) {
-        log.info("Getting orders by status: {}", status);
+    public Page<OrderResponse> getOrdersByStatus(String statusStr, Pageable pageable) {
+        log.info("Getting orders by status: {}", statusStr);
         
+        OrderStatus status = OrderStatus.fromString(statusStr);
         return orderRepository.findByStatus(status, pageable)
-                .map(this::mapOrderToResponse);
+                .map(orderMapper::mapOrderToResponse);
     }
 
+    /**
+     * Get orders by delivery date range
+     */
     @Override
     public Page<OrderResponse> getOrdersByDeliveryDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable) {
         log.info("Getting orders by delivery date between: {} and {}", startDate, endDate);
         
         return orderRepository.findByDeliveryDateBetween(startDate, endDate, pageable)
-                .map(this::mapOrderToResponse);
+                .map(orderMapper::mapOrderToResponse);
     }
 
+    /**
+     * Get orders by multiple filters
+     */
     @Override
     public Page<OrderResponse> getOrdersByFilters(
-            String status,
+            String statusStr,
             LocalDate startDate,
             LocalDate endDate,
             Long marketplaceId,
             String customerName,
             Pageable pageable) {
         log.info("Getting orders by filters: status={}, startDate={}, endDate={}, marketplaceId={}, customerName={}",
-                status, startDate, endDate, marketplaceId, customerName);
+                statusStr, startDate, endDate, marketplaceId, customerName);
         
+        OrderStatus status = statusStr != null ? OrderStatus.fromString(statusStr) : null;
         return orderRepository.findByFilters(status, startDate, endDate, marketplaceId, customerName, pageable)
-                .map(this::mapOrderToResponse);
+                .map(orderMapper::mapOrderToResponse);
     }
 
+    /**
+     * Update order status
+     */
     @Override
     @Transactional
-    public OrderResponse updateOrderStatus(Long id, String status, String notes, Long userId) {
-        User updatedBy = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-        log.info("Updating order status: orderId={}, status={}, updatedBy={}", id, status, updatedBy.getId());
+    public OrderResponse updateOrderStatus(Long id, String statusStr, String notes, Long userId) {
+        User updatedBy = getUserById(userId);
+        log.info("Updating order status: orderId={}, status={}, updatedBy={}", id, statusStr, updatedBy.getId());
         
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
         
+        // Convert string status to enum
+        OrderStatus newStatus = OrderStatus.fromString(statusStr);
+        OrderStatus currentStatus = order.getStatus();
+        
+        // Validate status transition
+        if (!statusValidationService.isValidTransition(currentStatus, newStatus)) {
+            throw new InvalidStatusTransitionException(currentStatus, newStatus);
+        }
+        
         // Update order status
-        order.setStatus(status);
+        order.setStatus(newStatus);
         Order savedOrder = orderRepository.save(order);
         
         // Create status history
         OrderStatusHistory statusHistory = OrderStatusHistory.builder()
                 .order(savedOrder)
-                .status(status)
+                .status(newStatus)
                 .notes(notes)
                 .updatedBy(updatedBy)
                 .build();
         
         orderStatusHistoryRepository.save(statusHistory);
         
-        return mapOrderToResponse(savedOrder);
+        return orderMapper.mapOrderToResponse(savedOrder);
     }
 
+    /**
+     * Generate PDF for an order
+     */
     @Override
     public ResponseEntity<Resource> generateOrderPdf(Long id) {
         log.info("Generating PDF for order with ID: {}", id);
@@ -546,332 +292,39 @@ public class OrderServiceImpl implements OrderService {
         List<OrderStatusHistory> statusHistory = orderStatusHistoryRepository.findByOrderIdWithUserOrderByTimestampDesc(id);
         order.setStatusHistory(statusHistory);
         
-        // Load product images
-        List<OrderProductImage> allImages = new ArrayList<>();
+        // Load product images for each product
         for (OrderProduct product : order.getProducts()) {
-            List<OrderProductImage> images = orderProductImageRepository.findByOrderProductId(product.getId());
-            product.setImages(images);
-            allImages.addAll(images);
+            product.setImages(orderProductImageRepository.findByOrderProductId(product.getId()));
         }
         
-        try {
-            // Create PDF document
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfWriter writer = new PdfWriter(baos);
-            PdfDocument pdfDoc = new PdfDocument(writer);
-            Document document = new Document(pdfDoc, PageSize.A4);
-            document.setMargins(36, 36, 36, 36); // 0.5 inch margins
-            
-            // Create fonts
-            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
-            PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
-            
-            // First page - Invoice details
-            createInvoicePage(document, order, boldFont, regularFont);
-            
-            // Second page - Product images
-            if (!allImages.isEmpty()) {
-                // Add a new page for images
-                document.add(new Paragraph("\n"));
-                document.add(new Paragraph("Product Images").setFont(boldFont).setFontSize(14)
-                        .setTextAlignment(TextAlignment.CENTER));
-                document.add(new Paragraph("\n"));
-                
-                createImagesPage(document, allImages);
-            }
-            
-            // Close document
-            document.close();
-            
-            // Return PDF as resource
-            byte[] pdfBytes = baos.toByteArray();
-            ByteArrayResource resource = new ByteArrayResource(pdfBytes);
-            
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=order-" + id + ".pdf")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .contentLength(pdfBytes.length)
-                    .body(resource);
-            
-        } catch (IOException e) {
-            log.error("Error generating PDF for order with ID: {}", id, e);
-            throw new RuntimeException("Failed to generate PDF", e);
-        }
-    }
-    
-    /**
-     * Creates the first page of the PDF with invoice-like details
-     */
-    private void createInvoicePage(Document document, Order order, PdfFont boldFont, PdfFont regularFont) {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        
-        // Header
-        Paragraph header = new Paragraph("INVOICE")
-                .setFont(boldFont)
-                .setFontSize(20)
-                .setTextAlignment(TextAlignment.CENTER);
-        document.add(header);
-        
-        // Order details
-        Table orderDetailsTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
-                .setWidth(UnitValue.createPercentValue(100));
-        
-        // Left column - Company/Marketplace details
-        Cell leftCell = new Cell()
-                .setBorder(null)
-                .add(new Paragraph("From:").setFont(boldFont))
-                .add(new Paragraph(order.getMarketplace().getName()).setFont(regularFont))
-                .add(new Paragraph(order.getMarketplace().getPageUrl()).setFont(regularFont));
-        
-        // Right column - Order details
-        Cell rightCell = new Cell()
-                .setBorder(null)
-                .add(new Paragraph("Order Details:").setFont(boldFont))
-                .add(new Paragraph("Order #: " + order.getOrderNumber()).setFont(regularFont))
-                .add(new Paragraph("Date: " + order.getCreatedAt().format(dateFormatter)).setFont(regularFont))
-                .add(new Paragraph("Status: " + order.getStatus()).setFont(regularFont))
-                .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont));
-        
-        orderDetailsTable.addCell(leftCell);
-        orderDetailsTable.addCell(rightCell);
-        document.add(orderDetailsTable);
-        
-        document.add(new Paragraph("\n"));
-        
-        // Customer details
-        Table customerTable = new Table(UnitValue.createPercentArray(new float[]{1}))
-                .setWidth(UnitValue.createPercentValue(100));
-        
-        Cell customerCell = new Cell()
-                .setBorder(null)
-                .add(new Paragraph("Customer Information:").setFont(boldFont))
-                .add(new Paragraph("Name: " + order.getCustomer().getName()).setFont(regularFont))
-                .add(new Paragraph("Phone: " + order.getCustomer().getPhone()).setFont(regularFont));
-        
-        if (order.getCustomer().getAlternativePhone() != null && !order.getCustomer().getAlternativePhone().isEmpty()) {
-            customerCell.add(new Paragraph("Alternative Phone: " + order.getCustomer().getAlternativePhone()).setFont(regularFont));
-        }
-        
-        customerCell.add(new Paragraph("Address: " + order.getCustomer().getAddress()).setFont(regularFont));
-        
-        if (order.getCustomer().getFacebookId() != null && !order.getCustomer().getFacebookId().isEmpty()) {
-            customerCell.add(new Paragraph("Facebook: " + order.getCustomer().getFacebookId()).setFont(regularFont));
-        }
-        
-        customerTable.addCell(customerCell);
-        document.add(customerTable);
-        
-        document.add(new Paragraph("\n"));
-        
-        // Delivery details
-        Table deliveryTable = new Table(UnitValue.createPercentArray(new float[]{1}))
-                .setWidth(UnitValue.createPercentValue(100));
-        
-        Cell deliveryCell = new Cell()
-                .setBorder(null)
-                .add(new Paragraph("Delivery Information:").setFont(boldFont))
-                .add(new Paragraph("Channel: " + order.getDeliveryChannel()).setFont(regularFont))
-                .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont));
-        
-        deliveryTable.addCell(deliveryCell);
-        document.add(deliveryTable);
-        
-        document.add(new Paragraph("\n"));
-        
-        // Products table
-        Table productsTable = new Table(UnitValue.createPercentArray(new float[]{3, 2, 1, 2, 2}))
-                .setWidth(UnitValue.createPercentValue(100));
-        
-        // Table header
-        productsTable.addHeaderCell(new Cell().add(new Paragraph("Product").setFont(boldFont)));
-        productsTable.addHeaderCell(new Cell().add(new Paragraph("Fabric").setFont(boldFont)));
-        productsTable.addHeaderCell(new Cell().add(new Paragraph("Qty").setFont(boldFont)));
-        productsTable.addHeaderCell(new Cell().add(new Paragraph("Unit Price").setFont(boldFont)));
-        productsTable.addHeaderCell(new Cell().add(new Paragraph("Subtotal").setFont(boldFont)));
-        
-        // Table rows
-        for (OrderProduct product : order.getProducts()) {
-            productsTable.addCell(new Cell().add(new Paragraph(product.getProductType()).setFont(regularFont)));
-            productsTable.addCell(new Cell().add(new Paragraph(product.getFabric().getName()).setFont(regularFont)));
-            productsTable.addCell(new Cell().add(new Paragraph(String.valueOf(product.getQuantity())).setFont(regularFont)));
-            productsTable.addCell(new Cell().add(new Paragraph(product.getPrice().toString()).setFont(regularFont)));
-            
-            BigDecimal subtotal = product.getPrice().multiply(new BigDecimal(product.getQuantity()));
-            productsTable.addCell(new Cell().add(new Paragraph(subtotal.toString()).setFont(regularFont)));
-        }
-        
-        document.add(productsTable);
-        
-        document.add(new Paragraph("\n"));
-        
-        // Totals
-        Table totalsTable = new Table(UnitValue.createPercentArray(new float[]{4, 1}))
-                .setWidth(UnitValue.createPercentValue(100));
-        
-        // Calculate subtotal
-        BigDecimal subtotal = order.getProducts().stream()
-                .map(p -> p.getPrice().multiply(new BigDecimal(p.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Subtotal:").setFont(boldFont).setTextAlignment(TextAlignment.RIGHT)));
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph(subtotal.toString()).setFont(regularFont)));
-        
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Delivery Charge:").setFont(boldFont).setTextAlignment(TextAlignment.RIGHT)));
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph(order.getDeliveryCharge().toString()).setFont(regularFont)));
-        
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Total:").setFont(boldFont).setTextAlignment(TextAlignment.RIGHT)));
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph(order.getTotalAmount().toString()).setFont(boldFont)));
-        
-        document.add(totalsTable);
-        
-        // Add page break for images
-        document.add(new AreaBreak());
-    }
-    
-    /**
-     * Creates the second page with product images in a grid layout
-     */
-    private void createImagesPage(Document document, List<OrderProductImage> images) throws IOException {
-        // Create a table for the image grid
-        // We'll use 2 columns for the grid
-        Table imageTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
-                .setWidth(UnitValue.createPercentValue(100));
-        
-        // Calculate how many images we can fit on the page
-        // For simplicity, we'll limit to a maximum of 6 images (3 rows x 2 columns)
-        int maxImages = Math.min(images.size(), 6);
-        
-        for (int i = 0; i < maxImages; i++) {
-            OrderProductImage orderImage = images.get(i);
-            
-            try {
-                // Get image data from storage
-                FileStorage fileStorage = fileStorageRepository.findById(orderImage.getImageId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + orderImage.getImageId()));
-                
-                byte[] imageData;
-                if (fileStorageConfig.isUseS3Storage()) {
-                    // Get from S3
-                    imageData = s3Service.downloadFile(fileStorage.getFilePath());
-                } else {
-                    // Get from local storage
-                    java.nio.file.Path imagePath = fileStorageConfig.getUploadPath()
-                            .resolve(fileStorage.getFilePath());
-                    imageData = java.nio.file.Files.readAllBytes(imagePath);
-                }
-                
-                // Create image
-                ImageData data = ImageDataFactory.create(imageData);
-                Image img = new Image(data);
-                
-                // Scale image to fit in cell while maintaining aspect ratio
-                float maxWidth = 250; // Max width for the image in the cell
-                float maxHeight = 250; // Max height for the image in the cell
-                
-                // Calculate scaling factor to maintain aspect ratio
-                float imgWidth = img.getImageWidth();
-                float imgHeight = img.getImageHeight();
-                float widthRatio = maxWidth / imgWidth;
-                float heightRatio = maxHeight / imgHeight;
-                float scaleFactor = Math.min(widthRatio, heightRatio);
-                
-                // Scale image
-                img.scale(scaleFactor, scaleFactor);
-                
-                // Center image in cell
-                Cell cell = new Cell()
-                        .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
-                        .setPadding(10)
-                        .setHorizontalAlignment(HorizontalAlignment.CENTER)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                        .add(img);
-                
-                imageTable.addCell(cell);
-            } catch (Exception e) {
-                log.error("Error adding image to PDF: {}", e.getMessage());
-                // Add empty cell if image can't be loaded
-                Cell cell = new Cell()
-                        .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
-                        .setPadding(10)
-                        .add(new Paragraph("Image not available").setFontColor(ColorConstants.GRAY));
-                imageTable.addCell(cell);
-            }
-        }
-        
-        // If we have an odd number of images, add an empty cell to complete the grid
-        if (maxImages % 2 != 0) {
-            Cell cell = new Cell().setBorder(null);
-            imageTable.addCell(cell);
-        }
-        
-        document.add(imageTable);
+        // Generate PDF using the dedicated generator
+        return pdfGenerator.generateOrderPdf(order);
     }
 
+    /**
+     * Generate Excel for orders
+     */
     @Override
-    public ResponseEntity<Resource> generateOrdersExcel(String status, LocalDate startDate, LocalDate endDate) {
-        log.info("Exporting orders to Excel: status={}, startDate={}, endDate={}", status, startDate, endDate);
+    public ResponseEntity<Resource> generateOrdersExcel(String statusStr, LocalDate startDate, LocalDate endDate) {
+        log.info("Exporting orders to Excel: status={}, startDate={}, endDate={}", statusStr, startDate, endDate);
         
         // Get orders based on filters
         List<Order> orders;
-        if (status != null || startDate != null || endDate != null) {
+        if (statusStr != null || startDate != null || endDate != null) {
+            OrderStatus status = statusStr != null ? OrderStatus.fromString(statusStr) : null;
             Page<Order> orderPage = orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, null, null, Pageable.unpaged());
             orders = orderPage.getContent();
         } else {
             orders = orderRepository.findAll();
         }
         
-        // Create Excel workbook
-        try {
-            // This is a placeholder for the actual Excel generation logic
-            // In a real implementation, you would use a library like Apache POI to create the Excel file
-            
-            // For now, return a simple CSV content
-            StringBuilder csvContent = new StringBuilder();
-            csvContent.append("ID,Order Number,Created Date,Created By,Status,Marketplace,Customer Name,Customer Phone,Customer Address,Alternative Phone,Facebook ID,Delivery Channel,Delivery Charge,Delivery Date,Products Count,Total Amount\n");
-            
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            
-            for (Order order : orders) {
-                csvContent.append(order.getId()).append(",");
-                csvContent.append(order.getOrderNumber()).append(",");
-                csvContent.append(order.getCreatedAt().toString()).append(",");
-                csvContent.append(order.getCreatedBy().getFirstName()).append(" ").append(order.getCreatedBy().getLastName()).append(",");
-                csvContent.append(order.getStatus()).append(",");
-                csvContent.append(order.getMarketplace().getName()).append(",");
-                csvContent.append(order.getCustomer().getName()).append(",");
-                csvContent.append(order.getCustomer().getPhone()).append(",");
-                csvContent.append(order.getCustomer().getAddress()).append(",");
-                csvContent.append(order.getCustomer().getAlternativePhone() != null ? order.getCustomer().getAlternativePhone() : "").append(",");
-                csvContent.append(order.getCustomer().getFacebookId() != null ? order.getCustomer().getFacebookId() : "").append(",");
-                csvContent.append(order.getDeliveryChannel()).append(",");
-                csvContent.append(order.getDeliveryCharge().doubleValue()).append(",");
-                csvContent.append(order.getDeliveryDate().format(dateFormatter)).append(",");
-                csvContent.append(order.getProducts().size()).append(",");
-                
-                // Calculate total
-                BigDecimal total = order.getProducts().stream()
-                        .map(p -> p.getPrice().multiply(new BigDecimal(p.getQuantity())))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add)
-                        .add(order.getDeliveryCharge());
-                
-                csvContent.append(total.doubleValue()).append("\n");
-            }
-            
-            byte[] excelBytes = csvContent.toString().getBytes();
-            
-            ByteArrayResource resource = new ByteArrayResource(excelBytes);
-            
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=orders.csv")
-                    .contentType(MediaType.parseMediaType("text/csv"))
-                    .contentLength(excelBytes.length)
-                    .body(resource);
-        } catch (Exception e) {
-            log.error("Error exporting orders to Excel", e);
-            throw new RuntimeException("Failed to export orders to Excel", e);
-        }
+        // Generate Excel using the dedicated generator
+        return excelGenerator.generateOrdersExcel(orders, statusStr, startDate, endDate);
     }
 
+    /**
+     * Get order status counts
+     */
     @Override
     public List<Map<String, Object>> getOrderStatusCounts() {
         log.info("Getting order status counts");
@@ -879,6 +332,9 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.getOrderStatusCounts();
     }
     
+    /**
+     * Get user order statistics
+     */
     @Override
     public List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth) {
         log.info("Getting user order statistics for {}", currentMonth ? "current month" : "current year");
@@ -938,6 +394,9 @@ public class OrderServiceImpl implements OrderService {
         return result;
     }
     
+    /**
+     * Get marketplace order statistics
+     */
     @Override
     public List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth) {
         log.info("Getting marketplace order statistics for {}", currentMonth ? "current month" : "current year");
@@ -993,143 +452,266 @@ public class OrderServiceImpl implements OrderService {
     }
     
     /**
-     * Map an Order entity to an OrderResponse DTO
+     * Find orders with similar products based on product type AND fabric
+     * Limited to returned or cancelled orders
+     * Also filters by description similarity (at least 50% match)
      */
-    private OrderResponse mapOrderToResponse(Order order) {
-        // Map marketplace
-        OrderResponse.MarketplaceResponse marketplaceResponse = OrderResponse.MarketplaceResponse.builder()
-                .id(order.getMarketplace().getId())
-                .name(order.getMarketplace().getName())
-                .description(order.getMarketplace().getPageUrl())
-                .build();
+    @Override
+    public List<OrderResponse> findSimilarOrders(Long orderId, int limit) {
+        log.info("Finding similar orders for order ID: {} with limit: {}", orderId, limit);
         
-        // Map customer
-        CustomerResponse customerResponse = CustomerResponse.builder()
-                .id(order.getCustomer().getId())
-                .name(order.getCustomer().getName())
-                .phone(order.getCustomer().getPhone())
-                .address(order.getCustomer().getAddress())
-                .alternativePhone(order.getCustomer().getAlternativePhone())
-                .facebookId(order.getCustomer().getFacebookId())
-                .createdAt(order.getCustomer().getCreatedAt())
-                .updatedAt(order.getCustomer().getUpdatedAt())
-                .build();
+        // Get the original order with products
+        Order order = orderRepository.findByIdWithProductsAndFabrics(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
         
-        // Map created by user
-        OrderResponse.UserResponse createdByDto = OrderResponse.UserResponse.builder()
-                .id(order.getCreatedBy().getId())
-                .firstName(order.getCreatedBy().getFirstName())
-                .lastName(order.getCreatedBy().getLastName())
-                .email(order.getCreatedBy().getEmail())
-                .build();
+        // Extract product types and fabric IDs from the order
+        List<String> productTypes = order.getProducts().stream()
+                .map(OrderProduct::getProductType)
+                .collect(java.util.stream.Collectors.toList());
         
-        // Map products
-        List<OrderProductResponse> productResponses = order.getProducts().stream()
-                .map(this::mapOrderProductToResponse)
-                .collect(Collectors.toList());
+        List<Long> fabricIds = order.getProducts().stream()
+                .map(product -> product.getFabric().getId())
+                .collect(java.util.stream.Collectors.toList());
         
-        // Map status history
-        List<OrderStatusHistoryResponse> statusHistoryResponses = orderStatusHistoryRepository
-                .findByOrderIdWithUserOrderByTimestampDesc(order.getId())
-                .stream()
-                .map(this::mapOrderStatusHistoryToResponse)
-                .collect(Collectors.toList());
+        // Create a map of product descriptions from the original order
+        Map<String, String> originalProductDescriptions = new HashMap<>();
+        for (OrderProduct product : order.getProducts()) {
+            String key = product.getProductType() + "-" + product.getFabric().getId();
+            originalProductDescriptions.put(key, product.getDescription());
+        }
         
-        // Calculate total amount
-        BigDecimal totalAmount = order.getProducts().stream()
-                .map(p -> p.getPrice().multiply(new BigDecimal(p.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .add(order.getDeliveryCharge());
+        // Find similar orders (returned or cancelled) with matching product types AND fabrics
+        List<Order> potentialSimilarOrders = orderRepository.findSimilarOrders(
+                orderId, 
+                productTypes, 
+                fabricIds,
+                limit * 2); // Get more than needed to allow for filtering
         
-        // Build response
-        return OrderResponse.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .marketplace(marketplaceResponse)
-                .customer(customerResponse)
-                .deliveryChannel(order.getDeliveryChannel())
-                .deliveryCharge(order.getDeliveryCharge())
-                .deliveryDate(order.getDeliveryDate())
-                .status(order.getStatus())
+        log.info("Found {} potential similar orders for order ID: {}", potentialSimilarOrders.size(), orderId);
+        
+        // Filter orders based on description similarity
+        List<Order> filteredOrders = new ArrayList<>();
+        for (Order similarOrder : potentialSimilarOrders) {
+            boolean hasMatchingProduct = false;
+            
+            for (OrderProduct product : similarOrder.getProducts()) {
+                String key = product.getProductType() + "-" + product.getFabric().getId();
+                String originalDescription = originalProductDescriptions.get(key);
+                
+                if (originalDescription != null && product.getDescription() != null) {
+                    double similarity = calculateTextSimilarity(originalDescription, product.getDescription());
+                    if (similarity >= 0.5) { // At least 50% similarity
+                        hasMatchingProduct = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (hasMatchingProduct) {
+                filteredOrders.add(similarOrder);
+                if (filteredOrders.size() >= limit) {
+                    break; // Stop once we have enough orders
+                }
+            }
+        }
+        
+        log.info("Filtered to {} similar orders with matching descriptions for order ID: {}", 
+                filteredOrders.size(), orderId);
+        
+        // Map to response DTOs
+        return filteredOrders.stream()
+                .map(orderMapper::mapOrderToResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * Calculate text similarity using Jaccard similarity
+     * @param text1 first text
+     * @param text2 second text
+     * @return similarity score between 0 and 1
+     */
+    private double calculateTextSimilarity(String text1, String text2) {
+        if (text1 == null || text2 == null) {
+            return 0.0;
+        }
+        
+        // Normalize texts and split into words
+        Set<String> words1 = tokenizeText(text1);
+        Set<String> words2 = tokenizeText(text2);
+        
+        // Calculate Jaccard similarity: intersection size / union size
+        Set<String> intersection = new HashSet<>(words1);
+        intersection.retainAll(words2);
+        
+        Set<String> union = new HashSet<>(words1);
+        union.addAll(words2);
+        
+        if (union.isEmpty()) {
+            return 0.0;
+        }
+        
+        return (double) intersection.size() / union.size();
+    }
+    
+    /**
+     * Tokenize text into a set of words
+     * @param text input text
+     * @return set of words
+     */
+    private Set<String> tokenizeText(String text) {
+        if (text == null || text.isEmpty()) {
+            return Collections.emptySet();
+        }
+        
+        // Convert to lowercase, remove punctuation, and split by whitespace
+        String normalized = text.toLowerCase()
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        
+        return new HashSet<>(Arrays.asList(normalized.split("\\s+")));
+    }
+    
+    // Helper methods
+    
+    /**
+     * Get user by ID
+     */
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+    }
+    
+    /**
+     * Get marketplace by ID
+     */
+    private Marketplace getMarketplaceById(Long marketplaceId) {
+        return marketplaceRepository.findById(marketplaceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Marketplace not found with ID: " + marketplaceId));
+    }
+    
+    /**
+     * Get or create customer from order request
+     */
+    private Customer getOrCreateCustomer(OrderRequest orderRequest) {
+        if (orderRequest.getCustomerId() != null) {
+            // Use existing customer
+            Customer customer = customerService.getCustomerEntityById(orderRequest.getCustomerId());
+            log.info("Using existing customer with ID: {}", customer.getId());
+            return customer;
+        } else if (orderRequest.getCustomerData() != null) {
+            // Create new customer or find by phone
+            CustomerResponse customerResponse = customerService.findOrCreateCustomer(orderRequest.getCustomerData());
+            Customer customer = customerService.getCustomerEntityById(customerResponse.getId());
+            log.info("Found or created customer with ID: {}", customer.getId());
+            return customer;
+        } else {
+            throw new IllegalArgumentException("Either customerId or customerData must be provided");
+        }
+    }
+    
+    /**
+     * Create initial order
+     */
+    private Order createInitialOrder(Marketplace marketplace, Customer customer, OrderRequest orderRequest, BigDecimal totalAmount, User currentUser) {
+        // Create order with a temporary order number to avoid constraint violation
+        String tempOrderNumber = "TEMP-" + System.currentTimeMillis();
+        
+        Order order = Order.builder()
+                .marketplace(marketplace)
+                .customer(customer)
+                .deliveryChannel(orderRequest.getDeliveryChannel())
+                .deliveryCharge(orderRequest.getDeliveryCharge())
+                .deliveryDate(orderRequest.getDeliveryDate())
+                .status(OrderStatus.ORDER_CREATED)
                 .totalAmount(totalAmount)
-                .createdBy(createdByDto)
-                .products(productResponses)
-                .statusHistory(statusHistoryResponses)
-                .createdAt(order.getCreatedAt())
-                .updatedAt(order.getUpdatedAt())
+                .createdBy(currentUser)
+                .orderNumber(tempOrderNumber)
                 .build();
+        
+        // Save the order first to get the ID
+        Order savedOrder = orderRepository.save(order);
+        
+        // Generate and set the custom order number
+        String orderNumber = String.format("ET-ORD-%04d", savedOrder.getId());
+        savedOrder.setOrderNumber(orderNumber);
+        
+        // Save again with the proper order number
+        return orderRepository.save(savedOrder);
     }
     
     /**
-     * Map an OrderProduct entity to an OrderProductResponse DTO
+     * Create initial status history
      */
-    private OrderProductResponse mapOrderProductToResponse(OrderProduct product) {
-        // Map fabric
-        OrderProductResponse.FabricResponse fabricResponse = OrderProductResponse.FabricResponse.builder()
-                .id(product.getFabric().getId())
-                .name(product.getFabric().getName())
-                .imageUrl("/files/" + product.getFabric().getImageId())
+    private void createInitialStatusHistory(Order order, User currentUser) {
+        OrderStatusHistory statusHistory = OrderStatusHistory.builder()
+                .order(order)
+                .status(OrderStatus.ORDER_CREATED)
+                .notes("Order created")
+                .updatedBy(currentUser)
                 .build();
         
-        // Map images
-        List<OrderProductImageResponse> imageResponses = orderProductImageRepository
-                .findByOrderProductId(product.getId())
-                .stream()
-                .map(this::mapOrderProductImageToResponse)
-                .collect(Collectors.toList());
-        
-        // Calculate subtotal
-        BigDecimal subtotal = product.getPrice().multiply(new BigDecimal(product.getQuantity()));
-        
-        // Build response
-        return OrderProductResponse.builder()
-                .id(product.getId())
-                .productType(product.getProductType())
-                .fabric(fabricResponse)
-                .quantity(product.getQuantity())
-                .price(product.getPrice())
-                .description(product.getDescription())
-                .subtotal(subtotal)
-                .images(imageResponses)
-                .createdAt(product.getCreatedAt())
-                .updatedAt(product.getUpdatedAt())
-                .build();
+        orderStatusHistoryRepository.save(statusHistory);
     }
     
     /**
-     * Map an OrderProductImage entity to an OrderProductImageResponse DTO
+     * Create order products
      */
-    private OrderProductImageResponse mapOrderProductImageToResponse(OrderProductImage image) {
-        return OrderProductImageResponse.builder()
-                .id(image.getId())
-                .imageId(image.getImageId())
-                .imageUrl(image.getImageUrl())
-                .createdAt(image.getCreatedAt())
-                .updatedAt(image.getUpdatedAt())
-                .build();
+    private void createOrderProducts(Order order, List<OrderProductRequest> productRequests, List<MultipartFile> files) {
+        for (OrderProductRequest productRequest : productRequests) {
+            productHandler.createOrderProduct(productRequest, order, files);
+        }
     }
     
     /**
-     * Map an OrderStatusHistory entity to an OrderStatusHistoryResponse DTO
+     * Update order fields
      */
-    private OrderStatusHistoryResponse mapOrderStatusHistoryToResponse(OrderStatusHistory history) {
-        // Map updated by user
-        OrderStatusHistoryResponse.UserResponse updatedByDto = OrderStatusHistoryResponse.UserResponse.builder()
-                .id(history.getUpdatedBy().getId())
-                .firstName(history.getUpdatedBy().getFirstName())
-                .lastName(history.getUpdatedBy().getLastName())
-                .email(history.getUpdatedBy().getEmail())
-                .build();
+    private void updateOrderFields(Order order, Marketplace marketplace, Customer customer, OrderRequest orderRequest, BigDecimal totalAmount) {
+        order.setMarketplace(marketplace);
+        order.setCustomer(customer);
+        order.setDeliveryChannel(orderRequest.getDeliveryChannel());
+        order.setDeliveryCharge(orderRequest.getDeliveryCharge());
+        order.setDeliveryDate(orderRequest.getDeliveryDate());
+        order.setTotalAmount(totalAmount);
         
-        // Build response
-        return OrderStatusHistoryResponse.builder()
-                .id(history.getId())
-                .status(history.getStatus())
-                .notes(history.getNotes())
-                .updatedBy(updatedByDto)
-                .timestamp(history.getTimestamp())
-                .createdAt(history.getCreatedAt())
-                .updatedAt(history.getUpdatedAt())
-                .build();
+        orderRepository.save(order);
+    }
+    
+    /**
+     * Update order products
+     */
+    private void updateOrderProducts(Order order, List<OrderProductRequest> productRequests, List<MultipartFile> files) {
+        // Get existing products
+        List<OrderProduct> existingProducts = orderProductRepository.findByOrderId(order.getId());
+        Map<Long, OrderProduct> existingProductMap = new HashMap<>();
+        for (OrderProduct existingProduct : existingProducts) {
+            if (existingProduct.getId() != null) {
+                existingProductMap.put(existingProduct.getId(), existingProduct);
+            }
+        }
+        
+        // Track products to keep
+        Set<Long> productsToKeep = new HashSet<>();
+        
+        // Update or create products
+        for (OrderProductRequest productRequest : productRequests) {
+            if (productRequest.getId() != null && existingProductMap.containsKey(productRequest.getId())) {
+                // Update existing product
+                OrderProduct existingProduct = existingProductMap.get(productRequest.getId());
+                productsToKeep.add(existingProduct.getId());
+                
+                productHandler.updateOrderProduct(existingProduct, productRequest, files);
+            } else {
+                // Create new product
+                productHandler.createOrderProduct(productRequest, order, files);
+            }
+        }
+        
+        // Delete products that are no longer needed
+        for (OrderProduct existingProduct : existingProducts) {
+            if (existingProduct.getId() != null && !productsToKeep.contains(existingProduct.getId())) {
+                productHandler.deleteOrderProduct(existingProduct);
+            }
+        }
     }
 }

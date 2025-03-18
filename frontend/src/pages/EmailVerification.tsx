@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -37,7 +37,7 @@ const EmailVerification: React.FC = () => {
       }
 
       try {
-        const response = await authService.verifyEmail({ token });
+        await authService.verifyEmail({ token });
         setSuccess(true);
         setLoading(false);
       } catch (err: any) {

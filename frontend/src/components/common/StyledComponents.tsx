@@ -1,6 +1,8 @@
 import { styled } from '@mui/material/styles';
-import { Paper, Button, Avatar, Box, Typography } from '@mui/material';
+import { Paper, Button, Avatar, Box, Typography, BoxProps } from '@mui/material';
 
+
+interface FooterBoxProps extends BoxProps {}
 /**
  * Styled components for authentication pages
  */
@@ -50,12 +52,12 @@ export const LogoContainer = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-export const FooterBox = styled(Box)(({ theme }) => ({
+export const FooterBox = styled(Box)<FooterBoxProps>(({ theme }) => ({
   padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
-  marginTop: 'auto',
-  backgroundColor: theme.palette.mode === 'light' 
+  marginTop: "auto",
+  backgroundColor: theme.palette.mode === "light" 
     ? theme.customColors.lightGray 
-    : '#253547',
+    : "#253547",
   borderTop: `2px solid ${theme.customColors.teal}`,
 }));
 
