@@ -73,7 +73,7 @@ const Login: React.FC = () => {
         <AuthCard elevation={3} className="techminds-card">
         <LogoContainer className="techminds-logo-container">
           <LogoAvatar>
-            <PsychologyIcon fontSize="large" />
+            <img src="/eleganttexlogo.png" alt="Tech Minds" style={{height:"50px"}} />
           </LogoAvatar>
           <Typography 
             component="h1" 
@@ -83,10 +83,10 @@ const Login: React.FC = () => {
               fontWeight: 'bold'
             }}
           >
-            TechMinds
+            Elegant Tex
           </Typography>
           <Typography variant="subtitle1" color="text.secondary" align="center">
-            Empowering Technical Excellence
+          Best furniture's cover experience
           </Typography>
         </LogoContainer>
         
