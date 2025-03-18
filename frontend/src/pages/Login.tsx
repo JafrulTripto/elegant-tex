@@ -11,7 +11,6 @@ import {
   Container,
   Alert
 } from '@mui/material';
-import { Psychology as PsychologyIcon } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import ResendVerificationDialog from '../components/common/ResendVerificationDialog';
 import { AuthCard, LogoAvatar, LogoContainer, GradientButton } from '../components/common/StyledComponents';
