@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
-import { OrderStatus, ORDER_STATUS_COLORS } from '../../types/order';
+import { ORDER_STATUS_COLORS } from '../../types/order';
 
 interface OrderStatsCardProps {
   status: string;
@@ -14,12 +14,23 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ status, count, onClick 
   };
 
   const getStatusLabel = (status: string): string => {
-    if (status === 'CREATED') return 'Created';
-    if (status === 'IN_PROGRESS') return 'In Progress';
-    if (status === 'IN_QA') return 'In QA';
-    if (status === 'DELIVERED') return 'Delivered';
-    if (status === 'RETURNED') return 'Returned';
-    return status;
+    // Map backend status to display name
+    switch (status) {
+      case 'ORDER_CREATED': return 'Order Created';
+      case 'APPROVED': return 'Approved';
+      case 'BOOKING': return 'Booking';
+      case 'PRODUCTION': return 'Production';
+      case 'QA': return 'QA';
+      case 'READY': return 'Ready';
+      case 'DELIVERED': return 'Delivered';
+      case 'RETURNED': return 'Returned';
+      case 'CANCELLED': return 'Cancelled';
+      // Legacy status mapping
+      case 'CREATED': return 'Order Created';
+      case 'IN_PROGRESS': return 'Production';
+      case 'IN_QA': return 'QA';
+      default: return status;
+    }
   };
 
   return (

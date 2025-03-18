@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, Tabs, Tab, Paper, Grid, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Paper, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import RoleManagement from '../../components/admin/RoleManagement';
 import PermissionManagement from '../../components/admin/PermissionManagement';
 import ProductTypeManagement from '../../components/admin/ProductTypeManagement';
 import { 
   Security as SecurityIcon, 
   Category as CategoryIcon, 
-  Style as StyleIcon 
 } from '@mui/icons-material';
 
 interface TabPanelProps {
@@ -46,7 +46,7 @@ const SettingsPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('roles-permissions');
   const [tabValue, setTabValue] = useState(0);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -66,7 +66,7 @@ const SettingsPage: React.FC = () => {
       
       <Grid container spacing={3}>
         {/* Navigation Menu */}
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Paper sx={{ p: 2 }}>
             <List>
               <ListItem 
@@ -95,7 +95,7 @@ const SettingsPage: React.FC = () => {
         </Grid>
         
         {/* Content Area */}
-        <Grid item xs={12} md={9}>
+        <Grid size={{ xs: 12, md: 9 }}>
           <Paper sx={{ p: 3 }}>
             {activeSection === 'roles-permissions' && (
               <Box>

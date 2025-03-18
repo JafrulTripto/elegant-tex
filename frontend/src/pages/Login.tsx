@@ -9,9 +9,7 @@ import {
   Box,
   Typography,
   Container,
-  Alert,
-  Stack,
-  useTheme,
+  Alert
 } from '@mui/material';
 import { Psychology as PsychologyIcon } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';

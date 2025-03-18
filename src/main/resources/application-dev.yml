@@ -1,7 +1,7 @@
-# application.yml
 spring:
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    activate:
+      on-profile: dev
   servlet:
     multipart:
       max-file-size: 20MB
@@ -9,13 +9,13 @@ spring:
   application:
     name: elegant-tex
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/eleganttex
+    username: eleganttex
+    password: eleganttex
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -29,9 +29,9 @@ spring:
   mail:
     host: smtp.resend.com
     port: 587
-    from: ${MAIL_FROM}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    from: your-email@gmail.com
+    username: your-email@gmail.com
+    password: your-email-password
     properties:
       mail:
         smtp:
@@ -39,39 +39,27 @@ spring:
           starttls:
             enable: true
 
-# JWT Configuration
 jwt:
-  secret: ${JWT_SECRET}
-  access-token-expiration: 900000  # 15 minutes in milliseconds
-  refresh-token-expiration: 604800000  # 7 days in milliseconds
+  secret: ZWxlZ2FudHRleC1zZWNyZXQta2V5LWZvci1qd3QtdG9rZW4tc2lnbmluZw==
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
 
-# Server Configuration
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
   servlet:
     multipart:
       enabled: true
     context-path: /api/v1
 
-# Logging Configuration
 logging:
   level:
-    org.springframework.security: INFO
+    org.springframework.security: DEBUG
     com.tripzin.eleganttex: DEBUG
 
-# Springdoc OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: method
-
-# Application specific configuration
 app:
-  frontend-url: ${APP_FRONTEND_URL}
+  frontend-url: http://localhost:3000
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+    allowed-origins: http://localhost:3000
   file-storage:
     upload-dir: ${FILE_UPLOAD_DIR:uploads}
     allowed-file-types: jpg,jpeg,png,gif

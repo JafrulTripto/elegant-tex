@@ -26,7 +26,6 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
   initialCustomerId
 }) => {
   // State
-  const [searchTerm, setSearchTerm] = useState<string>('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -90,7 +89,6 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
   // Handle search term change
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    setSearchTerm(value);
     debouncedSearch(value);
   };
 

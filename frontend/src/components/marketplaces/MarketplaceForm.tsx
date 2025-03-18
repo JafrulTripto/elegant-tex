@@ -89,7 +89,7 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
     }
   };
 
-  const handleUserChange = (event: React.SyntheticEvent, newValue: User[]) => {
+  const handleUserChange = (_: React.SyntheticEvent, newValue: User[]) => {
     setSelectedUsers(newValue);
     setFormData(prev => ({
       ...prev,

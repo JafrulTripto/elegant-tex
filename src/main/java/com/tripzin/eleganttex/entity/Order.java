@@ -46,8 +46,9 @@ public class Order {
     @Column(name = "delivery_date", nullable = false)
     private LocalDate deliveryDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private String status;
+    private OrderStatus status;
 
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;

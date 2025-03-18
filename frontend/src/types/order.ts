@@ -111,53 +111,86 @@ export interface OrderStatusCount {
   count: number;
 }
 
-export type OrderStatus = 'CREATED' | 'IN_PROGRESS' | 'IN_QA' | 'DELIVERED' | 'RETURNED' | 
-                         'Created' | 'In Progress' | 'In QA' | 'Delivered' | 'Returned';
+export type OrderStatus = 
+  'ORDER_CREATED' | 'APPROVED' | 'BOOKING' | 'PRODUCTION' | 
+  'QA' | 'READY' | 'DELIVERED' | 'RETURNED' | 'CANCELLED' |
+  'Order Created' | 'Approved' | 'Booking' | 'Production' | 
+  'QA' | 'Ready' | 'Delivered' | 'Returned' | 'Cancelled';
 
 export const ORDER_STATUSES = {
-  CREATED: 'CREATED',
-  IN_PROGRESS: 'IN_PROGRESS',
-  IN_QA: 'IN_QA',
+  // Backend versions
+  ORDER_CREATED: 'ORDER_CREATED',
+  APPROVED: 'APPROVED',
+  BOOKING: 'BOOKING',
+  PRODUCTION: 'PRODUCTION',
+  QA: 'QA',
+  READY: 'READY',
   DELIVERED: 'DELIVERED',
   RETURNED: 'RETURNED',
-  
-  // Frontend display versions
-  Created: 'Created',
-  'In Progress': 'In Progress',
-  'In QA': 'In QA',
-  Delivered: 'Delivered',
-  Returned: 'Returned'
+  CANCELLED: 'CANCELLED'
+};
+
+// Frontend display versions
+export const ORDER_STATUS_DISPLAY = {
+  'Order Created': 'Order Created',
+  'Approved': 'Approved',
+  'Booking': 'Booking',
+  'Production': 'Production',
+  'QA': 'QA',
+  'Ready': 'Ready',
+  'Delivered': 'Delivered',
+  'Returned': 'Returned',
+  'Cancelled': 'Cancelled'
 };
 
 export const STATUS_OPTIONS = [
-  'CREATED',
-  'IN_PROGRESS',
-  'IN_QA',
+  'ORDER_CREATED',
+  'APPROVED',
+  'BOOKING',
+  'PRODUCTION',
+  'QA',
+  'READY',
   'DELIVERED',
-  'RETURNED'
+  'RETURNED',
+  'CANCELLED'
 ];
 
 export const STATUS_DISPLAY_OPTIONS = [
-  'Created',
-  'In Progress',
-  'In QA',
+  'Order Created',
+  'Approved',
+  'Booking',
+  'Production',
+  'QA',
+  'Ready',
   'Delivered',
-  'Returned'
+  'Returned',
+  'Cancelled'
 ];
 
 export const ORDER_STATUS_COLORS = {
-  CREATED: '#1890ff',
-  IN_PROGRESS: '#faad14',
-  IN_QA: '#722ed1',
+  // Backend versions
+  ORDER_CREATED: '#1890ff',
+  APPROVED: '#13c2c2',
+  BOOKING: '#722ed1',
+  PRODUCTION: '#eb2f96',
+  QA: '#faad14',
+  READY: '#a0d911',
   DELIVERED: '#52c41a',
-  RETURNED: '#f5222d',
-  
-  // Frontend display versions
-  Created: '#1890ff',
-  'In Progress': '#faad14',
-  'In QA': '#722ed1',
-  Delivered: '#52c41a',
-  Returned: '#f5222d'
+  RETURNED: '#fa8c16',
+  CANCELLED: '#f5222d'
+};
+
+// Frontend display version colors
+export const ORDER_STATUS_DISPLAY_COLORS = {
+  'Order Created': '#1890ff',
+  'Approved': '#13c2c2',
+  'Booking': '#722ed1',
+  'Production': '#eb2f96',
+  'QA': '#faad14',
+  'Ready': '#a0d911',
+  'Delivered': '#52c41a',
+  'Returned': '#fa8c16',
+  'Cancelled': '#f5222d'
 };
 
 export const DELIVERY_CHANNELS = [

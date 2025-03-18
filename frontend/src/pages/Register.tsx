@@ -10,8 +10,7 @@ import {
   Typography,
   Container,
   Paper,
-  Alert,
-  Stack,
+  Alert
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon, Psychology as PsychologyIcon } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';

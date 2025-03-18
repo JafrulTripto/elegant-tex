@@ -36,6 +36,6 @@ public class OrderProductResponse {
     public static class FabricResponse {
         private Long id;
         private String name;
-        private String imageUrl;
+        private Long imageId;
     }
 }

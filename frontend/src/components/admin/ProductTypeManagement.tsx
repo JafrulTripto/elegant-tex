@@ -127,7 +127,7 @@ const ProductTypeManagement: React.FC = () => {
   };
 
   // Handle page change
-  const handlePageChange = (event: unknown, newPage: number) => {
+  const handlePageChange = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
 

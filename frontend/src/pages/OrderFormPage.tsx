@@ -37,7 +37,6 @@ import { DELIVERY_CHANNELS, OrderFormData, OrderProductFormData } from '../types
 import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
 import { Fabric } from '../types/fabric';
-import { Customer, CustomerRequest } from '../types/customer';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
 import * as fabricService from '../services/fabric.service';
@@ -47,15 +46,6 @@ import useAuth from '../hooks/useAuth';
 import OrderFileUpload from '../components/orders/OrderFileUpload';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
 import CustomerSelection from '../components/customers/CustomerSelection';
-
-// Customer data validation schema
-const CustomerDataSchema = Yup.object().shape({
-  name: Yup.string().required('Customer name is required'),
-  phone: Yup.string().required('Customer phone is required'),
-  address: Yup.string().required('Customer address is required'),
-  alternativePhone: Yup.string().notRequired(),
-  facebookId: Yup.string().notRequired()
-});
 
 // Validation schema for order form
 const OrderValidationSchema = Yup.object().shape({
@@ -415,7 +405,7 @@ const OrderFormPage: React.FC = () => {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isSubmitting }) => (
+          {({ values, errors, touched, setFieldValue, isSubmitting }) => (
             <Form noValidate>
               <Grid container spacing={3}>
                 {/* Marketplace Selection */}

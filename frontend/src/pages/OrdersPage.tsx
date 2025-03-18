@@ -18,7 +18,6 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridSortModel,
-  GridCallbackDetails,
   GridPaginationModel,
 } from '@mui/x-data-grid';
 import {
@@ -32,7 +31,7 @@ import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'date-fns';
 import orderService from '../services/order.service';
-import { Order, OrderStatus, OrderFilterParams, OrderStatusCount } from '../types/order';
+import { Order, OrderStatus, OrderFilterParams, OrderStatusCount, ORDER_STATUS_COLORS, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
 
@@ -100,7 +99,7 @@ const OrdersPage: React.FC = () => {
     setPaginationModel(model);
   };
 
-  const handleSortModelChange = (model: GridSortModel, details: GridCallbackDetails) => {
+  const handleSortModelChange = (model: GridSortModel) => {
     setSortModel(model);
   };
 
@@ -144,20 +143,44 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  const getStatusChipColor = (status: OrderStatus) => {
-    switch (status) {
-      case 'Created':
-        return 'default';
-      case 'In Progress':
-        return 'primary';
-      case 'In QA':
-        return 'warning';
+  // Convert backend status to display status
+  const getDisplayStatus = (backendStatus: string): string => {
+    const index = STATUS_OPTIONS.indexOf(backendStatus as any);
+    return index >= 0 ? STATUS_DISPLAY_OPTIONS[index] : backendStatus;
+  };
+  
+  // Get status chip color based on status
+  const getStatusChipColor = (status: string): string => {
+    // Check if it's a backend status (like ORDER_CREATED)
+    if (ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS]) {
+      return ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS];
+    }
+    
+    // If not found, try to convert to display status and get color
+    const displayStatus = getDisplayStatus(status);
+    
+    // Default colors for special cases
+    switch (displayStatus) {
+      case 'Order Created':
+        return '#1890ff'; // info blue
+      case 'Approved':
+        return '#13c2c2'; // cyan
+      case 'Booking':
+        return '#722ed1'; // purple
+      case 'Production':
+        return '#eb2f96'; // pink
+      case 'QA':
+        return '#faad14'; // warning yellow
+      case 'Ready':
+        return '#a0d911'; // lime
       case 'Delivered':
-        return 'success';
+        return '#52c41a'; // success green
       case 'Returned':
-        return 'error';
+        return '#fa8c16'; // orange
+      case 'Cancelled':
+        return '#f5222d'; // error red
       default:
-        return 'default';
+        return '#d9d9d9'; // default gray
     }
   };
 
@@ -205,13 +228,20 @@ const OrdersPage: React.FC = () => {
       field: 'status', 
       headerName: 'Status', 
       flex: 1,
-      renderCell: (params: any) => (
-        <Chip
-          label={params.value as string}
-          color={getStatusChipColor(params.value as OrderStatus) as any}
-          size="small"
-        />
-      )
+      renderCell: (params: any) => {
+        const displayStatus = getDisplayStatus(params.value as string);
+        return (
+          <Chip
+            label={displayStatus}
+            sx={{ 
+              backgroundColor: getStatusChipColor(params.value as string),
+              color: '#fff',
+              fontWeight: 'bold'
+            }}
+            size="small"
+          />
+        );
+      }
     },
     { 
       field: 'createdAt', 

@@ -76,6 +76,8 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   
   // Set up the image URL
   useEffect(() => {
+    console.log('imageUrl:', imageUrl);
+    console.log('imageId:', imageId);
     setLoading(true);
     setError(false);
     if (imageUrl) {
