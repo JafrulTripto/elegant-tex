@@ -114,9 +114,9 @@ const components = {
   MuiCardContent: {
     styleOverrides: {
       root: {
-        padding: 24, // 3 * 8px = 24px (MUI's spacing unit is 8px)
+        padding: 16, // 3 * 8px = 24px (MUI's spacing unit is 8px)
         '&:last-child': {
-          paddingBottom: 24,
+          paddingBottom: 16,
         },
       } as any,
     },
@@ -131,16 +131,16 @@ const components = {
   MuiTextField: {
     styleOverrides: {
       root: {
-        marginTop: 16, // 2 * 8px = 16px
-        marginBottom: 16,
+        marginTop: 8, // 2 * 8px = 16px
+        marginBottom: 8,
       } as any,
     },
   },
   MuiFormControl: {
     styleOverrides: {
       root: {
-        marginTop: 16,
-        marginBottom: 16,
+        marginTop: 8,
+        marginBottom: 8,
       } as any,
     },
   },
@@ -154,18 +154,18 @@ const components = {
   MuiTypography: {
     styleOverrides: {
       gutterBottom: {
-        marginBottom: 16, // Consistent gutterBottom margin
+        marginBottom: 8, // Consistent gutterBottom margin
       } as any,
       h6: {
-        marginBottom: 16, // Consistent heading margin
+        marginBottom: 8, // Consistent heading margin
       } as any,
     },
   },
   MuiDivider: {
     styleOverrides: {
       root: {
-        marginTop: 16,
-        marginBottom: 16,
+        marginTop: 8,
+        marginBottom: 8,
       } as any,
     },
   },

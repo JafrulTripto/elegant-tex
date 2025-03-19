@@ -178,7 +178,7 @@ const MarketplaceComparisonChart: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" >
         <Typography variant="h6">Marketplace Order Comparison</Typography>
         <ToggleButtonGroup
           value={currentMonth}
