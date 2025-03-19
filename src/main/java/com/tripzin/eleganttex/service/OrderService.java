@@ -40,7 +40,12 @@ public interface OrderService {
     
     ResponseEntity<Resource> generateOrdersExcel(String status, LocalDate startDate, LocalDate endDate);
     
-    List<Map<String, Object>> getOrderStatusCounts();
+    /**
+     * Get order counts by status for the current month or year
+     * @param currentMonth true for current month, false for current year
+     * @return List of maps containing status and count
+     */
+    List<Map<String, Object>> getOrderStatusCounts(boolean currentMonth);
     
     /**
      * Get order statistics by user for the current month or year
@@ -64,4 +69,12 @@ public interface OrderService {
      * @return list of similar orders
      */
     List<OrderResponse> findSimilarOrders(Long orderId, int limit);
+    
+    /**
+     * Get daily order counts between two dates
+     * @param startDate start date (inclusive)
+     * @param endDate end date (inclusive)
+     * @return List of maps containing date and count
+     */
+    List<Map<String, Object>> getMonthlyOrderData(LocalDate startDate, LocalDate endDate);
 }

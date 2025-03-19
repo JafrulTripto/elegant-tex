@@ -1,6 +1,12 @@
 import api from './api';
 import { Order, OrderRequest, OrderFormData, OrderFilterParams, OrderStatusCount, OrderStatus } from '../types/order';
 
+// Interface for monthly order data
+export interface MonthlyOrderData {
+  date: string;
+  count: number;
+}
+
 const BASE_URL = '/orders';
 
 export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
@@ -161,8 +167,10 @@ export const generateOrdersExcel = async (
   return response.data;
 };
 
-export const getOrderStatusCounts = async (): Promise<OrderStatusCount[]> => {
-  const response = await api.get(`${BASE_URL}/status-counts`);
+export const getOrderStatusCounts = async (currentMonth = true): Promise<OrderStatusCount[]> => {
+  const response = await api.get(`${BASE_URL}/status-counts`, {
+    params: { currentMonth }
+  });
   return response.data;
 };
 
@@ -178,6 +186,37 @@ export const getMarketplaceOrderStatistics = async (currentMonth = true): Promis
     params: { currentMonth }
   });
   return response.data;
+};
+
+/**
+ * Get orders for the last month, grouped by day
+ * @returns Array of daily order counts for the last month
+ */
+export const getLastMonthOrders = async (): Promise<MonthlyOrderData[]> => {
+  // Calculate date range for the last month
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 1);
+  
+  // Format dates for API
+  const formattedStartDate = startDate.toISOString().split('T')[0];
+  const formattedEndDate = endDate.toISOString().split('T')[0];
+
+  console.log("Fetching last month orders with:", { startDate: formattedStartDate, endDate: formattedEndDate });
+  
+  // Use the dedicated endpoint for monthly data
+  const response = await api.get(`${BASE_URL}/monthly-data`, {
+    params: {
+      startDate: formattedStartDate,
+      endDate: formattedEndDate
+    }
+  });
+  
+  // Map the response to the expected format
+  return response.data.map((item: any) => ({
+    date: item.date,
+    count: item.count
+  }));
 };
 
 /**
@@ -227,7 +266,8 @@ const orderService = {
   getUserOrderStatistics,
   getMarketplaceOrderStatistics,
   getSimilarOrders,
-  downloadBlob
+  downloadBlob,
+  getLastMonthOrders
 };
 
 export default orderService;

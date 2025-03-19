@@ -38,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -323,13 +324,32 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Get order status counts
+     * Get order status counts for the current month or year
+     * @param currentMonth true for current month, false for current year
+     * @return List of maps containing status and count
      */
     @Override
-    public List<Map<String, Object>> getOrderStatusCounts() {
-        log.info("Getting order status counts");
+    public List<Map<String, Object>> getOrderStatusCounts(boolean currentMonth) {
+        log.info("Getting order status counts for {}", currentMonth ? "current month" : "current year");
         
-        return orderRepository.getOrderStatusCounts();
+        LocalDate now = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate = now;
+        
+        if (currentMonth) {
+            // Current month: from first day of current month to today
+            startDate = now.withDayOfMonth(1);
+        } else {
+            // Current year: from first day of current year to today
+            startDate = now.withDayOfYear(1);
+        }
+        
+        log.info("Date range: {} to {}", startDate, endDate);
+        
+        return orderRepository.getOrderStatusCountsByDateRange(
+                startDate.atStartOfDay(), 
+                endDate.atTime(23, 59, 59)
+        );
     }
     
     /**
@@ -551,6 +571,49 @@ public class OrderServiceImpl implements OrderService {
         }
         
         return (double) intersection.size() / union.size();
+    }
+    
+    /**
+     * Get daily order counts between two dates
+     * @param startDate start date (inclusive)
+     * @param endDate end date (inclusive)
+     * @return List of maps containing date and count
+     */
+    @Override
+    public List<Map<String, Object>> getMonthlyOrderData(LocalDate startDate, LocalDate endDate) {
+        log.info("Getting monthly order data from {} to {}", startDate, endDate);
+        
+        // Get counts directly from the database
+        List<Object[]> results = orderRepository.countOrdersByDateBetween(startDate, endDate);
+        
+        // Initialize all dates in the range with 0 orders
+        Map<String, Integer> ordersByDate = new HashMap<>();
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            ordersByDate.put(current.toString(), 0);
+            current = current.plusDays(1);
+        }
+        
+        // Fill in actual counts from database results
+        for (Object[] result : results) {
+            String date = ((LocalDate) result[0]).toString();
+            Integer count = ((Number) result[1]).intValue();
+            ordersByDate.put(date, count);
+        }
+        
+        // Convert to list of maps for the response
+        List<Map<String, Object>> response = new ArrayList<>();
+        ordersByDate.forEach((date, count) -> {
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("date", date);
+            entry.put("count", count);
+            response.add(entry);
+        });
+        
+        // Sort by date
+        response.sort(Comparator.comparing(m -> (String) m.get("date")));
+        
+        return response;
     }
     
     /**

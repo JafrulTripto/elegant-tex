@@ -72,6 +72,10 @@ app:
   frontend-url: ${APP_FRONTEND_URL}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  email:
+    provider: ${EMAIL_PROVIDER:smtp}  # smtp or resend
+    resend:
+      api-key: ${RESEND_API_KEY:}
   file-storage:
     upload-dir: ${FILE_UPLOAD_DIR:uploads}
     allowed-file-types: jpg,jpeg,png,gif
