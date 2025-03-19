@@ -155,8 +155,9 @@ public class OrderController {
 
     @GetMapping("/status-counts")
     @PreAuthorize("hasAuthority('ORDER_READ')")
-    public ResponseEntity<List<Map<String, Object>>> getOrderStatusCounts() {
-        List<Map<String, Object>> statusCounts = orderService.getOrderStatusCounts();
+    public ResponseEntity<List<Map<String, Object>>> getOrderStatusCounts(
+            @RequestParam(defaultValue = "true") boolean currentMonth) {
+        List<Map<String, Object>> statusCounts = orderService.getOrderStatusCounts(currentMonth);
         return ResponseEntity.ok(statusCounts);
     }
     
@@ -189,5 +190,28 @@ public class OrderController {
             @RequestParam(defaultValue = "5") int limit) {
         List<OrderResponse> similarOrders = orderService.findSimilarOrders(id, limit);
         return ResponseEntity.ok(similarOrders);
+    }
+    
+    /**
+     * Get monthly order data for chart display
+     * @param startDate optional start date (defaults to one month ago)
+     * @param endDate optional end date (defaults to today)
+     * @return list of daily order counts
+     */
+    @GetMapping("/monthly-data")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<List<Map<String, Object>>> getMonthlyOrderData(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        // If dates not provided, default to last month
+        if (startDate == null) {
+            LocalDate now = LocalDate.now();
+            endDate = now;
+            startDate = now.minusMonths(1);
+        }
+        
+        List<Map<String, Object>> monthlyData = orderService.getMonthlyOrderData(startDate, endDate);
+        return ResponseEntity.ok(monthlyData);
     }
 }

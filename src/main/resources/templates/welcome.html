@@ -3,85 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to TechMinds</title>
+    <title>Welcome to ElegantTex</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         .container {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 20px;
-            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .header {
             text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 25px;
         }
         .logo {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 28px;
+            font-weight: 700;
             color: #2c3e50;
+            letter-spacing: 0.5px;
+        }
+        .logo-accent {
+            color: #3498db;
+        }
+        h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 16px;
+            color: #4a4a4a;
         }
         .button {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #3498db;
             color: white;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 6px;
             margin: 20px 0;
+            font-weight: 500;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #2980b9;
         }
         .footer {
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-            font-size: 12px;
-            color: #777;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+        }
+        .feature-box {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .feature-item {
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 15px;
+            border-left: 3px solid #3498db;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .feature-item h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        .signature {
+            margin-top: 25px;
+            padding-top: 5px;
+        }
+        @media only screen and (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            .button {
+                display: block;
+                width: 100%;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">TechMinds</div>
+            <div class="logo">Elegant<span class="logo-accent">Tex</span></div>
         </div>
         
-        <h2>Welcome to TechMinds!</h2>
+        <h2>Welcome to ElegantTex!</h2>
         
-        <p>Hello <span th:text="${firstName}">User</span>,</p>
+        <p class="greeting">Hello <span th:text="${firstName}">User</span>,</p>
         
-        <p>Thank you for joining TechMinds! We're excited to have you as part of our community.</p>
+        <p>Congratulations! Your ElegantTex account has been successfully verified. We're thrilled to welcome you to our textile management platform designed to streamline your fabric and order management processes.</p>
         
-        <p>Your account has been successfully created and verified. You can now log in to access all the features and resources available to our members.</p>
+        <p>Your account is now fully activated, and you can access all the features of our platform by clicking the button below:</p>
         
         <p style="text-align: center;">
             <a class="button" th:href="${loginUrl}">Log In to Your Account</a>
         </p>
         
-        <p>Here's what you can do with your TechMinds account:</p>
+        <div class="feature-box">
+            <p style="margin-top: 0;"><strong>Discover what you can do with ElegantTex:</strong></p>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>Fabric Management</h3>
+                    <p style="margin-bottom: 0;">Track inventory, manage suppliers, and organize your textile catalog efficiently.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>Order Tracking</h3>
+                    <p style="margin-bottom: 0;">Monitor production status, delivery timelines, and customer requirements in one place.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>Marketplace Integration</h3>
+                    <p style="margin-bottom: 0;">Connect with multiple sales channels and synchronize your inventory across platforms.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>Analytics & Reports</h3>
+                    <p style="margin-bottom: 0;">Gain insights into your business performance with comprehensive reporting tools.</p>
+                </div>
+            </div>
+        </div>
         
-        <ul>
-            <li>Access exclusive content and resources</li>
-            <li>Connect with other members</li>
-            <li>Participate in discussions and forums</li>
-            <li>Stay updated with the latest news and events</li>
-        </ul>
+        <p>Our team has created detailed guides to help you get started. You'll find these resources in the Help section after logging in.</p>
         
-        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        <p>If you have any questions or need assistance, our support team is ready to help you make the most of your ElegantTex experience.</p>
         
-        <p>Best regards,<br>The TechMinds Team</p>
+        <p class="signature">Warm regards,<br>The ElegantTex Team</p>
         
         <div class="footer">
-            <p>&copy; 2025 TechMinds. All rights reserved.</p>
-            <p>This is an automated email. Please do not reply to this message.</p>
+            <p>&copy; 2025 ElegantTex. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
         </div>
     </div>
 </body>

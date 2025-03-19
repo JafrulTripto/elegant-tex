@@ -36,6 +36,8 @@ import { useNavigate } from 'react-router-dom';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
 import UserOrdersTable from '../components/orders/UserOrdersTable';
 import MarketplaceComparisonChart from '../components/orders/MarketplaceComparisonChart';
+import OrderStatusDistributionChart from '../components/orders/OrderStatusDistributionChart';
+import LastMonthOrdersChart from '../components/orders/LastMonthOrdersChart';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
 import { OrderStatusCount, Order, ORDER_STATUS_COLORS } from '../types/order';
@@ -317,6 +319,24 @@ const Dashboard: React.FC = () => {
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <MarketplaceComparisonChart />
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Order Status Distribution Chart */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
+                <OrderStatusDistributionChart />
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Last Month Orders Chart */}
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
+                <LastMonthOrdersChart />
               </CardContent>
             </Card>
           </Grid>

@@ -19,6 +19,7 @@ import com.tripzin.eleganttex.repository.UserRepository;
 import com.tripzin.eleganttex.repository.VerificationTokenRepository;
 import com.tripzin.eleganttex.security.jwt.JwtUtils;
 import com.tripzin.eleganttex.security.services.UserDetailsImpl;
+import com.tripzin.eleganttex.service.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;

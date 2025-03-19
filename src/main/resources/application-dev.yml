@@ -29,9 +29,9 @@ spring:
   mail:
     host: smtp.resend.com
     port: 587
-    from: your-email@gmail.com
-    username: your-email@gmail.com
-    password: your-email-password
+    from: ${MAIL_FROM}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:

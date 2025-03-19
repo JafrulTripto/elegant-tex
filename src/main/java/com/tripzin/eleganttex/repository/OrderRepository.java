@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Comparator;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -63,6 +64,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     @Query(value = "SELECT o.status as status, COUNT(o.id) as count FROM orders o GROUP BY o.status", nativeQuery = true)
     List<Map<String, Object>> getOrderStatusCounts();
+    
+    /**
+     * Get order status counts for a specific date range
+     * @param startDateTime start date-time (inclusive)
+     * @param endDateTime end date-time (inclusive)
+     * @return list of maps containing status and count
+     */
+    @Query(value = "SELECT o.status as status, COUNT(o.id) as count FROM orders o " +
+           "WHERE o.created_at >= :startDateTime AND o.created_at <= :endDateTime " +
+           "GROUP BY o.status", nativeQuery = true)
+    List<Map<String, Object>> getOrderStatusCountsByDateRange(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime);
     
     @Query(value = "SELECT o.status, COUNT(o.id) FROM orders o GROUP BY o.status", nativeQuery = true)
     List<Object[]> countByStatusGrouped();
@@ -116,4 +130,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             int limit) {
         return findSimilarOrders(orderId, productTypes, fabricIds, PageRequest.of(0, limit));
     }
+    
+    /**
+     * Count orders by date between a given date range
+     * @param startDate start date (inclusive)
+     * @param endDate end date (inclusive)
+     * @return list of arrays containing [date, count]
+     */
+    @Query("SELECT CAST(o.createdAt AS LocalDate) as orderDate, COUNT(o) as orderCount " +
+           "FROM Order o " +
+           "WHERE CAST(o.createdAt AS LocalDate) BETWEEN :startDate AND :endDate " +
+           "GROUP BY CAST(o.createdAt AS LocalDate) " +
+           "ORDER BY orderDate")
+    List<Object[]> countOrdersByDateBetween(
+        @Param("startDate") LocalDate startDate, 
+        @Param("endDate") LocalDate endDate);
 }

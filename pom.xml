@@ -132,6 +132,12 @@
 			<version>7.2.5</version>
 			<type>pom</type>
 		</dependency>
+		<!-- Resend mail service -->
+		<dependency>
+			<groupId>com.resend</groupId>
+			<artifactId>resend-java</artifactId>
+			<version>4.1.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
