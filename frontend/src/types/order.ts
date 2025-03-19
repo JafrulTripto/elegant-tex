@@ -194,12 +194,16 @@ export const ORDER_STATUS_DISPLAY_COLORS = {
 };
 
 export const DELIVERY_CHANNELS = [
-  'Courier Service',
-  'Self Pickup',
-  'Home Delivery',
-  'Third-party Delivery'
+  'GCC Home Delivery',
+  'DCC Home Delivery',
+  'SteadFast Home Delivery (Without Fitting)',
+  'RedX Home Delivery (Without Fitting)',
+  'Pathao Home Delivery (Without Fitting)',
+  'S A Paribahan (Office Pickup)',
+  'Sundarban Courier Service (Office Pickup)',
+  'Janani Courier Service (Office Pickup)',
+  'Korotoa Courier Service (Office Pickup)',
 ];
-
 // Product types are now managed in the database and accessed via API
 
 export interface OrderRequest {

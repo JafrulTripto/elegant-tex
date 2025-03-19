@@ -393,7 +393,7 @@ const Dashboard: React.FC = () => {
           
           {/* Marketplaces */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} style={{ padding: '0px' }}>
               <CardHeader title="Your Marketplaces" />
               <Divider />
               <CardContent sx={{ flexGrow: 1, overflow: 'auto', minHeight: 300 }}>
