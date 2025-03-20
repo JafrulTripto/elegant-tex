@@ -81,8 +81,6 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       setLoading(true);
       setError(null);
 
-      // Calculate date range
-      const endDate = new Date();
       const startDate = new Date();
       if (currentMonth) {
         startDate.setMonth(startDate.getMonth() - 1);
@@ -90,9 +88,6 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
         startDate.setFullYear(startDate.getFullYear() - 1);
       }
 
-      // Format dates for API
-      const formattedStartDate = startDate.toISOString().split('T')[0];
-      const formattedEndDate = endDate.toISOString().split('T')[0];
 
       // For each marketplace, get order data
       const marketplaceData: MarketplaceOrderData[] = [];

@@ -1,5 +1,5 @@
 import api from './api';
-import { Role, RoleFilterParams, Permission } from '../types';
+import { RoleFilterParams, Permission } from '../types';
 
 class RoleService {
   /**
