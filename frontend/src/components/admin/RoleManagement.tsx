@@ -44,7 +44,6 @@ import RoleFilterDialog from './RoleFilterDialog';
 import PermissionSelector from './PermissionSelector';
 import PermissionDisplay from './PermissionDisplay';
 import ConfirmationDialog from '../common/ConfirmationDialog';
-import { groupPermissionsByCategory } from '../../utils/permissionUtils';
 
 interface RoleFormData {
   name: string;

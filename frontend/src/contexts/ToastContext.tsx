@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { SnackbarProvider, useSnackbar, VariantType, ProviderContext } from 'notistack';
+import { SnackbarProvider, useSnackbar, VariantType } from 'notistack';
 
 // Define the context type
 interface ToastContextType {

@@ -85,7 +85,6 @@ const MainLayout: React.FC = () => {
     return {color : isActive(path) ? theme.customColors.pinkDark : 'inherit' }
   }
   
-  const isAdmin = authState.user?.roles.some((role: string) => role === 'ROLE_ADMIN');
   const hasAdminDashboardPermission = 
     authState.user?.permissions?.includes('DASHBOARD_ADMIN_VIEW') || 
     authState.user?.roles.includes('ROLE_ADMIN');
