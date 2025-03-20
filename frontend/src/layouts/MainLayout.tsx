@@ -86,6 +86,9 @@ const MainLayout: React.FC = () => {
   }
   
   const isAdmin = authState.user?.roles.some((role: string) => role === 'ROLE_ADMIN');
+  const hasAdminDashboardPermission = 
+    authState.user?.permissions?.includes('DASHBOARD_ADMIN_VIEW') || 
+    authState.user?.roles.includes('ROLE_ADMIN');
   
   const drawer = (
     <div>
@@ -112,57 +115,65 @@ const MainLayout: React.FC = () => {
             <ListItemText primary="Profile" />
           </ListItemButton>
         </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => handleNavigate('/marketplaces')}>
-            <ListItemIcon color="secondary">
-              <StorefrontIcon style={navStyle('/marketplaces')}/>
-            </ListItemIcon>
-            <ListItemText primary="Marketplaces" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => handleNavigate('/fabrics')}>
-            <ListItemIcon color="secondary">
-              <CategoryIcon style={navStyle('/fabrics')}/>
-            </ListItemIcon>
-            <ListItemText primary="Fabrics" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => handleNavigate('/orders')}>
-            <ListItemIcon color="secondary">
-              <ShoppingCartIcon style={navStyle('/orders')}/>
-            </ListItemIcon>
-            <ListItemText primary="Orders" />
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => handleNavigate('/customers')}>
-            <ListItemIcon color="secondary">
-              <ContactPhoneIcon style={navStyle('/customers')}/>
-            </ListItemIcon>
-            <ListItemText primary="Customers" />
-          </ListItemButton>
-        </ListItem>
-        {isAdmin && (
-          <>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavigate('/admin/users')}>
-                <ListItemIcon color="secondary">
-                  <PeopleIcon style={navStyle('/admin/users')}/>
-                </ListItemIcon>
-                <ListItemText primary="User Management" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavigate('/admin/settings')}>
-                <ListItemIcon color="secondary">
-                  <SettingsIcon style={navStyle('/admin/settings')}/>
-                </ListItemIcon>
-                <ListItemText primary="Settings" />
-              </ListItemButton>
-            </ListItem>
-          </>
+        {(authState.user?.permissions?.includes('MARKETPLACE_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigate('/marketplaces')}>
+              <ListItemIcon color="secondary">
+                <StorefrontIcon style={navStyle('/marketplaces')}/>
+              </ListItemIcon>
+              <ListItemText primary="Marketplaces" />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {(authState.user?.permissions?.includes('FABRIC_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigate('/fabrics')}>
+              <ListItemIcon color="secondary">
+                <CategoryIcon style={navStyle('/fabrics')}/>
+              </ListItemIcon>
+              <ListItemText primary="Fabrics" />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {(authState.user?.permissions?.includes('ORDER_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigate('/orders')}>
+              <ListItemIcon color="secondary">
+                <ShoppingCartIcon style={navStyle('/orders')}/>
+              </ListItemIcon>
+              <ListItemText primary="Orders" />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {(authState.user?.permissions?.includes('CUSTOMER_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigate('/customers')}>
+              <ListItemIcon color="secondary">
+                <ContactPhoneIcon style={navStyle('/customers')}/>
+              </ListItemIcon>
+              <ListItemText primary="Customers" />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {(authState.user?.permissions?.includes('USER_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigate('/admin/users')}>
+              <ListItemIcon color="secondary">
+                <PeopleIcon style={navStyle('/admin/users')}/>
+              </ListItemIcon>
+              <ListItemText primary="User Management" />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {hasAdminDashboardPermission && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigate('/admin/settings')}>
+              <ListItemIcon color="secondary">
+                <SettingsIcon style={navStyle('/admin/settings')}/>
+              </ListItemIcon>
+              <ListItemText primary="Settings" />
+            </ListItemButton>
+          </ListItem>
         )}
       </List>
     </div>

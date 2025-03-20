@@ -1,8 +1,8 @@
 package com.tripzin.eleganttex.controller;
 
+import com.tripzin.eleganttex.constants.RoleConstants;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
 import com.tripzin.eleganttex.dto.response.RoleDTO;
-import com.tripzin.eleganttex.entity.ERole;
 import com.tripzin.eleganttex.entity.Permission;
 import com.tripzin.eleganttex.entity.Role;
 import com.tripzin.eleganttex.repository.PermissionRepository;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/roles")
 @PreAuthorize("hasRole('ADMIN')")
 public class RoleController {
 
@@ -46,15 +46,21 @@ public class RoleController {
 
     @PostMapping
     public ResponseEntity<?> createRole(@Valid @RequestBody RoleRequest request) {
+        // Validate role name format
+        if (!RoleConstants.isValidRoleFormat(request.getName())) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Role name must start with 'ROLE_'"));
+        }
+        
         // Check if role name already exists
-        if (roleRepository.existsByName(ERole.valueOf(request.getName()))) {
+        if (roleRepository.existsByName(request.getName())) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Role name is already taken!"));
         }
 
         // Create new role
         Role role = new Role();
-        role.setName(ERole.valueOf(request.getName()));
+        role.setName(request.getName());
         role.setDescription(request.getDescription());
 
         // Add permissions
@@ -78,13 +84,19 @@ public class RoleController {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
 
+        // Validate role name format
+        if (!RoleConstants.isValidRoleFormat(request.getName())) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: Role name must start with 'ROLE_'"));
+        }
+        
         // Update role name if it's different
-        if (!role.getName().name().equals(request.getName())) {
-            if (roleRepository.existsByName(ERole.valueOf(request.getName()))) {
+        if (!role.getName().equals(request.getName())) {
+            if (roleRepository.existsByName(request.getName())) {
                 return ResponseEntity.badRequest()
                         .body(new MessageResponse("Error: Role name is already taken!"));
             }
-            role.setName(ERole.valueOf(request.getName()));
+            role.setName(request.getName());
         }
 
         // Update description
@@ -111,8 +123,8 @@ public class RoleController {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
 
-        // Check if it's a system role (ROLE_USER, ROLE_ADMIN, ROLE_MODERATOR)
-        if (role.getName() == ERole.ROLE_USER || role.getName() == ERole.ROLE_ADMIN || role.getName() == ERole.ROLE_MODERATOR) {
+        // Check if it's a system role
+        if (RoleConstants.isSystemRole(role.getName())) {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Cannot delete system role!"));
         }

@@ -12,6 +12,7 @@ import {
   Alert
 } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../contexts/ToastContext';
 import ResendVerificationDialog from '../components/common/ResendVerificationDialog';
 import { AuthCard, LogoAvatar, LogoContainer, GradientButton } from '../components/common/StyledComponents';
 
@@ -19,6 +20,7 @@ const Login: React.FC = () => {
   const { login, authState } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -42,6 +44,7 @@ const Login: React.FC = () => {
     
     if (!username.trim() || !password.trim()) {
       setError('Username and password are required');
+      showToast('Username and password are required', 'error');
       return;
     }
     
@@ -51,7 +54,9 @@ const Login: React.FC = () => {
       await login(username, password);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || err.response?.data?.message || 'Failed to login. Please check your credentials.');
+      const errorMessage = err.message || err.response?.data?.message || 'Failed to login. Please check your credentials.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -59,6 +64,7 @@ const Login: React.FC = () => {
 
   const handleOpenResendVerification = () => {
     setOpenResendVerification(true);
+    showToast('Please enter your email to receive a verification link', 'info');
   };
 
   const handleCloseResendVerification = () => {

@@ -32,7 +32,7 @@ public class RoleDTO {
 
         return new RoleDTO(
                 role.getId(),
-                role.getName().name(),
+                role.getName(),
                 role.getDescription(),
                 permissionDTOs
         );

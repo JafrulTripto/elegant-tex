@@ -59,3 +59,5 @@ Thumbs.db
 /frontend/.pnp.js
 /frontend/dist/
 /frontend/.vite/
+/frontend/.env.development
+/frontend/.env.production

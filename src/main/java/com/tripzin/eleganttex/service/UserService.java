@@ -2,7 +2,6 @@ package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.UserDTO;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
-import com.tripzin.eleganttex.entity.ERole;
 import com.tripzin.eleganttex.entity.Role;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.exception.BadRequestException;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,6 +91,26 @@ public class UserService {
             user.setProfileImageId(userDTO.getProfileImageId());
         }
         
+        // Update account verification status
+        user.setAccountVerified(userDTO.isAccountVerified());
+        
+        // Update roles if provided
+        if (userDTO.getRoles() != null && !userDTO.getRoles().isEmpty()) {
+            Set<Role> roles = new HashSet<>();
+            
+            userDTO.getRoles().forEach(roleName -> {
+                // Ensure role name has ROLE_ prefix
+                String formattedRoleName = roleName.startsWith("ROLE_") ? 
+                    roleName : "ROLE_" + roleName.toUpperCase();
+                
+                Role role = roleRepository.findByName(formattedRoleName)
+                        .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + roleName));
+                roles.add(role);
+            });
+            
+            user.setRoles(roles);
+        }
+        
         User updatedUser = userRepository.save(user);
         return UserDTO.fromEntity(updatedUser);
     }
@@ -119,14 +137,13 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         
         roleNames.forEach(roleName -> {
-            try {
-                ERole eRole = ERole.valueOf("ROLE_" + roleName.toUpperCase());
-                Role role = roleRepository.findByName(eRole)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + roleName));
-                roles.add(role);
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("Invalid role name: " + roleName);
-            }
+            // Ensure role name has ROLE_ prefix
+            String formattedRoleName = roleName.startsWith("ROLE_") ? 
+                roleName : "ROLE_" + roleName.toUpperCase();
+            
+            Role role = roleRepository.findByName(formattedRoleName)
+                    .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + roleName));
+            roles.add(role);
         });
         
         user.setRoles(roles);
@@ -165,17 +182,9 @@ public class UserService {
         
         // If roles filter is provided, filter the results in memory
         if (roles != null && !roles.isEmpty()) {
-            // Convert role strings to ERole enum values
-            Set<ERole> roleEnums = roles.stream()
-                    .map(role -> {
-                        try {
-                            return ERole.valueOf(role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            log.warn("Invalid role name: {}", role);
-                            return null;
-                        }
-                    })
-                    .filter(role -> role != null)
+            // Format role names to ensure ROLE_ prefix
+            Set<String> formattedRoleNames = roles.stream()
+                    .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase())
                     .collect(Collectors.toSet());
             
             // Filter users by roles
@@ -183,7 +192,7 @@ public class UserService {
                     .filter(user -> {
                         // Check if user has any of the specified roles
                         return user.getRoles().stream()
-                                .anyMatch(role -> roleEnums.contains(role.getName()));
+                                .anyMatch(role -> formattedRoleNames.contains(role.getName()));
                     })
                     .collect(Collectors.toList());
             

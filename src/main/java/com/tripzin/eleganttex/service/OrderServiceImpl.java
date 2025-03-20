@@ -34,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -122,31 +121,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
-        log.info("Updating order with ID: {}", id);
-        
-        // Get current user
-        User currentUser = getUserById(userId);
-        
-        // Get existing order
+        log.info("Updating order with ID: {}", id);        
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
-        
-        // Find marketplace
         Marketplace marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
-        
-        // Find or update customer
         Customer customer = getOrCreateCustomer(orderRequest);
-        
-        // Calculate total amount
         BigDecimal totalAmount = calculationService.calculateTotalFromRequests(orderRequest.getProducts())
                 .add(orderRequest.getDeliveryCharge());
-        
-        // Update order fields
         updateOrderFields(order, marketplace, customer, orderRequest, totalAmount);
-        
-        // Update products
         updateOrderProducts(order, orderRequest.getProducts(), files);
-        
         return orderMapper.mapOrderToResponse(order);
     }
 

@@ -39,8 +39,8 @@ public class UserDetailsImpl implements UserDetails {
         
         // Process each role
         user.getRoles().forEach(role -> {
-            // Add role as an authority with ROLE_ prefix
-            authorities.add(new SimpleGrantedAuthority(role.getName().name()));
+            // Add role as an authority
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
             
             // Add all permissions from the role as authorities
             role.getPermissions().forEach(permission -> {

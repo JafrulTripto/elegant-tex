@@ -3,6 +3,7 @@ import { AuthState } from '../types';
 import authService from '../services/auth.service';
 import userService from '../services/user.service';
 import axios from 'axios';
+import { useToast } from './ToastContext';
 
 // Define the context type
 export interface AuthContextType {
@@ -31,6 +32,7 @@ interface AuthProviderProps {
 // Provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
+  const { showToast } = useToast();
 
   // Load user on mount
   useEffect(() => {
@@ -47,6 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             loading: false,
             error: 'Session expired. Please login again.',
           });
+          showToast('Session expired. Please login again.', 'error');
         }
       } else {
         setAuthState({
@@ -90,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       await authService.login({ username, password });
       await loadUser();
+      showToast('Login successful!', 'success');
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         setAuthState({
@@ -116,6 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       await authService.register({ phone, email, password, firstName, lastName });
       setAuthState(prev => ({ ...prev, loading: false }));
+      showToast('Registration successful! Please check your email to verify your account.', 'success');
     } catch (error) {
       setAuthState(prev => ({
         ...prev,
@@ -135,6 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       loading: false,
       error: null,
     });
+    showToast('You have been logged out', 'info');
   };
 
   return (

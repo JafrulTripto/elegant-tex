@@ -14,10 +14,12 @@ import {
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon, Psychology as PsychologyIcon } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../contexts/ToastContext';
 
 const Register: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
     phone: '',
@@ -43,31 +45,37 @@ const Register: React.FC = () => {
   const validateForm = () => {
     if (!formData.phone.trim()) {
       setError('Phone number is required');
+      showToast('Phone number is required', 'error');
       return false;
     }
     
     if (!formData.email.trim()) {
       setError('Email is required');
+      showToast('Email is required', 'error');
       return false;
     }
     
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       setError('Email is invalid');
+      showToast('Email is invalid', 'error');
       return false;
     }
     
     if (!formData.password) {
       setError('Password is required');
+      showToast('Password is required', 'error');
       return false;
     }
     
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters');
+      showToast('Password must be at least 6 characters', 'error');
       return false;
     }
     
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      showToast('Passwords do not match', 'error');
       return false;
     }
     
@@ -105,7 +113,9 @@ const Register: React.FC = () => {
       }, 3000);
       
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      const errorMessage = err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }

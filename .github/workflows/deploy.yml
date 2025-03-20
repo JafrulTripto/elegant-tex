@@ -38,6 +38,7 @@ jobs:
         script: |
           # Replace with your actual project path on the server
           cd /srv/elegant-tex
+          git pull origin master
           docker pull tripzin/elegant-tex-v2:latest
           docker compose down
           docker compose up -d
