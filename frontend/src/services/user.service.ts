@@ -42,7 +42,7 @@ export const userService = {
   },
   
   changePassword: async (currentPassword: string, newPassword: string) => {
-    return api.post<MessageResponse>('/users/change-password', {
+    return api.post<MessageResponse>('/users/reset-password', {
       currentPassword,
       newPassword
     });
