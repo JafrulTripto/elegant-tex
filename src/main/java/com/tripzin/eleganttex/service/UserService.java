@@ -216,4 +216,20 @@ public class UserService {
         // Convert to DTOs
         return userPage.map(UserDTO::fromEntity);
     }
+
+    // Write change password method here and retrun message response
+
+    public MessageResponse changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new BadRequestException("Old password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        return MessageResponse.success("Password changed successfully");
+    }
 }
