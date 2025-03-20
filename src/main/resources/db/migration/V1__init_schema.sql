@@ -64,39 +64,39 @@ INSERT INTO roles (name, description) VALUES
 
 -- Insert default permissions
 INSERT INTO permissions (name, description) VALUES 
-    ('READ_USER', 'Can read user data'),
-    ('WRITE_USER', 'Can create and update user data'),
-    ('DELETE_USER', 'Can delete user data'),
-    ('MANAGE_ROLES', 'Can manage user roles'),
-    ('VERIFY_USERS', 'Can verify user accounts');
+    ('USER_READ', 'Can read user data'),
+    ('USER_WRITE', 'Can create and update user data'),
+    ('USER_DELETE', 'Can delete user data'),
+    ('ROLE_MANAGE', 'Can manage user roles'),
+    ('USER_VERIFY', 'Can verify user accounts');
 
 -- Assign permissions to roles
 -- User role permissions
 INSERT INTO role_permissions (role_id, permission_id) VALUES 
     ((SELECT id FROM roles WHERE name = 'ROLE_USER'), 
-     (SELECT id FROM permissions WHERE name = 'READ_USER'));
+     (SELECT id FROM permissions WHERE name = 'USER_READ'));
 
 -- Moderator role permissions
 INSERT INTO role_permissions (role_id, permission_id) VALUES 
     ((SELECT id FROM roles WHERE name = 'ROLE_MODERATOR'), 
-     (SELECT id FROM permissions WHERE name = 'READ_USER')),
+     (SELECT id FROM permissions WHERE name = 'USER_READ')),
     ((SELECT id FROM roles WHERE name = 'ROLE_MODERATOR'), 
-     (SELECT id FROM permissions WHERE name = 'WRITE_USER')),
+     (SELECT id FROM permissions WHERE name = 'USER_WRITE')),
     ((SELECT id FROM roles WHERE name = 'ROLE_MODERATOR'), 
-     (SELECT id FROM permissions WHERE name = 'VERIFY_USERS'));
+     (SELECT id FROM permissions WHERE name = 'USER_VERIFY'));
 
 -- Admin role permissions
 INSERT INTO role_permissions (role_id, permission_id) VALUES 
     ((SELECT id FROM roles WHERE name = 'ROLE_ADMIN'), 
-     (SELECT id FROM permissions WHERE name = 'READ_USER')),
+     (SELECT id FROM permissions WHERE name = 'USER_READ')),
     ((SELECT id FROM roles WHERE name = 'ROLE_ADMIN'), 
-     (SELECT id FROM permissions WHERE name = 'WRITE_USER')),
+     (SELECT id FROM permissions WHERE name = 'USER_WRITE')),
     ((SELECT id FROM roles WHERE name = 'ROLE_ADMIN'), 
-     (SELECT id FROM permissions WHERE name = 'DELETE_USER')),
+     (SELECT id FROM permissions WHERE name = 'USER_DELETE')),
     ((SELECT id FROM roles WHERE name = 'ROLE_ADMIN'), 
-     (SELECT id FROM permissions WHERE name = 'MANAGE_ROLES')),
+     (SELECT id FROM permissions WHERE name = 'ROLE_MANAGE')),
     ((SELECT id FROM roles WHERE name = 'ROLE_ADMIN'), 
-     (SELECT id FROM permissions WHERE name = 'VERIFY_USERS'));
+     (SELECT id FROM permissions WHERE name = 'USER_VERIFY'));
 
 INSERT INTO users (first_name, last_name, email, phone, password, email_verified, account_verified)
 VALUES ('Jafrul', 'Hossain', 'jafrultripto@gmail.com', '+8801832958858', 

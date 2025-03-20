@@ -8,7 +8,6 @@ import com.tripzin.eleganttex.dto.response.OrderStatusHistoryResponse;
 import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderProduct;
 import com.tripzin.eleganttex.entity.OrderProductImage;
-import com.tripzin.eleganttex.entity.OrderStatus;
 import com.tripzin.eleganttex.entity.OrderStatusHistory;
 import com.tripzin.eleganttex.repository.OrderProductImageRepository;
 import com.tripzin.eleganttex.repository.OrderStatusHistoryRepository;

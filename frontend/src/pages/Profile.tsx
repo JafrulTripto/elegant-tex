@@ -23,13 +23,16 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Save as SaveIcon, Lock as LockIcon, PhotoCamera } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../contexts/ToastContext';
 import userService from '../services/user.service';
 import FileUpload from '../components/common/FileUpload';
 import ImagePreview from '../components/common/ImagePreview';
+import ToastExample from '../components/common/ToastExample';
 
 const Profile: React.FC = () => {
   const { authState, loadUser } = useAuth();
   const { user } = authState;
+  const { showToast } = useToast();
   
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -100,9 +103,12 @@ const Profile: React.FC = () => {
       
       await loadUser();
       setSuccess('Profile updated successfully');
+      showToast('Profile updated successfully', 'success');
       setEditing(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+      const errorMessage = err.message || 'Failed to update profile';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -131,6 +137,7 @@ const Profile: React.FC = () => {
       );
       
       setSuccess('Password changed successfully');
+      showToast('Password changed successfully', 'success');
       setOpenPasswordDialog(false);
       setPasswordData({
         currentPassword: '',
@@ -138,7 +145,9 @@ const Profile: React.FC = () => {
         confirmPassword: '',
       });
     } catch (err: any) {
-      setPasswordError(err.message || 'Failed to change password');
+      const errorMessage = err.message || 'Failed to change password';
+      setPasswordError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -155,9 +164,12 @@ const Profile: React.FC = () => {
       await loadUser(); // Reload user data to get updated profileImageId
       
       setSuccess('Profile image updated successfully');
+      showToast('Profile image updated successfully', 'success');
       setShowUploadDialog(false);
     } catch (err: any) {
-      setUploadError(err.message || 'Failed to upload profile image');
+      const errorMessage = err.message || 'Failed to upload profile image';
+      setUploadError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setUploadLoading(false);
     }
@@ -358,6 +370,9 @@ const Profile: React.FC = () => {
               Change Password
             </Button>
           </Paper>
+          
+          {/* Toast Example Component */}
+          <ToastExample />
         </Grid>
       </Grid>
       

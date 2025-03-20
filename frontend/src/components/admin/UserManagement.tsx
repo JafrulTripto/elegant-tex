@@ -101,7 +101,7 @@ const UserManagement: React.FC = () => {
         setLoading(true);
         
         // Fetch roles
-        const rolesResponse = await api.get('/api/roles');
+        const rolesResponse = await api.get('/roles');
         setRoles(Array.isArray(rolesResponse.data) ? rolesResponse.data : []);
         
         setLoading(false);
@@ -297,8 +297,15 @@ const UserManagement: React.FC = () => {
       setLoading(true);
       
       if (editingUser) {
-        // Update existing user
-        await api.put(`/users/${editingUser.id}`, formData);
+        // Update existing user with all necessary fields
+        await api.put(`/users/${editingUser.id}`, {
+          phone: formData.phone,
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          roles: formData.roleIds,
+          accountVerified: formData.accountVerified
+        });
         setSuccess('User updated successfully');
       } else {
         // Create new user using the auth/register endpoint

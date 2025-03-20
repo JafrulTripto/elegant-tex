@@ -25,4 +25,5 @@ public class JwtResponse {
     private boolean emailVerified;
     private boolean accountVerified;
     private List<String> roles;
+    private List<String> permissions;
 }

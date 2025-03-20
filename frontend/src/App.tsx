@@ -1,4 +1,5 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, FC } from 'react';
+import { useAuth } from './hooks/useAuth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import { CircularProgress, Box } from '@mui/material';
@@ -6,6 +7,7 @@ import { CircularProgress, Box } from '@mui/material';
 // Context Providers
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -19,7 +21,8 @@ import Register from './pages/Register';
 import EmailVerification from './pages/EmailVerification';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/Dashboard';
+import UserDashboard from './pages/UserDashboard';
 import Profile from './pages/Profile';
 import MarketplacesPage from './pages/MarketplacesPage';
 import MarketplaceDetailPage from './pages/MarketplaceDetailPage';
@@ -35,11 +38,38 @@ import Unauthorized from './pages/Unauthorized';
 const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage'));
 const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
 
+// Dashboard router component to conditionally render the appropriate dashboard
+const DashboardRouter: FC = () => {
+  const { authState } = useAuth();
+
+  console.log(authState.user);
+  
+  // Check if user has the DASHBOARD_ADMIN_VIEW permission
+  const hasAdminDashboardPermission = 
+    authState.user?.permissions?.includes('DASHBOARD_ADMIN_VIEW') || 
+    authState.user?.roles.includes('ROLE_ADMIN');
+  
+  // Check if user has the DASHBOARD_USER_VIEW permission
+  const hasUserDashboardPermission =
+    authState.user?.permissions?.includes('DASHBOARD_USER_VIEW');
+  
+  // Render the appropriate dashboard based on permissions
+  if (hasAdminDashboardPermission) {
+    return <AdminDashboard />;
+  } else if (hasUserDashboardPermission) {
+    return <UserDashboard />;
+  } else {
+    // If user doesn't have permission to view any dashboard, redirect to unauthorized
+    return <Navigate to="/unauthorized" replace />;
+  }
+};
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
       <CssBaseline enableColorScheme />
-      <AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
         <Router>
           <Box sx={{ 
             bgcolor: 'background.default', 
@@ -64,15 +94,39 @@ const App: React.FC = () => {
             {/* Protected routes - require authentication */}
             <Route element={<MainLayout />}>
               <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={
+                  <DashboardRouter />
+                } />
                 <Route path="/profile" element={<Profile />} />
+              </Route>
+
+              {/* Marketplace routes */}
+              <Route element={<ProtectedRoute requiredPermissions={['MARKETPLACE_READ']} />}>
                 <Route path="/marketplaces" element={<MarketplacesPage />} />
                 <Route path="/marketplaces/:id" element={<MarketplaceDetailPage />} />
+              </Route>
+              
+              {/* Fabric routes */}
+              <Route element={<ProtectedRoute requiredPermissions={['FABRIC_READ']} />}>
                 <Route path="/fabrics" element={<FabricsPage />} />
+              </Route>
+              
+              {/* Order routes */}
+              <Route element={<ProtectedRoute requiredPermissions={['ORDER_READ']} />}>
                 <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/orders/new" element={<OrderFormPage />} />
                 <Route path="/orders/:id" element={<OrderDetailPage />} />
+              </Route>
+              
+              <Route element={<ProtectedRoute requiredPermissions={['ORDER_CREATE']} />}>
+                <Route path="/orders/new" element={<OrderFormPage />} />
+              </Route>
+              
+              <Route element={<ProtectedRoute requiredPermissions={['ORDER_UPDATE']} />}>
                 <Route path="/orders/:id/edit" element={<OrderFormPage />} />
+              </Route>
+              
+              {/* Customer routes */}
+              <Route element={<ProtectedRoute requiredPermissions={['CUSTOMER_READ']} />}>
                 <Route path="/customers" element={<CustomersPage />} />
               </Route>
               
@@ -97,7 +151,8 @@ const App: React.FC = () => {
             </Routes>
           </Box>
         </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

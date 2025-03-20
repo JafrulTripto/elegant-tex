@@ -6,7 +6,7 @@ import com.tripzin.eleganttex.dto.request.TokenRefreshRequest;
 import com.tripzin.eleganttex.dto.response.JwtResponse;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
 import com.tripzin.eleganttex.dto.response.TokenRefreshResponse;
-import com.tripzin.eleganttex.entity.ERole;
+import com.tripzin.eleganttex.constants.RoleConstants;
 import com.tripzin.eleganttex.entity.Role;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.entity.VerificationToken;
@@ -61,6 +61,16 @@ public class AuthService {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
         
+        // Get user from repository to access roles and permissions
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userDetails.getId()));
+        
+        // Collect all permissions from all roles
+        List<String> permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(permission -> permission.getName())
+                .collect(Collectors.toList());
+        
         return JwtResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -72,6 +82,7 @@ public class AuthService {
                 .emailVerified(userDetails.isEmailVerified())
                 .accountVerified(userDetails.isAccountVerified())
                 .roles(roles)
+                .permissions(permissions)
                 .build();
     }
     
@@ -102,25 +113,30 @@ public class AuthService {
         Set<Role> roles = new HashSet<>();
         
         if (strRoles == null || strRoles.isEmpty()) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+            Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
                     .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER is not found."));
             roles.add(userRole);
         } else {
             strRoles.forEach(role -> {
                 switch (role.toLowerCase()) {
                     case "admin":
-                        Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                        Role adminRole = roleRepository.findByName(RoleConstants.ROLE_ADMIN)
                                 .orElseThrow(() -> new ResourceNotFoundException("Error: Role ADMIN is not found."));
                         roles.add(adminRole);
                         break;
                     case "mod":
                     case "moderator":
-                        Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+                        Role modRole = roleRepository.findByName(RoleConstants.ROLE_MODERATOR)
                                 .orElseThrow(() -> new ResourceNotFoundException("Error: Role MODERATOR is not found."));
                         roles.add(modRole);
                         break;
+                    case "manager":
+                        Role managerRole = roleRepository.findByName(RoleConstants.ROLE_MANAGER)
+                                .orElseThrow(() -> new ResourceNotFoundException("Error: Role MANAGER is not found."));
+                        roles.add(managerRole);
+                        break;
                     default:
-                        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                        Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
                                 .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER is not found."));
                         roles.add(userRole);
                 }

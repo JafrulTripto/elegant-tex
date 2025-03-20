@@ -31,6 +31,7 @@ public class UserDTO {
     private boolean emailVerified;
     private boolean accountVerified;
     private Set<String> roles;
+    private Set<String> permissions;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -45,7 +46,11 @@ public class UserDTO {
                 .emailVerified(user.isEmailVerified())
                 .accountVerified(user.isAccountVerified())
                 .roles(user.getRoles().stream()
-                        .map(role -> role.getName().name())
+                        .map(role -> role.getName())
+                        .collect(Collectors.toSet()))
+                .permissions(user.getRoles().stream()
+                        .flatMap(role -> role.getPermissions().stream())
+                        .map(permission -> permission.getName())
                         .collect(Collectors.toSet()))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

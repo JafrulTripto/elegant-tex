@@ -6,6 +6,7 @@ import { CircularProgress, Box } from '@mui/material';
 interface ProtectedRouteProps {
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requiredPermissions?: string[];
 }
 
 /**
@@ -13,10 +14,12 @@ interface ProtectedRouteProps {
  * 
  * @param requireAuth - If true, user must be authenticated to access the route
  * @param requireAdmin - If true, user must have admin role to access the route
+ * @param requiredPermissions - If provided, user must have all the specified permissions to access the route
  */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
   requireAdmin = false,
+  requiredPermissions = [],
 }) => {
   const { authState } = useAuth();
   const location = useLocation();
@@ -45,6 +48,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requireAdmin &&
     (!authState.user ||
       !authState.user.roles.some((role: string) => role === 'ROLE_ADMIN'))
+  ) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // If specific permissions are required, check if user has them or is an admin
+  if (
+    requiredPermissions.length > 0 &&
+    (!authState.user ||
+      !(
+        // Either user has all required permissions OR user is an admin
+        (authState.user.permissions &&
+          requiredPermissions.every(permission => 
+            authState.user?.permissions?.includes(permission) || false
+          )) ||
+        authState.user.roles.includes('ROLE_ADMIN')
+      )
+    )
   ) {
     return <Navigate to="/unauthorized" replace />;
   }

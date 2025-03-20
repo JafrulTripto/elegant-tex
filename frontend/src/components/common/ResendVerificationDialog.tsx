@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import authService from '../../services/auth.service';
 import { AccentButton } from './StyledComponents';
+import { useToast } from '../../contexts/ToastContext';
 
 interface ResendVerificationDialogProps {
   open: boolean;
@@ -24,17 +25,20 @@ const ResendVerificationDialog: React.FC<ResendVerificationDialogProps> = ({ ope
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email.trim()) {
       setError('Email is required');
+      showToast('Email is required', 'error');
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError('Please enter a valid email address');
+      showToast('Please enter a valid email address', 'error');
       return;
     }
 
@@ -45,8 +49,11 @@ const ResendVerificationDialog: React.FC<ResendVerificationDialogProps> = ({ ope
       await authService.resendVerification({ email });
       setSuccess(true);
       setEmail('');
+      showToast('Verification email has been sent successfully!', 'success');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to resend verification email');
+      const errorMessage = err.response?.data?.message || 'Failed to resend verification email';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

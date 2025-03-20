@@ -7,6 +7,7 @@ export interface User {
   lastName?: string;
   profileImageId?: number;
   roles: string[];
+  permissions?: string[];
   accountVerified: boolean;
   emailVerified: boolean;
 }
@@ -14,12 +15,14 @@ export interface User {
 export interface Role {
   id: number;
   name: string;
+  description?: string;
   permissions?: Permission[];
 }
 
 export interface Permission {
   id: number;
   name: string;
+  description?: string;
 }
 
 // Authentication related types
@@ -52,6 +55,7 @@ export interface JwtResponse {
   username: string;
   email: string;
   roles: string[];
+  permissions?: string[];
 }
 
 export interface TokenRefreshRequest {
@@ -121,4 +125,20 @@ export interface UserFilterParams {
   size?: number;
   sortBy?: string;
   sortDir?: string;
+}
+
+// Role filter types
+export interface RoleFilterParams {
+  search?: string;
+  permissions?: number[];
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDir?: string;
+}
+
+// Permission category type
+export interface PermissionCategory {
+  name: string;
+  permissions: Permission[];
 }

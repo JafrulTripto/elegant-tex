@@ -105,7 +105,7 @@ public class OrderProductHandler {
                     imagesToKeep.add(imageId);
                 } else {
                     // Verify image exists
-                    FileStorage fileStorage = fileStorageRepository.findById(imageId)
+                    fileStorageRepository.findById(imageId)
                             .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
                     
                     // Create new image reference
@@ -160,7 +160,7 @@ public class OrderProductHandler {
         if (imageIds != null && !imageIds.isEmpty()) {
             for (Long imageId : imageIds) {
                 // Verify image exists
-                FileStorage fileStorage = fileStorageRepository.findById(imageId)
+                fileStorageRepository.findById(imageId)
                         .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
                 
                 OrderProductImage image = OrderProductImage.builder()

@@ -21,9 +21,8 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20, unique = true)
-    private ERole name;
+    @Column(length = 50, unique = true)
+    private String name;
     
     private String description;
     
@@ -39,7 +38,7 @@ public class Role {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Role role = (Role) o;
-        return Objects.equals(id, role.id) && name == role.name;
+        return Objects.equals(id, role.id) && Objects.equals(name, role.name);
     }
 
     @Override

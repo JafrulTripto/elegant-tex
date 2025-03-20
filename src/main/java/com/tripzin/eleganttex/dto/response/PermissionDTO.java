@@ -23,7 +23,7 @@ public class PermissionDTO {
 
     public static PermissionDTO fromEntity(Permission permission) {
         List<String> roleNames = permission.getRoles().stream()
-                .map(role -> role.getName().name())
+                .map(role -> role.getName())
                 .collect(Collectors.toList());
 
         return new PermissionDTO(
