@@ -41,8 +41,8 @@ export const userService = {
     return api.post<ApiResponse<void>>(`/users/${id}/verify`);
   },
   
-  changePassword: async (currentPassword: string, newPassword: string) => {
-    return api.post<MessageResponse>('/users/reset-password', {
+  changePassword: async (id: number, currentPassword: string, newPassword: string) => {
+    return api.post<MessageResponse>(`/users/${id}/change-password`, {
       currentPassword,
       newPassword
     });

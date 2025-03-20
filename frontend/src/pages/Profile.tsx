@@ -27,7 +27,6 @@ import { useToast } from '../contexts/ToastContext';
 import userService from '../services/user.service';
 import FileUpload from '../components/common/FileUpload';
 import ImagePreview from '../components/common/ImagePreview';
-import ToastExample from '../components/common/ToastExample';
 
 const Profile: React.FC = () => {
   const { authState, loadUser } = useAuth();
@@ -132,6 +131,7 @@ const Profile: React.FC = () => {
       setPasswordError(null);
       
       await userService.changePassword(
+        user!.id,
         passwordData.currentPassword,
         passwordData.newPassword
       );
@@ -370,9 +370,6 @@ const Profile: React.FC = () => {
               Change Password
             </Button>
           </Paper>
-          
-          {/* Toast Example Component */}
-          <ToastExample />
         </Grid>
       </Grid>
       

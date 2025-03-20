@@ -1,6 +1,7 @@
 package com.tripzin.eleganttex.controller;
 
 import com.tripzin.eleganttex.dto.UserDTO;
+import com.tripzin.eleganttex.dto.request.ChangePasswordRequest;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
 import com.tripzin.eleganttex.entity.FileStorage;
 import com.tripzin.eleganttex.security.services.UserDetailsImpl;
@@ -106,5 +107,14 @@ public class UserController {
         UserDTO updatedUser = userService.updateUser(id, user);
         
         return ResponseEntity.ok(updatedUser);
+    }
+
+    // Get the id from path variable and the current user from the security context
+    @PostMapping("/{id}/change-password")
+    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isCurrentUser(#id, authentication)")
+    public ResponseEntity<MessageResponse> changePassword(
+            @PathVariable Long id,
+            @RequestBody ChangePasswordRequest changePasswordRequest) {
+        return ResponseEntity.ok(userService.changePassword(id, changePasswordRequest.getCurrentPassword(), changePasswordRequest.getNewPassword()));
     }
 }
