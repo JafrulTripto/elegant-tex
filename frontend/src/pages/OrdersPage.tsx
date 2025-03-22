@@ -34,9 +34,12 @@ import orderService from '../services/order.service';
 import { Order, OrderStatus, OrderFilterParams, OrderStatusCount, ORDER_STATUS_COLORS, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
+import { canViewAllOrders } from '../utils/permissionUtils';
 
 const OrdersPage: React.FC = () => {
   const { authState } = useAuth();
+  const hasViewAllOrdersPermission = authState.user?.permissions ? 
+    canViewAllOrders(authState.user.permissions) : false;
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [totalItems, setTotalItems] = useState<number>(0);
@@ -305,9 +308,16 @@ const OrdersPage: React.FC = () => {
         <Grid container spacing={3}>
           <Grid size={{ xs: 12 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h4" component="h1" gutterBottom>
-                Orders
-              </Typography>
+              <Box>
+                <Typography variant="h4" component="h1" gutterBottom>
+                  Orders
+                </Typography>
+                {!hasViewAllOrdersPermission && (
+                  <Typography variant="subtitle2" color="text.secondary">
+                    You are viewing only orders created by you. Contact an administrator for access to all orders.
+                  </Typography>
+                )}
+              </Box>
               <Stack direction="row" spacing={2}>
                 <Button
                   variant="outlined"

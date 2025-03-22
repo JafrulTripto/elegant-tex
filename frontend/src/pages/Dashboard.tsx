@@ -29,7 +29,6 @@ import {
   ShoppingCart as ShoppingCartIcon,
   Store as StoreIcon,
   AttachMoney as AttachMoneyIcon,
-  LocalShipping as LocalShippingIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +37,8 @@ import UserOrdersTable from '../components/orders/UserOrdersTable';
 import MarketplaceComparisonChart from '../components/orders/MarketplaceComparisonChart';
 import OrderStatusDistributionChart from '../components/orders/OrderStatusDistributionChart';
 import LastMonthOrdersChart from '../components/orders/LastMonthOrdersChart';
+import OrderCountAmountChart from '../components/orders/OrderCountAmountChart';
+import MonthlyOrderStatusCard from '../components/orders/MonthlyOrderStatusCard';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
 import { OrderStatusCount, Order, ORDER_STATUS_COLORS } from '../types/order';
@@ -266,25 +267,9 @@ const Dashboard: React.FC = () => {
             </Card>
           </Grid>
           
-          {/* Pending Deliveries Card */}
+          {/* Monthly Order Status Card */}
           <Grid size={{ xs: 12, md: 3 }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography variant="h4" component="div" fontWeight="bold">
-                      {orderStatusCounts.find(item => item.status === 'IN_PROGRESS')?.count || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Pending Deliveries
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'warning.main' }}>
-                    <LocalShippingIcon />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
+            <MonthlyOrderStatusCard title="This Month's Orders" />
           </Grid>
           
           {/* Order Status Cards */}
@@ -333,10 +318,19 @@ const Dashboard: React.FC = () => {
           </Grid>
           
           {/* Last Month Orders Chart */}
-          <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
                 <LastMonthOrdersChart />
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Order Count and Amount Chart */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
+                <OrderCountAmountChart />
               </CardContent>
             </Card>
           </Grid>

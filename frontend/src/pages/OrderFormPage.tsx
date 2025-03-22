@@ -43,6 +43,7 @@ import * as fabricService from '../services/fabric.service';
 import * as productTypeService from '../services/productType.service';
 import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
+import { canViewAllOrders } from '../utils/permissionUtils';
 import OrderFileUpload from '../components/orders/OrderFileUpload';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
 import CustomerSelection from '../components/customers/CustomerSelection';
@@ -125,6 +126,9 @@ const OrderFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const isEditMode = Boolean(id);
+  const hasViewAllOrdersPermission = authState.user?.permissions ? 
+    canViewAllOrders(authState.user.permissions) : false;
+  const [accessDenied, setAccessDenied] = useState<boolean>(false);
 
   // Initial form values
   const initialValues: OrderFormData = {
@@ -200,34 +204,56 @@ const OrderFormPage: React.FC = () => {
         
         // If edit mode, load order data
         if (isEditMode && id) {
-          const orderData = await orderService.getOrderById(parseInt(id));
-          
-          // Transform order data to form data
-          const transformedProducts = orderData.products.map(product => ({
-            id: product.id, // Include the product ID for updates
-            productType: product.productType,
-            fabricId: product.fabric.id,
-            quantity: product.quantity,
-            price: product.price,
-            description: product.description || '',
-            imageIds: product.images.map(img => img.imageId),
-            tempImages: [],
-            existingImages: product.images.map(img => ({
-              id: img.id,
-              imageId: img.imageId,
-              imageUrl: getFileUrl(img.imageId) || ''
-            }))
-          }));
-          
-          setFormValues({
-            marketplaceId: orderData.marketplace.id,
-            customerId: orderData.customer.id,
-            customerValidation: undefined, // Added for validation purposes
-            deliveryChannel: orderData.deliveryChannel,
-            deliveryCharge: orderData.deliveryCharge,
-            deliveryDate: orderData.deliveryDate,
-            products: transformedProducts
-          });
+          try {
+            const orderData = await orderService.getOrderById(parseInt(id));
+            
+            // Check if user has permission to edit this order
+            if (!hasViewAllOrdersPermission && 
+                authState.user && 
+                orderData.createdBy.id !== authState.user.id) {
+              setAccessDenied(true);
+              setError('You do not have permission to edit this order. You can only edit orders created by you.');
+              setLoading(false);
+              return;
+            }
+            
+            // Transform order data to form data
+            const transformedProducts = orderData.products.map(product => ({
+              id: product.id, // Include the product ID for updates
+              productType: product.productType,
+              fabricId: product.fabric.id,
+              quantity: product.quantity,
+              price: product.price,
+              description: product.description || '',
+              imageIds: product.images.map(img => img.imageId),
+              tempImages: [],
+              existingImages: product.images.map(img => ({
+                id: img.id,
+                imageId: img.imageId,
+                imageUrl: getFileUrl(img.imageId) || ''
+              }))
+            }));
+            
+            setFormValues({
+              marketplaceId: orderData.marketplace.id,
+              customerId: orderData.customer.id,
+              customerValidation: undefined, // Added for validation purposes
+              deliveryChannel: orderData.deliveryChannel,
+              deliveryCharge: orderData.deliveryCharge,
+              deliveryDate: orderData.deliveryDate,
+              products: transformedProducts
+            });
+          } catch (err: any) {
+            console.error('Error loading order data:', err);
+            if (err.response && err.response.status === 403) {
+              setAccessDenied(true);
+              setError('You do not have permission to edit this order.');
+            } else {
+              setError('Failed to load order data. Please try again later.');
+            }
+            setLoading(false);
+            return;
+          }
         } else if (userMarketplaces.length > 0) {
           // Set default marketplace if available
           setFormValues(prev => ({
@@ -374,6 +400,25 @@ const OrderFormPage: React.FC = () => {
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
         <CircularProgress />
       </Box>
+    );
+  }
+  
+  if (accessDenied) {
+    return (
+      <Container maxWidth="lg">
+        <Box my={4}>
+          <Alert severity="error">
+            {error || 'You do not have permission to edit this order. You can only edit orders created by you.'}
+          </Alert>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/orders')}
+            sx={{ mt: 2 }}
+          >
+            Back to Orders
+          </Button>
+        </Box>
+      </Container>
     );
   }
 

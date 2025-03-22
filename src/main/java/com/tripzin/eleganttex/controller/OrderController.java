@@ -33,7 +33,7 @@ public class OrderController {
     private final UserSecurity userSecurity;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORDER_CREATE')")
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestPart("orderRequest") OrderRequest orderRequest,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
@@ -57,7 +57,10 @@ public class OrderController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ORDER_READ')")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponse> getOrderById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         OrderResponse order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
     }
@@ -65,7 +68,9 @@ public class OrderController {
     @GetMapping
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getAllOrders(
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         Page<OrderResponse> orders = orderService.getAllOrders(pageable);
         return ResponseEntity.ok(orders);
     }
@@ -74,7 +79,9 @@ public class OrderController {
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getOrdersByMarketplaceId(
             @PathVariable Long marketplaceId,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         Page<OrderResponse> orders = orderService.getOrdersByMarketplaceId(marketplaceId, pageable);
         return ResponseEntity.ok(orders);
     }
@@ -83,7 +90,9 @@ public class OrderController {
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getOrdersByStatus(
             @PathVariable String status,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         Page<OrderResponse> orders = orderService.getOrdersByStatus(status, pageable);
         return ResponseEntity.ok(orders);
     }
@@ -93,7 +102,9 @@ public class OrderController {
     public ResponseEntity<Page<OrderResponse>> getOrdersByDeliveryDateBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         Page<OrderResponse> orders = orderService.getOrdersByDeliveryDateBetween(startDate, endDate, pageable);
         return ResponseEntity.ok(orders);
     }
@@ -106,7 +117,9 @@ public class OrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) Long marketplaceId,
             @RequestParam(required = false) String customerName,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         Page<OrderResponse> orders = orderService.getOrdersByFilters(status, startDate, endDate, marketplaceId, customerName, pageable);
         return ResponseEntity.ok(orders);
     }
@@ -125,7 +138,10 @@ public class OrderController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ORDER_DELETE')")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }
@@ -156,7 +172,15 @@ public class OrderController {
     @GetMapping("/status-counts")
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<List<Map<String, Object>>> getOrderStatusCounts(
-            @RequestParam(defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+        // If month and year are provided, use them
+        if (month != null && year != null) {
+            List<Map<String, Object>> statusCounts = orderService.getOrderStatusCountsByMonth(month, year);
+            return ResponseEntity.ok(statusCounts);
+        }
+        // Otherwise, fall back to the existing method
         List<Map<String, Object>> statusCounts = orderService.getOrderStatusCounts(currentMonth);
         return ResponseEntity.ok(statusCounts);
     }
@@ -164,7 +188,15 @@ public class OrderController {
     @GetMapping("/user-statistics")
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<List<Map<String, Object>>> getUserOrderStatistics(
-            @RequestParam(defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+        // If month and year are provided, use them
+        if (month != null && year != null) {
+            List<Map<String, Object>> userStats = orderService.getUserOrderStatisticsByMonth(month, year);
+            return ResponseEntity.ok(userStats);
+        }
+        // Otherwise, fall back to the existing method
         List<Map<String, Object>> userStats = orderService.getUserOrderStatistics(currentMonth);
         return ResponseEntity.ok(userStats);
     }
@@ -172,7 +204,15 @@ public class OrderController {
     @GetMapping("/marketplace-statistics")
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<List<Map<String, Object>>> getMarketplaceOrderStatistics(
-            @RequestParam(defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+        // If month and year are provided, use them
+        if (month != null && year != null) {
+            List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatisticsByMonth(month, year);
+            return ResponseEntity.ok(marketplaceStats);
+        }
+        // Otherwise, fall back to the existing method
         List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatistics(currentMonth);
         return ResponseEntity.ok(marketplaceStats);
     }
@@ -187,7 +227,9 @@ public class OrderController {
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<List<OrderResponse>> getSimilarOrders(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "5") int limit) {
+            @RequestParam(defaultValue = "5") int limit,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // The user ID will be extracted in the service layer from the security context
         List<OrderResponse> similarOrders = orderService.findSimilarOrders(id, limit);
         return ResponseEntity.ok(similarOrders);
     }
@@ -213,5 +255,23 @@ public class OrderController {
         
         List<Map<String, Object>> monthlyData = orderService.getMonthlyOrderData(startDate, endDate);
         return ResponseEntity.ok(monthlyData);
+    }
+    
+    /**
+     * Get monthly order count and amount data for chart display
+     * @param month optional month (0-11)
+     * @param year optional year
+     * @param currentMonth whether to use current month if month/year not provided
+     * @return list of daily order counts and amounts
+     */
+    @GetMapping("/monthly-count-amount")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<List<Map<String, Object>>> getMonthlyOrderCountAndAmount(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+        
+        List<Map<String, Object>> data = orderService.getMonthlyOrderCountAndAmount(month, year, currentMonth);
+        return ResponseEntity.ok(data);
     }
 }

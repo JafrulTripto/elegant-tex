@@ -36,6 +36,8 @@ import marketplaceService from '../services/marketplace.service';
 import { Order, ORDER_STATUS_COLORS } from '../types/order';
 import { Marketplace } from '../types/marketplace';
 import UserMarketplaceLineChart from '../components/orders/UserMarketplaceLineChart';
+import UserOrderStatusDistributionChart from '../components/orders/UserOrderStatusDistributionChart';
+import MonthlyOrderStatusCard from '../components/orders/MonthlyOrderStatusCard';
 
 const UserDashboard: React.FC = () => {
   const { authState } = useAuth();
@@ -195,7 +197,7 @@ const UserDashboard: React.FC = () => {
           </Grid>
           
           {/* Total Orders Card */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -216,7 +218,7 @@ const UserDashboard: React.FC = () => {
           </Grid>
           
           {/* Total Amount Card */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -236,8 +238,22 @@ const UserDashboard: React.FC = () => {
             </Card>
           </Grid>
           
+          {/* Monthly Order Status Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <MonthlyOrderStatusCard userId={user?.id} title="My Monthly Orders" />
+          </Grid>
+          
+          {/* Order Status Distribution Chart */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
+                <UserOrderStatusDistributionChart />
+              </CardContent>
+            </Card>
+          </Grid>
+          
           {/* Marketplace Line Chart */}
-          <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 400 }}>
                 <UserMarketplaceLineChart userMarketplaces={userMarketplaces} />

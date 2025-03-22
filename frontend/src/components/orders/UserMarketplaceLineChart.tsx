@@ -4,11 +4,8 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  ToggleButtonGroup,
-  ToggleButton,
   useTheme
 } from '@mui/material';
-import { CalendarMonth, CalendarToday } from '@mui/icons-material';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,6 +20,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { Marketplace } from '../../types/marketplace';
+import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
 
 // Register Chart.js components
 ChartJS.register(
@@ -50,8 +48,39 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
   const theme = useTheme();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentMonth, setCurrentMonth] = useState<boolean>(true);
   const [marketplaceOrderData, setMarketplaceOrderData] = useState<MarketplaceOrderData[]>([]);
+  
+  // New state for month/year selection
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  
+  // Generate month options
+  const generateMonthOptions = (): MonthSelectorOption[] => {
+    const options: MonthSelectorOption[] = [
+      { value: 'full-year', label: 'Full Year', isFullYear: true }
+    ];
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Add options for each month up to the current month
+    for (let i = 0; i <= currentMonth; i++) {
+      options.push({
+        value: `${i}-${currentYear}`,
+        label: `${monthNames[i]} ${currentYear}`,
+        isFullYear: false
+      });
+    }
+    
+    return options;
+  };
+  
+  const monthOptions = generateMonthOptions();
+  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
+  const [isFullYear, setIsFullYear] = useState<boolean>(false);
 
   // Generate colors for each marketplace
   const generateColors = (index: number) => {
@@ -74,7 +103,7 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
     } else {
       setLoading(false);
     }
-  }, [userMarketplaces, currentMonth]);
+  }, [userMarketplaces, selectedValue, isFullYear]);
 
   const fetchMarketplaceOrderData = async () => {
     try {
@@ -82,10 +111,10 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       setError(null);
 
       const startDate = new Date();
-      if (currentMonth) {
-        startDate.setMonth(startDate.getMonth() - 1);
-      } else {
+      if (isFullYear) {
         startDate.setFullYear(startDate.getFullYear() - 1);
+      } else {
+        startDate.setMonth(startDate.getMonth() - 1);
       }
 
 
@@ -100,7 +129,13 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       const monthlyData = await orderService.getLastMonthOrders();
       
       // Get marketplace statistics
-      const marketplaceStats = await orderService.getMarketplaceOrderStatistics(currentMonth);
+      let marketplaceStats;
+      if (isFullYear) {
+        marketplaceStats = await orderService.getMarketplaceOrderStatistics(false);
+      } else {
+        const [month, year] = selectedValue.split('-').map(Number);
+        marketplaceStats = await orderService.getMarketplaceOrderStatisticsByMonth(month, year);
+      }
       
       // Create a dataset for each marketplace
       for (const marketplace of userMarketplaces) {
@@ -132,13 +167,9 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
     }
   };
 
-  const handleTimeRangeChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newValue: boolean | null
-  ) => {
-    if (newValue !== null) {
-      setCurrentMonth(newValue);
-    }
+  const handleMonthChange = (value: string, fullYear: boolean) => {
+    setSelectedValue(value);
+    setIsFullYear(fullYear);
   };
 
   // Format date for display
@@ -271,22 +302,11 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">Marketplace Order Amounts</Typography>
-        <ToggleButtonGroup
-          value={currentMonth}
-          exclusive
-          onChange={handleTimeRangeChange}
-          aria-label="time range"
-          size="small"
-        >
-          <ToggleButton value={true} aria-label="current month">
-            <CalendarToday sx={{ mr: 1 }} fontSize="small" />
-            Month
-          </ToggleButton>
-          <ToggleButton value={false} aria-label="current year">
-            <CalendarMonth sx={{ mr: 1 }} fontSize="small" />
-            Year
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <MonthYearSelector
+          selectedValue={selectedValue}
+          options={monthOptions}
+          onChange={handleMonthChange}
+        />
       </Box>
 
       {error && (

@@ -7,6 +7,13 @@ export interface MonthlyOrderData {
   count: number;
 }
 
+// Interface for monthly order count and amount data
+export interface MonthlyOrderCountAmount {
+  date: string;
+  count: number;
+  amount: number;
+}
+
 const BASE_URL = '/orders';
 
 export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
@@ -174,6 +181,27 @@ export const getOrderStatusCounts = async (currentMonth = true): Promise<OrderSt
   return response.data;
 };
 
+export const getOrderStatusCountsByMonth = async (month: number, year: number): Promise<OrderStatusCount[]> => {
+  const response = await api.get(`${BASE_URL}/status-counts`, {
+    params: { month, year }
+  });
+  return response.data;
+};
+
+export const getUserOrderStatusCounts = async (userId: number, currentMonth = true): Promise<OrderStatusCount[]> => {
+  const response = await api.get(`${BASE_URL}/user/${userId}/status-counts`, {
+    params: { currentMonth }
+  });
+  return response.data;
+};
+
+export const getUserOrderStatusCountsByMonth = async (userId: number, month: number, year: number): Promise<OrderStatusCount[]> => {
+  const response = await api.get(`${BASE_URL}/user/${userId}/status-counts`, {
+    params: { month, year }
+  });
+  return response.data;
+};
+
 export const getUserOrderStatistics = async (currentMonth = true): Promise<any[]> => {
   const response = await api.get(`${BASE_URL}/user-statistics`, {
     params: { currentMonth }
@@ -181,9 +209,23 @@ export const getUserOrderStatistics = async (currentMonth = true): Promise<any[]
   return response.data;
 };
 
+export const getUserOrderStatisticsByMonth = async (month: number, year: number): Promise<any[]> => {
+  const response = await api.get(`${BASE_URL}/user-statistics`, {
+    params: { month, year }
+  });
+  return response.data;
+};
+
 export const getMarketplaceOrderStatistics = async (currentMonth = true): Promise<any[]> => {
   const response = await api.get(`${BASE_URL}/marketplace-statistics`, {
     params: { currentMonth }
+  });
+  return response.data;
+};
+
+export const getMarketplaceOrderStatisticsByMonth = async (month: number, year: number): Promise<any[]> => {
+  const response = await api.get(`${BASE_URL}/marketplace-statistics`, {
+    params: { month, year }
   });
   return response.data;
 };
@@ -216,6 +258,30 @@ export const getLastMonthOrders = async (): Promise<MonthlyOrderData[]> => {
   return response.data.map((item: any) => ({
     date: item.date,
     count: item.count
+  }));
+};
+
+/**
+ * Get monthly order count and amount data
+ * @param month optional month (0-11)
+ * @param year optional year
+ * @param currentMonth whether to use current month if month/year not provided
+ * @returns Array of daily order counts and amounts
+ */
+export const getMonthlyOrderCountAndAmount = async (
+  month?: number,
+  year?: number,
+  currentMonth: boolean = true
+): Promise<MonthlyOrderCountAmount[]> => {
+  const response = await api.get(`${BASE_URL}/monthly-count-amount`, {
+    params: { month, year, currentMonth }
+  });
+  
+  // Map the response to the expected format
+  return response.data.map((item: any) => ({
+    date: item.date,
+    count: item.count,
+    amount: item.amount
   }));
 };
 
@@ -263,11 +329,17 @@ const orderService = {
   generateOrderPdf,
   generateOrdersExcel,
   getOrderStatusCounts,
+  getOrderStatusCountsByMonth,
+  getUserOrderStatusCounts,
+  getUserOrderStatusCountsByMonth,
   getUserOrderStatistics,
+  getUserOrderStatisticsByMonth,
   getMarketplaceOrderStatistics,
+  getMarketplaceOrderStatisticsByMonth,
   getSimilarOrders,
   downloadBlob,
-  getLastMonthOrders
+  getLastMonthOrders,
+  getMonthlyOrderCountAndAmount
 };
 
 export default orderService;
