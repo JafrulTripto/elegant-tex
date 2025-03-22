@@ -100,3 +100,22 @@ export const getCategoryColor = (categoryName: string): string => {
   
   return colorMap[categoryName] || 'default';
 };
+
+/**
+ * Check if the user has a specific permission
+ * @param permissions Array of user permissions
+ * @param permissionName The permission name to check
+ * @returns True if the user has the permission, false otherwise
+ */
+export const hasPermission = (permissions: string[], permissionName: string): boolean => {
+  return permissions.includes(permissionName);
+};
+
+/**
+ * Check if the user has permission to view all orders
+ * @param permissions Array of user permissions
+ * @returns True if the user has the ORDER_READ_ALL permission, false otherwise
+ */
+export const canViewAllOrders = (permissions: string[]): boolean => {
+  return hasPermission(permissions, 'ORDER_READ_ALL');
+};

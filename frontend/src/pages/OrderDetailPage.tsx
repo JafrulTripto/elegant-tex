@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { canViewAllOrders } from '../utils/permissionUtils';
 import {
   Box,
   Button,
@@ -56,11 +58,15 @@ const ORDER_STATUS_STEPS: string[] = [
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { authState } = useAuth();
+  const hasViewAllOrdersPermission = authState.user?.permissions ? 
+    canViewAllOrders(authState.user.permissions) : false;
   
   // State
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState<boolean>(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [newStatus, setNewStatus] = useState<OrderStatus | ''>('');
   const [displayStatus, setDisplayStatus] = useState<string>('');
@@ -80,19 +86,35 @@ const OrderDetailPage: React.FC = () => {
       
       try {
         const orderData = await orderService.getOrderById(parseInt(id));
-        setOrder(orderData);
-        console.log(orderData);
         
-      } catch (err) {
+        // Check if user has permission to view this order
+        if (!hasViewAllOrdersPermission && 
+            authState.user && 
+            orderData.createdBy.id !== authState.user.id) {
+          setAccessDenied(true);
+          setError('You do not have permission to view this order. You can only view orders created by you.');
+          setLoading(false);
+          return;
+        }
+        
+        // If we get here, the user has permission to view the order
+        setOrder(orderData);
+        
+      } catch (err: any) {
         console.error('Error fetching order:', err);
-        setError('Failed to load order details. Please try again later.');
+        if (err.response && err.response.status === 403) {
+          setAccessDenied(true);
+          setError('You do not have permission to view this order.');
+        } else {
+          setError('Failed to load order details. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
     };
     
     fetchOrder();
-  }, [id]);
+  }, [id, hasViewAllOrdersPermission, authState.user]);
   
   // Get active step for stepper
   const getActiveStep = (status: string): number => {
@@ -234,7 +256,11 @@ const OrderDetailPage: React.FC = () => {
     return (
       <Container maxWidth="lg">
         <Box my={4}>
-          <Alert severity="error">{error || 'Order not found'}</Alert>
+          <Alert severity="error">
+            {accessDenied ? 
+              'You do not have permission to view this order. You can only view orders created by you.' : 
+              (error || 'Order not found')}
+          </Alert>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/orders')}

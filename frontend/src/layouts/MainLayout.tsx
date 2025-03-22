@@ -154,7 +154,7 @@ const MainLayout: React.FC = () => {
             </ListItemButton>
           </ListItem>
         )}
-        {(authState.user?.permissions?.includes('USER_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+        {authState.user?.roles.includes('ROLE_ADMIN') && (
           <ListItem disablePadding>
             <ListItemButton onClick={() => handleNavigate('/admin/users')}>
               <ListItemIcon color="secondary">

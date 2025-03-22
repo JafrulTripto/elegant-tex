@@ -9,14 +9,12 @@ import {
   TableRow,
   Paper,
   Typography,
-  ToggleButtonGroup,
-  ToggleButton,
   CircularProgress,
   TableSortLabel,
   Alert
 } from '@mui/material';
-import { CalendarMonth, CalendarToday } from '@mui/icons-material';
 import orderService from '../../services/order.service';
+import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
 
 interface UserOrderStatistics {
   userId: number;
@@ -34,7 +32,38 @@ const UserOrdersTable: React.FC = () => {
   const [userStats, setUserStats] = useState<UserOrderStatistics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentMonth, setCurrentMonth] = useState<boolean>(true);
+  
+  // New state for month/year selection
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  
+  // Generate month options
+  const generateMonthOptions = (): MonthSelectorOption[] => {
+    const options: MonthSelectorOption[] = [
+      { value: 'full-year', label: 'Full Year', isFullYear: true }
+    ];
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Add options for each month up to the current month
+    for (let i = 0; i <= currentMonth; i++) {
+      options.push({
+        value: `${i}-${currentYear}`,
+        label: `${monthNames[i]} ${currentYear}`,
+        isFullYear: false
+      });
+    }
+    
+    return options;
+  };
+  
+  const monthOptions = generateMonthOptions();
+  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
+  const [isFullYear, setIsFullYear] = useState<boolean>(false);
   
   // Sorting
   const [sortField, setSortField] = useState<SortField>('orderCount');
@@ -42,13 +71,24 @@ const UserOrdersTable: React.FC = () => {
 
   useEffect(() => {
     fetchUserOrderStatistics();
-  }, [currentMonth]);
+  }, [selectedValue, isFullYear]);
 
   const fetchUserOrderStatistics = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await orderService.getUserOrderStatistics(currentMonth);
+      
+      let data;
+      if (isFullYear) {
+        // Use existing method for full year
+        data = await orderService.getUserOrderStatistics(false);
+      } else {
+        // Parse month and year from selected value
+        const [month, year] = selectedValue.split('-').map(Number);
+        // Use new method for specific month
+        data = await orderService.getUserOrderStatisticsByMonth(month, year);
+      }
+      
       setUserStats(data);
       setLoading(false);
     } catch (err: any) {
@@ -57,13 +97,9 @@ const UserOrdersTable: React.FC = () => {
     }
   };
 
-  const handleTimeRangeChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newValue: boolean | null
-  ) => {
-    if (newValue !== null) {
-      setCurrentMonth(newValue);
-    }
+  const handleMonthChange = (value: string, fullYear: boolean) => {
+    setSelectedValue(value);
+    setIsFullYear(fullYear);
   };
 
   const handleSort = (field: SortField) => {
@@ -101,22 +137,11 @@ const UserOrdersTable: React.FC = () => {
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">User Order Statistics</Typography>
-        <ToggleButtonGroup
-          value={currentMonth}
-          exclusive
-          onChange={handleTimeRangeChange}
-          aria-label="time range"
-          size="small"
-        >
-          <ToggleButton value={true} aria-label="current month">
-            <CalendarToday sx={{ mr: 1 }} fontSize="small" />
-            Month
-          </ToggleButton>
-          <ToggleButton value={false} aria-label="current year">
-            <CalendarMonth sx={{ mr: 1 }} fontSize="small" />
-            Year
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <MonthYearSelector
+          selectedValue={selectedValue}
+          options={monthOptions}
+          onChange={handleMonthChange}
+        />
       </Box>
 
       {error && (

@@ -9,36 +9,28 @@ import {
 } from '@mui/material';
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
+  ArcElement,
   Tooltip,
   Legend
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
+import { OrderStatusCount, ORDER_STATUS_COLORS, ORDER_STATUS_DISPLAY } from '../../types/order';
 import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
+import { useAuth } from '../../hooks/useAuth';
 
 // Register Chart.js components
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
+  ArcElement,
   Tooltip,
   Legend
 );
 
-interface MarketplaceOrderStatistics {
-  marketplaceId: number;
-  name: string;
-  totalAmount: number;
-}
-
-const MarketplaceComparisonChart: React.FC = () => {
+const UserOrderStatusDistributionChart: React.FC = () => {
   const theme = useTheme();
-  const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceOrderStatistics[]>([]);
+  const { authState } = useAuth();
+  const { user } = authState;
+  const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -75,29 +67,57 @@ const MarketplaceComparisonChart: React.FC = () => {
   const [isFullYear, setIsFullYear] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchMarketplaceOrderStatistics();
-  }, [selectedValue, isFullYear]);
+    if (user) {
+      fetchUserOrderStatusCounts();
+    }
+  }, [selectedValue, isFullYear, user]);
 
-  const fetchMarketplaceOrderStatistics = async () => {
+  const fetchUserOrderStatusCounts = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       setError(null);
       
       let data;
-      if (isFullYear) {
-        // Use existing method for full year
-        data = await orderService.getMarketplaceOrderStatistics(false);
-      } else {
-        // Parse month and year from selected value
-        const [month, year] = selectedValue.split('-').map(Number);
-        // Use new method for specific month
-        data = await orderService.getMarketplaceOrderStatisticsByMonth(month, year);
+      
+      try {
+        // First try to use the dedicated user-specific endpoints
+        if (isFullYear) {
+          data = await orderService.getUserOrderStatusCounts(user.id, false);
+        } else {
+          const [month, year] = selectedValue.split('-').map(Number);
+          data = await orderService.getUserOrderStatusCountsByMonth(user.id, month, year);
+        }
+      } catch (apiError) {
+        // If the dedicated endpoints fail (e.g., not implemented on backend yet),
+        // fall back to client-side filtering of the general data
+        console.warn('User-specific order status API not available, falling back to client-side filtering');
+        
+        // Get all orders to filter by user
+        const ordersResponse = await orderService.getAllOrders(0, 1000); // Get a large batch of orders
+        const userOrders = ordersResponse.content.filter(order => 
+          order.createdBy && order.createdBy.id === user.id
+        );
+        
+        // Count orders by status for this user
+        const statusMap = new Map<string, number>();
+        userOrders.forEach(order => {
+          const count = statusMap.get(order.status) || 0;
+          statusMap.set(order.status, count + 1);
+        });
+        
+        // Convert to OrderStatusCount array
+        data = Array.from(statusMap.entries()).map(([status, count]) => ({
+          status,
+          count
+        }));
       }
       
-      setMarketplaceStats(data);
+      setStatusCounts(data);
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to load marketplace order statistics');
+      setError(err.message || 'Failed to load order status counts');
       setLoading(false);
     }
   };
@@ -107,27 +127,40 @@ const MarketplaceComparisonChart: React.FC = () => {
     setIsFullYear(fullYear);
   };
 
+  // Calculate total orders
+  const totalOrders = statusCounts.reduce((sum, item) => sum + item.count, 0);
+
   // Prepare data for Chart.js
-  const labels = marketplaceStats.map(stat => stat.name);
-  const amounts = marketplaceStats.map(stat => parseFloat(stat.totalAmount.toFixed(2)));
+  const labels = statusCounts.map(item => ORDER_STATUS_DISPLAY[item.status as keyof typeof ORDER_STATUS_DISPLAY] || item.status);
+  const counts = statusCounts.map(item => item.count);
+  const backgroundColor = statusCounts.map(item => ORDER_STATUS_COLORS[item.status as keyof typeof ORDER_STATUS_COLORS] || '#757575');
   
-  // Configure chart options based on theme
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        data: counts,
+        backgroundColor,
+        borderColor: theme.palette.background.paper,
+        borderWidth: 2,
+        hoverOffset: 15
+      }
+    ]
+  };
+  
   const chartOptions = {
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart' as const
-    },
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: 'right' as const,
         labels: {
           color: theme.palette.text.primary,
           font: {
             family: theme.typography.fontFamily,
             size: 12
-          }
+          },
+          padding: 20
         }
       },
       tooltip: {
@@ -142,79 +175,22 @@ const MarketplaceComparisonChart: React.FC = () => {
         displayColors: true,
         callbacks: {
           label: function(context: any) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += new Intl.NumberFormat('en-US', { 
-                style: 'currency', 
-                currency: 'USD' 
-              }).format(context.parsed.y);
-            }
-            return label;
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = Math.round((value / total) * 100);
+            return `${label}: ${value} (${percentage}%)`;
           }
         }
-      },
-      title: {
-        display: false
       }
     },
-    scales: {
-      x: {
-        grid: {
-          color: theme.palette.divider,
-        },
-        ticks: {
-          color: theme.palette.text.secondary,
-          font: {
-            family: theme.typography.fontFamily
-          }
-        }
-      },
-      y: {
-        grid: {
-          color: theme.palette.divider,
-        },
-        ticks: {
-          color: theme.palette.text.secondary,
-          font: {
-            family: theme.typography.fontFamily
-          },
-          callback: function(value: any) {
-            return '$' + value;
-          }
-        }
-      }
-    }
-  };
-  
-  const chartData = {
-    labels,
-    datasets: [
-      {
-        label: 'Total Amount',
-        data: amounts,
-        backgroundColor: theme.palette.mode === 'dark' 
-          ? 'rgba(80, 200, 200, 0.7)' 
-          : theme.palette.primary.main + '99', // Add transparency
-        borderColor: theme.palette.mode === 'dark'
-          ? 'rgba(80, 200, 200, 1)'
-          : theme.palette.primary.main,
-        borderWidth: 1,
-        borderRadius: 6,
-        maxBarThickness: 50,
-        hoverBackgroundColor: theme.palette.mode === 'dark'
-          ? 'rgba(75, 192, 192, 0.9)'
-          : theme.palette.primary.dark + 'cc',
-      }
-    ]
+    cutout: '60%'
   };
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" >
-        <Typography variant="h6">Marketplace Order Comparison</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">Order Status Distribution</Typography>
         <MonthYearSelector
           selectedValue={selectedValue}
           options={monthOptions}
@@ -246,11 +222,29 @@ const MarketplaceComparisonChart: React.FC = () => {
           }}
         >
           {chartData.labels.length > 0 ? (
-            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
-              <Bar 
+            <Box sx={{ position: 'relative', height: '100%', width: '100%', display: 'flex' }}>
+              <Doughnut 
                 options={chartOptions} 
                 data={chartData} 
               />
+              {/* Center content */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none' // Allows clicks to pass through to the chart
+                }}
+              >
+                <Typography variant="h4" fontWeight="bold">
+                  {totalOrders}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  My Orders
+                </Typography>
+              </Box>
             </Box>
           ) : (
             <Box 
@@ -260,7 +254,7 @@ const MarketplaceComparisonChart: React.FC = () => {
               height="100%"
             >
               <Typography variant="body1" color="text.secondary">
-                No data available for this time period
+                No order status data available
               </Typography>
             </Box>
           )}
@@ -270,4 +264,4 @@ const MarketplaceComparisonChart: React.FC = () => {
   );
 };
 
-export default MarketplaceComparisonChart;
+export default UserOrderStatusDistributionChart;
