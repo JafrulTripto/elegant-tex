@@ -106,13 +106,26 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
 
   return (
     <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <CardContent sx={{ p: 1.5, height: '100%' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
           <Box>
-            <Typography variant="h4" component="div" fontWeight="bold">
+            <Typography 
+              variant="h4" 
+              component="div" 
+              fontWeight="bold"
+              sx={{ 
+                fontSize: '1.5rem',
+                lineHeight: 1.2,
+                mb: 0.5
+              }}
+            >
               {selectedStatus === 'DELIVERED' ? deliveredCount : returnedCount}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ fontSize: '0.75rem' }}
+            >
               {selectedStatus === 'DELIVERED' ? 'Delivered Orders' : 'Returned Orders'}
             </Typography>
           </Box>
@@ -120,45 +133,64 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
             sx={{
               bgcolor: selectedStatus === 'DELIVERED' ? deliveredColor : returnedColor,
               color: '#fff',
-              width: 48,
-              height: 48,
+              width: 40, // Reduced from 48
+              height: 40, // Reduced from 48
               borderRadius: '50%',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
             }}
           >
-            {selectedStatus === 'DELIVERED' ? <DeliveredIcon /> : <ReturnedIcon />}
+            {selectedStatus === 'DELIVERED' ? 
+              <DeliveredIcon sx={{ fontSize: '1.25rem' }} /> : 
+              <ReturnedIcon sx={{ fontSize: '1.25rem' }} />
+            }
           </Box>
-
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 1, 
+              py: 0.5, 
+              '& .MuiAlert-message': { 
+                padding: '2px 0' 
+              } 
+            }}
+          >
             {error}
           </Alert>
         )}
 
         {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" py={3}>
-            <CircularProgress size={40} />
+          <Box display="flex" justifyContent="center" alignItems="center" py={1.5}>
+            <CircularProgress size={30} /> {/* Smaller loading indicator */}
           </Box>
         ) : (
           <Box
             sx={{
               display: 'flex',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-start', // Changed from space-between
               alignItems: 'center',
               transition: 'all 0.3s ease',
+              mt: 0.5
             }}
           >
-
             <ToggleButtonGroup
               value={selectedStatus}
               exclusive
               onChange={handleStatusToggle}
               size="small"
               aria-label="Order status filter"
+              sx={{ 
+                '& .MuiToggleButton-root': {
+                  py: 0.5, // Reduced padding
+                  px: 1.5,
+                  fontSize: '0.75rem', // Smaller font
+                  textTransform: 'none'
+                }
+              }}
             >
               <ToggleButton
                 value="DELIVERED"
@@ -193,8 +225,6 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
                 Returned
               </ToggleButton>
             </ToggleButtonGroup>
-
-
           </Box>
         )}
       </CardContent>

@@ -27,6 +27,12 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
+  useMediaQuery,
+  useTheme,
+  IconButton,
+  Menu,
+  StepContent,
+  Tooltip,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -36,7 +42,8 @@ import {
   Timeline as TimelineIcon,
   Delete as DeleteIcon,
   Inventory as InventoryIcon,
-  Description as DescriptionIcon
+  Description as DescriptionIcon,
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { Order, OrderStatus, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
@@ -59,8 +66,21 @@ const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { authState } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const hasViewAllOrdersPermission = authState.user?.permissions ? 
     canViewAllOrders(authState.user.permissions) : false;
+  
+  // Menu state for mobile action buttons
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
   
   // State
   const [order, setOrder] = useState<Order | null>(null);
@@ -274,79 +294,188 @@ const OrderDetailPage: React.FC = () => {
   }
   
   return (
-    <Container maxWidth="lg">
-      <Box my={4}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+    <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box my={{ xs: 2, sm: 3, md: 4 }}>
+        <Box 
+          display="flex" 
+          flexDirection={{ xs: 'column', sm: 'row' }} 
+          justifyContent="space-between" 
+          alignItems={{ xs: 'flex-start', sm: 'center' }} 
+          mb={{ xs: 2, sm: 3 }}
+          gap={1}
+        >
           <Box display="flex" alignItems="center">
-            <Button
-              startIcon={<ArrowBackIcon />}
+            <IconButton
               onClick={() => navigate('/orders')}
-              sx={{ mr: 2 }}
+              sx={{ mr: { xs: 1, sm: 2 } }}
+              aria-label="Back to orders"
+              size={isMobile ? "small" : "medium"}
             >
-              Back
-            </Button>
-            <Typography variant="h4" component="h1">
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography 
+              variant={isMobile ? "h5" : "h4"} 
+              component="h1"
+              sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}
+            >
               Order #{order.orderNumber}
             </Typography>
           </Box>
-          <Box>
-            <Button
-              variant="outlined"
-              startIcon={<TimelineIcon />}
-              onClick={handleStatusDialogOpen}
-              sx={{ mr: 1 }}
-            >
-              Update Status
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<PdfIcon />}
-              onClick={handleGeneratePdf}
-              disabled={generatingPdf}
-              sx={{ mr: 1 }}
-            >
-              {generatingPdf ? 'Generating...' : 'Download PDF'}
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => setDeleteDialogOpen(true)}
-              disabled={deleting}
-              sx={{ mr: 1 }}
-            >
-              {deleting ? 'Deleting...' : 'Delete Order'}
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<EditIcon />}
-              onClick={() => navigate(`/orders/${order.id}/edit`)}
-            >
-              Edit Order
-            </Button>
-          </Box>
+          
+          {/* Desktop action buttons */}
+          {!isMobile && (
+            <Box sx={{ display: 'flex', flexWrap: { xs: 'wrap', md: 'nowrap' }, gap: 1, justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                startIcon={<TimelineIcon />}
+                onClick={handleStatusDialogOpen}
+                size={isTablet ? "small" : "medium"}
+              >
+                Update Status
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PdfIcon />}
+                onClick={handleGeneratePdf}
+                disabled={generatingPdf}
+                size={isTablet ? "small" : "medium"}
+              >
+                {generatingPdf ? 'Generating...' : 'Download PDF'}
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={deleting}
+                size={isTablet ? "small" : "medium"}
+              >
+                {deleting ? 'Deleting...' : 'Delete Order'}
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<EditIcon />}
+                onClick={() => navigate(`/orders/${order.id}/edit`)}
+                size={isTablet ? "small" : "medium"}
+              >
+                Edit Order
+              </Button>
+            </Box>
+          )}
+          
+          {/* Mobile action menu */}
+          {isMobile && (
+            <Box sx={{ alignSelf: 'flex-end' }}>
+              <Tooltip title="Order actions">
+                <IconButton
+                  aria-label="Order actions"
+                  aria-controls={open ? 'order-actions-menu' : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={open ? 'true' : undefined}
+                  onClick={handleMenuClick}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                id="order-actions-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleMenuClose}
+                MenuListProps={{
+                  'aria-labelledby': 'order-actions-button',
+                }}
+              >
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  handleStatusDialogOpen();
+                }}>
+                  <TimelineIcon fontSize="small" sx={{ mr: 1 }} />
+                  Update Status
+                </MenuItem>
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  handleGeneratePdf();
+                }} disabled={generatingPdf}>
+                  <PdfIcon fontSize="small" sx={{ mr: 1 }} />
+                  {generatingPdf ? 'Generating...' : 'Download PDF'}
+                </MenuItem>
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  setDeleteDialogOpen(true);
+                }} disabled={deleting} sx={{ color: 'error.main' }}>
+                  <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                  {deleting ? 'Deleting...' : 'Delete Order'}
+                </MenuItem>
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  navigate(`/orders/${order.id}/edit`);
+                }}>
+                  <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                  Edit Order
+                </MenuItem>
+              </Menu>
+            </Box>
+          )}
         </Box>
 
         {/* Order Status */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Order Status</Typography>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}>
+          <Box 
+            display="flex" 
+            flexDirection={{ xs: 'column', sm: 'row' }} 
+            justifyContent="space-between" 
+            alignItems={{ xs: 'flex-start', sm: 'center' }} 
+            mb={2}
+            gap={1}
+          >
+            <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}>
+              Order Status
+            </Typography>
             <Chip
               label={getDisplayStatus(order.status)}
               color={getStatusColor(getDisplayStatus(order.status)) as any}
-              sx={{ fontWeight: 'bold' }}
+              sx={{ fontWeight: 'bold', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
             />
           </Box>
           
           {getDisplayStatus(order.status) !== 'Returned' && getDisplayStatus(order.status) !== 'Cancelled' ? (
-            <Stepper activeStep={getActiveStep(order.status)} alternativeLabel>
-              {ORDER_STATUS_STEPS.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+            isMobile ? (
+              // Vertical stepper for mobile
+              <Stepper activeStep={getActiveStep(order.status)} orientation="vertical">
+                {ORDER_STATUS_STEPS.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                    <StepContent>
+                      {getActiveStep(order.status) === ORDER_STATUS_STEPS.indexOf(label) && (
+                        <Typography variant="caption" color="text.secondary">
+                          Current status
+                        </Typography>
+                      )}
+                    </StepContent>
+                  </Step>
+                ))}
+              </Stepper>
+            ) : (
+              // Horizontal stepper for desktop
+              <Stepper 
+                activeStep={getActiveStep(order.status)} 
+                alternativeLabel
+                sx={{ 
+                  overflowX: { xs: 'auto', md: 'visible' },
+                  '& .MuiStepLabel-label': {
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }
+                }}
+              >
+                {ORDER_STATUS_STEPS.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            )
           ) : (
             getDisplayStatus(order.status) === 'Returned' ? (
               <Alert severity="error" sx={{ mt: 2 }}>
@@ -398,13 +527,17 @@ const OrderDetailPage: React.FC = () => {
           </Box>
         </Paper>
 
-        {/* Order Details - Two columns layout */}
-        <Grid container spacing={3}>
+        {/* Order Details - Two columns layout on desktop, stacked on mobile */}
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           {/* Left Column */}
           <Grid size={{ xs: 12, md: 6 }}>
             {/* Customer Information */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
+            <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}
+              >
                 Customer Information
               </Typography>
               <Divider sx={{ mb: 2 }} />
@@ -476,8 +609,12 @@ const OrderDetailPage: React.FC = () => {
             </Paper>
             
             {/* Delivery Information */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
+            <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}
+              >
                 Delivery Information
               </Typography>
               <Divider sx={{ mb: 2 }} />
@@ -530,8 +667,12 @@ const OrderDetailPage: React.FC = () => {
             </Paper>
             
             {/* Order Summary */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
+            <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}
+              >
                 Order Summary
               </Typography>
               <Divider sx={{ mb: 2 }} />
@@ -587,8 +728,12 @@ const OrderDetailPage: React.FC = () => {
           
           {/* Right Column - Products */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
+            <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}
+              >
                 Products
               </Typography>
               <Divider sx={{ mb: 2 }} />
@@ -626,7 +771,8 @@ const OrderDetailPage: React.FC = () => {
                     <Box 
                       sx={{ 
                         display: 'flex',
-                        alignItems: 'center',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'flex-start', sm: 'center' },
                         mb: 2,
                         p: 1.5,
                         bgcolor: 'background.paper',
@@ -635,15 +781,23 @@ const OrderDetailPage: React.FC = () => {
                       }}
                     >
                       {/* Fabric image */}
-                      <OrderImagePreview
-                        imageId={product.fabric.imageId}
-                        width={60}
-                        height={60}
-                        showDeleteButton={false}
-                      />
+                      <Box sx={{ alignSelf: { xs: 'center', sm: 'flex-start' }, mb: { xs: 1, sm: 0 } }}>
+                        <OrderImagePreview
+                          imageId={product.fabric.imageId}
+                          width={isMobile ? 80 : 60}
+                          height={isMobile ? 80 : 60}
+                          showDeleteButton={false}
+                        />
+                      </Box>
                       
-                      <Box ml={2} flex={1}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box ml={{ xs: 0, sm: 2 }} flex={1}>
+                        <Box 
+                          display="flex" 
+                          flexDirection={{ xs: 'column', sm: 'row' }}
+                          justifyContent="space-between" 
+                          alignItems={{ xs: 'flex-start', sm: 'center' }}
+                          mb={{ xs: 0.5, sm: 0 }}
+                        >
                           <Typography variant="body2" color="textSecondary">
                             Fabric
                           </Typography>
@@ -698,7 +852,8 @@ const OrderDetailPage: React.FC = () => {
                             display: 'flex', 
                             flexWrap: 'wrap', 
                             gap: 1,
-                            pl: 3
+                            pl: { xs: 0, sm: 3 },
+                            mt: { xs: 1, sm: 0 }
                           }}
                         >
                           {product.images.map((image) => (
@@ -722,7 +877,7 @@ const OrderDetailPage: React.FC = () => {
         
         {/* Similar Orders Section */}
         {order.status !== 'RETURNED' && order.status !== 'CANCELLED' && id && (
-          <Paper sx={{ p: 3, mt: 3 }}>
+          <Paper sx={{ p: { xs: 2, sm: 3 }, mt: { xs: 2, sm: 3 } }}>
             <SimilarOrdersSection 
               orderId={parseInt(id)} 
               currentOrderProducts={order.products.map(product => ({
@@ -744,9 +899,18 @@ const OrderDetailPage: React.FC = () => {
           setStatusDialogOpen(false);
           setError(null); // Clear any errors when closing the dialog
         }}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            width: { xs: '95%', sm: '80%' },
+            maxWidth: { xs: '95%', sm: 600 },
+            m: { xs: 1, sm: 'auto' }
+          }
+        }}
       >
         <DialogTitle>Update Order Status</DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 2 } }}>
           <Box sx={{ pt: 1 }}>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -785,8 +949,12 @@ const OrderDetailPage: React.FC = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setStatusDialogOpen(false)} color="inherit">
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 2 } }}>
+          <Button 
+            onClick={() => setStatusDialogOpen(false)} 
+            color="inherit"
+            size={isMobile ? "small" : "medium"}
+          >
             Cancel
           </Button>
           <Button
@@ -794,6 +962,7 @@ const OrderDetailPage: React.FC = () => {
             color="primary"
             variant="contained"
             disabled={updatingStatus || !newStatus}
+            size={isMobile ? "small" : "medium"}
           >
             {updatingStatus ? 'Updating...' : 'Update Status'}
           </Button>

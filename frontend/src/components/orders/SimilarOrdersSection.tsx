@@ -13,7 +13,8 @@ import {
   CardActions,
   Paper,
   Stack,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { alpha } from '@mui/material/styles';
@@ -43,7 +44,9 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
   const [similarOrders, setSimilarOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const theme = useTheme(); // Moved to top level to follow React hooks rules
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   useEffect(() => {
     const fetchSimilarOrders = async () => {
@@ -127,10 +130,19 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
   
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography 
+        variant="h6" 
+        gutterBottom
+        sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}
+      >
         Similar Orders ({similarOrders.length})
       </Typography>
-      <Typography variant="body2" color="textSecondary" paragraph>
+      <Typography 
+        variant="body2" 
+        color="textSecondary" 
+        paragraph
+        sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+      >
         These are returned or cancelled orders with matching products (same product type AND fabric with similar descriptions) that could potentially be reused.
       </Typography>
       
@@ -168,7 +180,14 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                 ? alpha(theme.palette.error.light, 0.1)
                 : 'inherit'
             }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Box 
+                display="flex" 
+                flexDirection={{ xs: 'column', sm: 'row' }}
+                justifyContent="space-between" 
+                alignItems={{ xs: 'flex-start', sm: 'center' }} 
+                mb={2}
+                gap={1}
+              >
                 <Typography 
                   variant="h6" 
                   component={Link} 
@@ -177,6 +196,7 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                     textDecoration: 'none', 
                     color: 'primary.main',
                     fontWeight: 'medium',
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' },
                     '&:hover': {
                       textDecoration: 'underline'
                     }
@@ -188,61 +208,65 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                   label={statusDisplay}
                   color={statusColor as any}
                   size="small"
-                  sx={{ fontWeight: 'medium' }}
+                  sx={{ 
+                    fontWeight: 'medium',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                    height: { xs: '22px', sm: '24px' }
+                  }}
                 />
               </Box>
               
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid container spacing={{ xs: 1, sm: 2 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <PersonIcon fontSize="small" color="action" />
+                    <PersonIcon fontSize={isMobile ? "inherit" : "small"} color="action" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     <Box>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
                         Customer
                       </Typography>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" fontWeight="medium" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                         {order.customer.name}
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
                 
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <CalendarIcon fontSize="small" color="action" />
+                    <CalendarIcon fontSize={isMobile ? "inherit" : "small"} color="action" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     <Box>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
                         Created Date
                       </Typography>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" fontWeight="medium" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                         {format(new Date(order.createdAt), 'PP')}
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
                 
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <MoneyIcon fontSize="small" color="action" />
+                    <MoneyIcon fontSize={isMobile ? "inherit" : "small"} color="action" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     <Box>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
                         Total Amount
                       </Typography>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" fontWeight="medium" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                         ${order.totalAmount.toFixed(2)}
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
                 
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 6, sm: 6, md: 3 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <ProductIcon fontSize="small" color="action" />
+                    <ProductIcon fontSize={isMobile ? "inherit" : "small"} color="action" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     <Box>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
                         Products
                       </Typography>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" fontWeight="medium" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                         {order.products.length} items
                       </Typography>
                     </Box>
@@ -254,12 +278,20 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                 variant="outlined" 
                 sx={{ 
                   mt: 2, 
-                  p: 1.5, 
+                  p: { xs: 1, sm: 1.5 }, 
                   backgroundColor: 'background.default',
                   borderRadius: 1
                 }}
               >
-                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
+                <Typography 
+                  variant="caption" 
+                  color="textSecondary" 
+                  sx={{ 
+                    display: 'block', 
+                    mb: 1,
+                    fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                  }}
+                >
                   Products:
                 </Typography>
                 <Box 
@@ -267,7 +299,7 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                     display: 'flex', 
                     flexWrap: 'wrap', 
                     gap: 1,
-                    maxHeight: order.products.length > 8 ? '120px' : 'auto',
+                    maxHeight: order.products.length > 8 ? { xs: '100px', sm: '120px' } : 'auto',
                     overflowY: order.products.length > 8 ? 'auto' : 'visible',
                     pr: order.products.length > 8 ? 1 : 0, // Add padding for scrollbar
                     '&::-webkit-scrollbar': {
@@ -291,14 +323,24 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                       color="primary"
                       sx={{ 
                         borderRadius: '4px',
+                        height: { xs: '20px', sm: '24px' },
                         '& .MuiChip-label': {
-                          px: 1
+                          px: 1,
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' }
                         }
                       }}
                     />
                   ))}
                   {order.products.length > 8 && (
-                    <Typography variant="caption" color="textSecondary" sx={{ alignSelf: 'center', ml: 1 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="textSecondary" 
+                      sx={{ 
+                        alignSelf: 'center', 
+                        ml: 1,
+                        fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      }}
+                    >
                       Scroll to see all
                     </Typography>
                   )}
@@ -306,12 +348,16 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
               </Paper>
             </CardContent>
             
-            <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1, px: 2 }}>
+            <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1, px: { xs: 1, sm: 2 } }}>
               <Button 
                 component={Link}
                 to={`/orders/${order.id}`}
                 size="small" 
-                endIcon={<ArrowIcon />}
+                endIcon={<ArrowIcon fontSize={isMobile ? "inherit" : "small"} />}
+                sx={{ 
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                  py: { xs: 0.5, sm: 1 }
+                }}
               >
                 View Details
               </Button>

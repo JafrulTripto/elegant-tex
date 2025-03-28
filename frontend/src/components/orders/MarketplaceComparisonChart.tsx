@@ -114,7 +114,7 @@ const MarketplaceComparisonChart: React.FC = () => {
   // Configure chart options based on theme
   const chartOptions = {
     animation: {
-      duration: 1000,
+      duration: 800, // Reduced from 1000
       easing: 'easeOutQuart' as const
     },
     responsive: true,
@@ -122,12 +122,16 @@ const MarketplaceComparisonChart: React.FC = () => {
     plugins: {
       legend: {
         position: 'top' as const,
+        align: 'end' as const,
         labels: {
           color: theme.palette.text.primary,
           font: {
             family: theme.typography.fontFamily,
-            size: 12
-          }
+            size: 10 // Reduced from 12
+          },
+          boxWidth: 12, // Smaller color boxes
+          boxHeight: 12,
+          padding: 10 // Reduced padding
         }
       },
       tooltip: {
@@ -138,8 +142,14 @@ const MarketplaceComparisonChart: React.FC = () => {
         bodyColor: theme.palette.text.primary,
         borderColor: theme.palette.divider,
         borderWidth: 1,
-        padding: 10,
+        padding: 8, // Reduced from 10
         displayColors: true,
+        titleFont: {
+          size: 11
+        },
+        bodyFont: {
+          size: 11
+        },
         callbacks: {
           label: function(context: any) {
             let label = context.dataset.label || '';
@@ -164,29 +174,52 @@ const MarketplaceComparisonChart: React.FC = () => {
       x: {
         grid: {
           color: theme.palette.divider,
+          drawBorder: false,
+          display: true,
+          drawOnChartArea: true,
+          drawTicks: false
         },
         ticks: {
           color: theme.palette.text.secondary,
           font: {
-            family: theme.typography.fontFamily
-          }
+            family: theme.typography.fontFamily,
+            size: 9 // Smaller font
+          },
+          maxRotation: 45, // Allow rotation for longer marketplace names
+          padding: 5 // Reduced padding
         }
       },
       y: {
         grid: {
           color: theme.palette.divider,
+          drawBorder: false,
+          display: true,
+          drawOnChartArea: true,
+          drawTicks: false
         },
         ticks: {
           color: theme.palette.text.secondary,
           font: {
-            family: theme.typography.fontFamily
+            family: theme.typography.fontFamily,
+            size: 9 // Smaller font
           },
+          padding: 5, // Reduced padding
           callback: function(value: any) {
             return '$' + value;
           }
         }
       }
-    }
+    },
+    layout: {
+      padding: {
+        left: 5,
+        right: 5,
+        top: 5,
+        bottom: 5
+      }
+    },
+    barPercentage: 0.7, // Make bars slightly thinner
+    categoryPercentage: 0.8 // Adjust spacing between bar groups
   };
   
   const chartData = {
@@ -196,25 +229,40 @@ const MarketplaceComparisonChart: React.FC = () => {
         label: 'Total Amount',
         data: amounts,
         backgroundColor: theme.palette.mode === 'dark' 
-          ? 'rgba(80, 200, 200, 0.7)' 
-          : theme.palette.primary.main + '99', // Add transparency
+          ? 'rgba(80, 200, 200, 0.6)' // Reduced opacity
+          : theme.palette.primary.main + '88', // Reduced opacity
         borderColor: theme.palette.mode === 'dark'
-          ? 'rgba(80, 200, 200, 1)'
+          ? 'rgba(80, 200, 200, 0.8)'
           : theme.palette.primary.main,
         borderWidth: 1,
-        borderRadius: 6,
-        maxBarThickness: 50,
+        borderRadius: 4, // Reduced from 6
+        maxBarThickness: 40, // Reduced from 50
         hoverBackgroundColor: theme.palette.mode === 'dark'
-          ? 'rgba(75, 192, 192, 0.9)'
-          : theme.palette.primary.dark + 'cc',
+          ? 'rgba(75, 192, 192, 0.8)'
+          : theme.palette.primary.dark + 'bb',
       }
     ]
   };
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" >
-        <Typography variant="h6">Marketplace Order Comparison</Typography>
+      <Box 
+        display="flex" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        mb={1} // Added mb={1}
+        sx={{ 
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          pb: 0.75
+        }}
+      >
+        <Typography 
+          variant="subtitle1" 
+          fontWeight="medium"
+          sx={{ fontSize: '0.95rem' }}
+        >
+          Marketplace Order Comparison
+        </Typography>
         <MonthYearSelector
           selectedValue={selectedValue}
           options={monthOptions}
@@ -223,25 +271,33 @@ const MarketplaceComparisonChart: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 1, // Reduced from mb={2}
+            py: 0.5, 
+            '& .MuiAlert-message': { 
+              padding: '2px 0' 
+            } 
+          }}
+        >
           {error}
         </Alert>
       )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" flexGrow={1}>
-          <CircularProgress />
+          <CircularProgress size={30} /> {/* Smaller loading indicator */}
         </Box>
       ) : (
         <Paper 
           sx={{ 
-            p: 2, 
+            p: 1.5, // Reduced from p: 2
             flexGrow: 1,
-            minHeight: 300,
-            mt: 2,
+            minHeight: 280, // Reduced from 300
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.1)',
+            boxShadow: theme.palette.mode === 'dark' ? '0 2px 10px rgba(0,0,0,0.3)' : '0 2px 10px rgba(0,0,0,0.08)',
             transition: 'box-shadow 0.3s ease-in-out'
           }}
         >
@@ -259,7 +315,7 @@ const MarketplaceComparisonChart: React.FC = () => {
               alignItems="center" 
               height="100%"
             >
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body2" color="text.secondary">
                 No data available for this time period
               </Typography>
             </Box>
