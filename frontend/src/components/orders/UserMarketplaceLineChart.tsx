@@ -4,7 +4,8 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Chart as ChartJS,
@@ -46,6 +47,7 @@ interface MarketplaceOrderData {
 
 const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ userMarketplaces }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [marketplaceOrderData, setMarketplaceOrderData] = useState<MarketplaceOrderData[]>([]);
@@ -175,8 +177,9 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    // Use shorter format on mobile
     return date.toLocaleDateString('en-US', {
-      month: 'short',
+      month: isMobile ? '2-digit' : 'short',
       day: 'numeric'
     });
   };
@@ -186,26 +189,38 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
     .filter((value, index, self) => self.indexOf(value) === index)
     .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
   
-  // Prepare data for Chart.js
-  const labels = allDates.map(date => formatDate(date));
+  // For mobile, reduce the number of labels to avoid overcrowding
+  let filteredDates = allDates;
+  if (isMobile && allDates.length > 7) {
+    // Show only every nth label to fit on mobile
+    const step = Math.ceil(allDates.length / 7);
+    filteredDates = allDates.filter((_, index) => index % step === 0);
+  }
   
-  // Configure chart options based on theme
+  // Prepare data for Chart.js
+  const labels = filteredDates.map(date => formatDate(date));
+  
+  // Configure chart options based on theme and screen size
   const chartOptions = {
     animation: {
-      duration: 1000,
+      duration: 800,
       easing: 'easeOutQuart' as const
     },
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: isMobile ? 'bottom' as const : 'top' as const,
+        align: 'center' as const,
         labels: {
           color: theme.palette.text.primary,
           font: {
             family: theme.typography.fontFamily,
-            size: 12
-          }
+            size: isMobile ? 8 : 10
+          },
+          boxWidth: isMobile ? 8 : 12,
+          boxHeight: isMobile ? 8 : 12,
+          padding: isMobile ? 5 : 10
         }
       },
       tooltip: {
@@ -216,8 +231,14 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
         bodyColor: theme.palette.text.primary,
         borderColor: theme.palette.divider,
         borderWidth: 1,
-        padding: 10,
+        padding: isMobile ? 6 : 8,
         displayColors: true,
+        titleFont: {
+          size: isMobile ? 10 : 11
+        },
+        bodyFont: {
+          size: isMobile ? 10 : 11
+        },
         callbacks: {
           label: function(context: any) {
             let label = context.dataset.label || '';
@@ -242,27 +263,52 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       x: {
         grid: {
           color: theme.palette.divider,
+          drawBorder: false,
+          display: !isMobile,
+          drawOnChartArea: !isMobile,
+          drawTicks: false
         },
         ticks: {
           color: theme.palette.text.secondary,
           font: {
-            family: theme.typography.fontFamily
-          }
+            family: theme.typography.fontFamily,
+            size: isMobile ? 8 : 9
+          },
+          maxRotation: isMobile ? 45 : 0,
+          padding: isMobile ? 2 : 5
         }
       },
       y: {
         grid: {
           color: theme.palette.divider,
+          drawBorder: false,
+          display: true,
+          drawOnChartArea: true,
+          drawTicks: false
         },
         ticks: {
           color: theme.palette.text.secondary,
           font: {
-            family: theme.typography.fontFamily
+            family: theme.typography.fontFamily,
+            size: isMobile ? 8 : 9
           },
+          padding: isMobile ? 2 : 5,
           callback: function(value: any) {
+            // Shorter format on mobile
+            if (isMobile) {
+              return value >= 1000 ? `$${(value / 1000).toFixed(1)}k` : `$${value}`;
+            }
             return '$' + value;
           }
         }
+      }
+    },
+    layout: {
+      padding: {
+        left: isMobile ? 2 : 5,
+        right: isMobile ? 2 : 5,
+        top: isMobile ? 2 : 5,
+        bottom: isMobile ? 15 : 5 // Extra padding for legend on mobile
       }
     }
   };
@@ -281,13 +327,13 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       label: marketplace.name,
       data: dataPoints,
       borderColor: color,
-      backgroundColor: `${color}20`, // Add transparency
-      borderWidth: 2,
+      backgroundColor: `${color}15`, // Reduced opacity
+      borderWidth: isMobile ? 1 : 1.5,
       pointBackgroundColor: color,
       pointBorderColor: theme.palette.background.paper,
-      pointBorderWidth: 2,
-      pointRadius: 4,
-      pointHoverRadius: 6,
+      pointBorderWidth: isMobile ? 1 : 1.5,
+      pointRadius: isMobile ? 2 : 3,
+      pointHoverRadius: isMobile ? 4 : 5,
       tension: 0.3,
       fill: true
     };
@@ -300,8 +346,25 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Marketplace Order Amounts</Typography>
+      <Box 
+        display="flex" 
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between" 
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        mb={1}
+        gap={{ xs: 1, sm: 0 }}
+        sx={{ 
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          pb: 0.75
+        }}
+      >
+        <Typography 
+          variant="subtitle1" 
+          fontWeight="medium"
+          sx={{ fontSize: '0.95rem' }}
+        >
+          Marketplace Order Amounts
+        </Typography>
         <MonthYearSelector
           selectedValue={selectedValue}
           options={monthOptions}
@@ -310,17 +373,31 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 1,
+            py: 0.5, 
+            '& .MuiAlert-message': { 
+              padding: '2px 0' 
+            } 
+          }}
+        >
           {error}
         </Alert>
       )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" flexGrow={1}>
-          <CircularProgress />
+          <CircularProgress size={30} />
         </Box>
       ) : (
-        <Box sx={{ position: 'relative', height: '100%', width: '100%', minHeight: 300 }}>
+        <Box sx={{ 
+          position: 'relative', 
+          height: '100%', 
+          width: '100%', 
+          minHeight: { xs: 250, sm: 280 }
+        }}>
           {marketplaceOrderData.length > 0 ? (
             <Line options={chartOptions} data={chartData} />
           ) : (
@@ -330,7 +407,7 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
               alignItems="center" 
               height="100%"
             >
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 No marketplace data available
               </Typography>
             </Box>

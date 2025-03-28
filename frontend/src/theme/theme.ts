@@ -84,12 +84,12 @@ const typography = {
   },
 };
 
-// Define standard spacing values
+// Define standard spacing values - reduced for more compact layouts
 const customSpacingValues = {
-  container: 3, // Standard padding for containers (Paper, Card)
-  section: 3,   // Standard margin between sections
-  element: 2,   // Standard margin between elements within a section
-  item: 1,      // Standard margin between small items
+  container: 2, // Standard padding for containers (Paper, Card) - reduced from 3
+  section: 2,   // Standard margin between sections - reduced from 3
+  element: 1.5, // Standard margin between elements within a section - reduced from 2
+  item: 0.75,   // Standard margin between small items - reduced from 1
 };
 
 // Common component overrides
@@ -105,19 +105,33 @@ const components = {
   MuiCard: {
     styleOverrides: {
       root: {
-        borderRadius: 12,
-        boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
+        borderRadius: 8, // Reduced from 12 for more compact appearance
+        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.05)',
         padding: 0, // Reset padding to use consistent values
+        transition: 'box-shadow 0.3s ease-in-out, transform 0.2s ease',
+        '&:hover': {
+          boxShadow: '0 4px 12px 0 rgba(0,0,0,0.1)',
+        },
       } as any,
     },
   },
   MuiCardContent: {
     styleOverrides: {
       root: {
-        padding: 16, // 3 * 8px = 24px (MUI's spacing unit is 8px)
+        padding: 12, // Reduced from 16px for more compact layout
         '&:last-child': {
-          paddingBottom: 16,
+          paddingBottom: 12,
         },
+      } as any,
+    },
+  },
+  MuiCardHeader: {
+    styleOverrides: {
+      root: {
+        padding: '12px 12px 8px 12px', // More compact header padding
+      } as any,
+      title: {
+        fontSize: '1rem', // Slightly smaller title for compact headers
       } as any,
     },
   },
@@ -154,18 +168,39 @@ const components = {
   MuiTypography: {
     styleOverrides: {
       gutterBottom: {
-        marginBottom: 8, // Consistent gutterBottom margin
+        marginBottom: 6, // Reduced from 8px for more compact spacing
       } as any,
       h6: {
-        marginBottom: 8, // Consistent heading margin
+        marginBottom: 6, // Reduced from 8px for more compact spacing
+        fontSize: '1rem', // Slightly smaller for compact headers
+      } as any,
+      h5: {
+        fontSize: '1.15rem', // Slightly smaller for compact headers
       } as any,
     },
   },
   MuiDivider: {
     styleOverrides: {
       root: {
-        marginTop: 8,
-        marginBottom: 8,
+        marginTop: 6, // Reduced from 8px
+        marginBottom: 6, // Reduced from 8px
+      } as any,
+    },
+  },
+  MuiTableCell: {
+    styleOverrides: {
+      root: {
+        padding: '8px 12px', // More compact table cells
+      } as any,
+      head: {
+        fontWeight: 600, // Make headers more distinct
+      } as any,
+    },
+  },
+  MuiListItem: {
+    styleOverrides: {
+      root: {
+        padding: '6px 12px', // More compact list items
       } as any,
     },
   },

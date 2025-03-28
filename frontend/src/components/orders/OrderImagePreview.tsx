@@ -9,7 +9,9 @@ import {
   Button,
   Typography,
   Tooltip,
-  Stack
+  Stack,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
@@ -67,6 +69,8 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   showDeleteButton = true,
   showZoomButton = true
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
@@ -139,8 +143,13 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
             height="100%"
             p={1}
           >
-            <BrokenImageIcon color="error" />
-            <Typography variant="caption" color="text.secondary" align="center">
+            <BrokenImageIcon color="error" sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }} />
+            <Typography 
+              variant="caption" 
+              color="text.secondary" 
+              align="center"
+              sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}
+            >
               Failed to load image
             </Typography>
           </Box>
@@ -165,9 +174,14 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
                 <IconButton
                   size="small"
                   onClick={handleOpenDialog}
-                  sx={{ color: 'white', p: 0.5 }}
+                  sx={{ 
+                    color: 'white', 
+                    p: 0.5,
+                    width: isMobile ? 28 : 32,
+                    height: isMobile ? 28 : 32
+                  }}
                 >
-                  <ZoomInIcon fontSize="small" />
+                  <ZoomInIcon fontSize={isMobile ? "inherit" : "small"} sx={{ fontSize: isMobile ? '0.9rem' : '1.25rem' }} />
                 </IconButton>
               )}
               
@@ -179,9 +193,14 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
                     if (onDelete) onDelete();
                     if (onRemove) onRemove();
                   }}
-                  sx={{ color: 'white', p: 0.5 }}
+                  sx={{ 
+                    color: 'white', 
+                    p: 0.5,
+                    width: isMobile ? 28 : 32,
+                    height: isMobile ? 28 : 32
+                  }}
                 >
-                  <DeleteIcon fontSize="small" />
+                  <DeleteIcon fontSize={isMobile ? "inherit" : "small"} sx={{ fontSize: isMobile ? '0.9rem' : '1.25rem' }} />
                 </IconButton>
               )}
             </ImageActions>
@@ -197,10 +216,13 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
         fullWidth
         PaperProps={{
           sx: {
-            height: '90vh',
-            maxHeight: '90vh',
+            height: isMobile ? '100vh' : '90vh',
+            maxHeight: isMobile ? '100vh' : '90vh',
+            width: isMobile ? '100%' : undefined,
+            margin: isMobile ? 0 : undefined,
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            borderRadius: isMobile ? 0 : undefined
           }
         }}
       >
@@ -219,12 +241,12 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
           <Box
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
+              top: isMobile ? 16 : 8,
+              right: isMobile ? 16 : 8,
               zIndex: 1,
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               borderRadius: 1,
-              p: 0.5
+              p: isMobile ? 0.75 : 0.5
             }}
           >
             <Stack direction="row" spacing={1}>
@@ -234,8 +256,15 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
           
           <ImageViewer src={src} alt={imageName || 'Image preview'} />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Close</Button>
+        <DialogActions sx={{ p: isMobile ? 2 : 1 }}>
+          <Button 
+            onClick={handleCloseDialog} 
+            variant={isMobile ? "contained" : "text"}
+            size={isMobile ? "large" : "medium"}
+            fullWidth={isMobile}
+          >
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </>
@@ -309,7 +338,11 @@ const ViewerControls = ({ src }: { src: string }) => {
         <IconButton 
           size="small" 
           onClick={handleToggleSize}
-          sx={{ color: 'white' }}
+          sx={{ 
+            color: 'white',
+            width: { xs: 36, sm: 32 },
+            height: { xs: 36, sm: 32 }
+          }}
         >
           {originalSize ? <FullscreenExitIcon /> : <FullscreenIcon />}
         </IconButton>
@@ -319,7 +352,11 @@ const ViewerControls = ({ src }: { src: string }) => {
         <IconButton 
           size="small" 
           onClick={handleOpenInNewTab}
-          sx={{ color: 'white' }}
+          sx={{ 
+            color: 'white',
+            width: { xs: 36, sm: 32 },
+            height: { xs: 36, sm: 32 }
+          }}
         >
           <ZoomOutIcon />
         </IconButton>

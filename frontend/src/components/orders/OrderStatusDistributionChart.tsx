@@ -117,19 +117,25 @@ const OrderStatusDistributionChart: React.FC = () => {
     ]
   };
   
+  // Determine if we're on a small screen
+  const isSmallScreen = window.innerWidth < 600;
+  
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: isSmallScreen ? 'bottom' as const : 'right' as const,
+        align: 'start' as const,
         labels: {
           color: theme.palette.text.primary,
           font: {
             family: theme.typography.fontFamily,
-            size: 12
+            size: isSmallScreen ? 9 : 10
           },
-          padding: 20
+          padding: isSmallScreen ? 5 : 10,
+          boxWidth: isSmallScreen ? 10 : 12,
+          boxHeight: isSmallScreen ? 10 : 12
         }
       },
       tooltip: {
@@ -140,8 +146,14 @@ const OrderStatusDistributionChart: React.FC = () => {
         bodyColor: theme.palette.text.primary,
         borderColor: theme.palette.divider,
         borderWidth: 1,
-        padding: 10,
+        padding: isSmallScreen ? 6 : 8,
         displayColors: true,
+        titleFont: {
+          size: isSmallScreen ? 10 : 11
+        },
+        bodyFont: {
+          size: isSmallScreen ? 10 : 11
+        },
         callbacks: {
           label: function(context: any) {
             const label = context.label || '';
@@ -153,13 +165,36 @@ const OrderStatusDistributionChart: React.FC = () => {
         }
       }
     },
-    cutout: '60%'
+    cutout: isSmallScreen ? '60%' : '65%',
+    layout: {
+      padding: {
+        left: isSmallScreen ? 2 : 5,
+        right: isSmallScreen ? 2 : 5,
+        top: isSmallScreen ? 2 : 5,
+        bottom: isSmallScreen ? 15 : 5 // Extra padding at bottom for legend on small screens
+      }
+    }
   };
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Order Status Distribution</Typography>
+      <Box 
+        display="flex" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        mb={1} // Reduced from mb={2}
+        sx={{ 
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          pb: 0.75
+        }}
+      >
+        <Typography 
+          variant="subtitle1" 
+          fontWeight="medium"
+          sx={{ fontSize: '0.95rem' }}
+        >
+          Order Status Distribution
+        </Typography>
         <MonthYearSelector
           selectedValue={selectedValue}
           options={monthOptions}
@@ -168,25 +203,33 @@ const OrderStatusDistributionChart: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 1, // Reduced from mb={2}
+            py: 0.5, 
+            '& .MuiAlert-message': { 
+              padding: '2px 0' 
+            } 
+          }}
+        >
           {error}
         </Alert>
       )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" flexGrow={1}>
-          <CircularProgress />
+          <CircularProgress size={30} /> {/* Smaller loading indicator */}
         </Box>
       ) : (
         <Paper 
           sx={{ 
-            p: 2, 
+            p: 1.5, // Reduced from p: 2
             flexGrow: 1,
-            minHeight: 300,
-            mt: 2,
+            minHeight: 280, // Reduced from 300
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.1)',
+            boxShadow: theme.palette.mode === 'dark' ? '0 2px 10px rgba(0,0,0,0.3)' : '0 2px 10px rgba(0,0,0,0.08)',
             transition: 'box-shadow 0.3s ease-in-out'
           }}
         >
@@ -201,16 +244,24 @@ const OrderStatusDistributionChart: React.FC = () => {
                 sx={{
                   position: 'absolute',
                   top: '50%',
-                  left: '50%',
+                  left: '40%', // Adjusted to account for legend on right
                   transform: 'translate(-50%, -50%)',
                   textAlign: 'center',
                   pointerEvents: 'none' // Allows clicks to pass through to the chart
                 }}
               >
-                <Typography variant="h4" fontWeight="bold">
+                <Typography 
+                  variant="h4" 
+                  fontWeight="bold"
+                  sx={{ fontSize: '1.75rem', lineHeight: 1.2 }}
+                >
                   {totalOrders}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ fontSize: '0.75rem' }}
+                >
                   Total Orders
                 </Typography>
               </Box>
@@ -222,7 +273,7 @@ const OrderStatusDistributionChart: React.FC = () => {
               alignItems="center" 
               height="100%"
             >
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body2" color="text.secondary">
                 No order status data available
               </Typography>
             </Box>

@@ -79,6 +79,20 @@ const CombinedChart: React.FC<ChartProps> = ({ data, labels, loading, activeView
         display: false,
       },
       tooltip: {
+        backgroundColor: theme.palette.mode === 'dark' 
+          ? 'rgba(0, 0, 0, 0.8)' 
+          : 'rgba(255, 255, 255, 0.8)',
+        titleColor: theme.palette.text.primary,
+        bodyColor: theme.palette.text.primary,
+        borderColor: theme.palette.divider,
+        borderWidth: 1,
+        padding: 8,
+        titleFont: {
+          size: 11
+        },
+        bodyFont: {
+          size: 11
+        },
         callbacks: {
           label: function(context: any) {
             if (activeView === 'count') {
@@ -97,23 +111,36 @@ const CombinedChart: React.FC<ChartProps> = ({ data, labels, loading, activeView
       x: {
         grid: {
           color: theme.palette.divider,
+          drawBorder: false,
+          display: true,
+          drawOnChartArea: true,
+          drawTicks: false
         },
         ticks: {
           color: theme.palette.text.secondary,
           font: {
-            family: theme.typography.fontFamily
-          }
+            family: theme.typography.fontFamily,
+            size: 9 // Smaller font
+          },
+          maxRotation: 0, // Keep labels horizontal
+          padding: 5 // Reduced padding
         }
       },
       y: {
         grid: {
           color: theme.palette.divider,
+          drawBorder: false,
+          display: true,
+          drawOnChartArea: true,
+          drawTicks: false
         },
         ticks: {
           color: theme.palette.text.secondary,
           font: {
-            family: theme.typography.fontFamily
+            family: theme.typography.fontFamily,
+            size: 9 // Smaller font
           },
+          padding: 5, // Reduced padding
           ...(activeView === 'amount' && {
             callback: function(value: any) {
               return formatCurrency(value);
@@ -130,11 +157,22 @@ const CombinedChart: React.FC<ChartProps> = ({ data, labels, loading, activeView
           color: theme.palette.text.primary,
           font: {
             family: theme.typography.fontFamily,
-            size: 12
-          }
+            size: 10 // Reduced from 12
+          },
+          padding: { top: 0, bottom: 5 } // Reduced padding
         }
       }
     },
+    layout: {
+      padding: {
+        left: 5,
+        right: 5,
+        top: 5,
+        bottom: 5
+      }
+    },
+    barPercentage: 0.7, // Make bars slightly thinner
+    categoryPercentage: 0.8 // Adjust spacing between bar groups
   };
   
   const barData = {
@@ -161,21 +199,34 @@ const CombinedChart: React.FC<ChartProps> = ({ data, labels, loading, activeView
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography variant="subtitle1" fontWeight="medium">
+      <Box 
+        display="flex" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        mb={0.75} // Reduced from mb={1}
+      >
+        <Typography 
+          variant="subtitle2" 
+          fontWeight="medium"
+          sx={{ fontSize: '0.85rem' }}
+        >
           {activeView === 'count' ? 'Order Count' : 'Order Amount'}
         </Typography>
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography 
+          variant="subtitle2" 
+          fontWeight="bold"
+          sx={{ fontSize: '0.85rem' }}
+        >
           Total: {formattedTotal}
         </Typography>
       </Box>
       
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" flexGrow={1} minHeight={150}>
-          <CircularProgress size={30} />
+        <Box display="flex" justifyContent="center" alignItems="center" flexGrow={1} minHeight={120}>
+          <CircularProgress size={24} /> {/* Smaller loading indicator */}
         </Box>
       ) : (
-        <Box sx={{ position: 'relative', height: 400, width: '100%' }}>
+        <Box sx={{ position: 'relative', height: 350, width: '100%' }}> {/* Reduced height from 400 */}
           {data.length > 0 ? (
             <Bar options={chartOptions} data={barData} />
           ) : (
@@ -185,7 +236,7 @@ const CombinedChart: React.FC<ChartProps> = ({ data, labels, loading, activeView
               alignItems="center" 
               height="100%"
             >
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 No order data available
               </Typography>
             </Box>
@@ -291,9 +342,24 @@ const OrderCountAmountChart: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Order Count and Amount</Typography>
-        <Box display="flex" alignItems="center" gap={2}>
+      <Box 
+        display="flex" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        mb={1} // Reduced from mb={2}
+        sx={{ 
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          pb: 0.75
+        }}
+      >
+        <Typography 
+          variant="subtitle1" 
+          fontWeight="medium"
+          sx={{ fontSize: '0.95rem' }}
+        >
+          Order Count and Amount
+        </Typography>
+        <Box display="flex" alignItems="center" gap={1}> {/* Reduced gap from 2 */}
           <ToggleButtonGroup
             value={activeView}
             exclusive
@@ -304,6 +370,14 @@ const OrderCountAmountChart: React.FC = () => {
             }}
             size="small"
             aria-label="Chart view"
+            sx={{ 
+              '& .MuiToggleButton-root': {
+                py: 0.5, // Reduced padding
+                px: 1.5,
+                fontSize: '0.75rem', // Smaller font
+                textTransform: 'none'
+              }
+            }}
           >
             <ToggleButton value="count" aria-label="Order Count">
               Count
@@ -321,20 +395,28 @@ const OrderCountAmountChart: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 1, // Reduced from mb={2}
+            py: 0.5, 
+            '& .MuiAlert-message': { 
+              padding: '2px 0' 
+            } 
+          }}
+        >
           {error}
         </Alert>
       )}
 
       <Paper 
         sx={{ 
-          p: 2, 
+          p: 1.5, // Reduced from p: 2
           flexGrow: 1,
-          minHeight: 450,
-          mt: 2,
+          minHeight: 380, // Reduced from 450
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.1)',
+          boxShadow: theme.palette.mode === 'dark' ? '0 2px 10px rgba(0,0,0,0.3)' : '0 2px 10px rgba(0,0,0,0.08)',
           transition: 'box-shadow 0.3s ease-in-out'
         }}
       >

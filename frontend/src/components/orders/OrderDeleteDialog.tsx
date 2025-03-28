@@ -10,7 +10,9 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Divider
+  Divider,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
 
@@ -31,6 +33,8 @@ const OrderDeleteDialog: React.FC<OrderDeleteDialogProps> = ({
   orderCustomerName,
   loading = false
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -61,11 +65,22 @@ const OrderDeleteDialog: React.FC<OrderDeleteDialogProps> = ({
       aria-labelledby="delete-order-dialog-title"
       maxWidth="sm"
       fullWidth
+      PaperProps={{
+        sx: {
+          width: { xs: '95%', sm: '80%' },
+          maxWidth: { xs: '95%', sm: 600 },
+          m: { xs: 1, sm: 'auto' }
+        }
+      }}
     >
-      <DialogTitle id="delete-order-dialog-title" sx={{ pb: 1 }}>
+      <DialogTitle id="delete-order-dialog-title" sx={{ pb: 1, px: { xs: 2, sm: 3 } }}>
         <Box display="flex" alignItems="center">
-          <DeleteIcon color="error" sx={{ mr: 1 }} />
-          <Typography variant="h6" component="span">
+          <DeleteIcon color="error" sx={{ mr: 1, fontSize: isMobile ? '1.25rem' : '1.5rem' }} />
+          <Typography 
+            variant="h6" 
+            component="span"
+            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+          >
             Delete Order
           </Typography>
         </Box>
@@ -73,18 +88,31 @@ const OrderDeleteDialog: React.FC<OrderDeleteDialogProps> = ({
       
       <Divider />
       
-      <DialogContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <WarningIcon color="warning" sx={{ fontSize: 40, mr: 2 }} />
-          <DialogContentText>
+      <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' }, 
+          mb: 2,
+          gap: { xs: 1, sm: 0 }
+        }}>
+          <WarningIcon 
+            color="warning" 
+            sx={{ 
+              fontSize: { xs: 32, sm: 40 }, 
+              mr: { xs: 0, sm: 2 },
+              alignSelf: { xs: 'center', sm: 'flex-start' }
+            }} 
+          />
+          <DialogContentText sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
             Are you sure you want to delete order <strong>#{orderNumber}</strong>
             {orderCustomerName && <> for <strong>{orderCustomerName}</strong></>}?
             This action cannot be undone.
           </DialogContentText>
         </Box>
         
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          <Typography variant="body2">
+        <Alert severity="warning" sx={{ mb: 2, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+          <Typography variant="body2" sx={{ fontSize: 'inherit' }}>
             Deleting this order will permanently remove all associated data, including:
           </Typography>
           <ul style={{ marginTop: 4, marginBottom: 4, paddingLeft: 20 }}>
@@ -102,11 +130,13 @@ const OrderDeleteDialog: React.FC<OrderDeleteDialogProps> = ({
         )}
       </DialogContent>
       
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 }, flexWrap: 'wrap', gap: 1 }}>
         <Button
           onClick={handleClose}
           color="inherit"
           disabled={isDeleting || loading}
+          size={isMobile ? "small" : "medium"}
+          sx={{ minWidth: { xs: '80px', sm: '100px' } }}
         >
           Cancel
         </Button>
@@ -115,7 +145,9 @@ const OrderDeleteDialog: React.FC<OrderDeleteDialogProps> = ({
           color="error"
           variant="contained"
           disabled={isDeleting || loading}
-          startIcon={isDeleting ? <CircularProgress size={20} color="inherit" /> : <DeleteIcon />}
+          startIcon={isDeleting ? <CircularProgress size={isMobile ? 16 : 20} color="inherit" /> : <DeleteIcon />}
+          size={isMobile ? "small" : "medium"}
+          sx={{ minWidth: { xs: '120px', sm: '150px' } }}
         >
           {isDeleting ? 'Deleting...' : 'Delete Order'}
         </Button>

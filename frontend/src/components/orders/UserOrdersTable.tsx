@@ -11,7 +11,9 @@ import {
   Typography,
   CircularProgress,
   TableSortLabel,
-  Alert
+  Alert,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import orderService from '../../services/order.service';
 import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
@@ -29,6 +31,9 @@ type SortField = 'name' | 'email' | 'orderCount' | 'totalAmount';
 type SortDirection = 'asc' | 'desc';
 
 const UserOrdersTable: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [userStats, setUserStats] = useState<UserOrderStatistics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,10 +138,43 @@ const UserOrdersTable: React.FC = () => {
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
+  // Function to get shortened email for mobile view
+  const getShortenedEmail = (email: string): string => {
+    if (!isMobile) return email;
+    
+    const parts = email.split('@');
+    if (parts.length !== 2) return email;
+    
+    const username = parts[0];
+    const domain = parts[1];
+    
+    // If username is already short, don't truncate
+    if (username.length <= 8) return email;
+    
+    return `${username.substring(0, 6)}...@${domain}`;
+  };
+
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">User Order Statistics</Typography>
+      <Box 
+        display="flex" 
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between" 
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        mb={1}
+        gap={{ xs: 1, sm: 0 }}
+        sx={{ 
+          borderBottom: `1px solid ${sortedUserStats.length > 0 ? 'transparent' : 'rgba(0, 0, 0, 0.12)'}`,
+          pb: 0.75
+        }}
+      >
+        <Typography 
+          variant="subtitle1" 
+          fontWeight="medium"
+          sx={{ fontSize: '0.95rem' }}
+        >
+          User Order Statistics
+        </Typography>
         <MonthYearSelector
           selectedValue={selectedValue}
           options={monthOptions}
@@ -145,30 +183,50 @@ const UserOrdersTable: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 1,
+            py: 0.5, 
+            '& .MuiAlert-message': { 
+              padding: '2px 0' 
+            } 
+          }}
+        >
           {error}
         </Alert>
       )}
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" flexGrow={1}>
-          <CircularProgress />
+          <CircularProgress size={30} />
         </Box>
       ) : (
         <TableContainer 
           component={Paper} 
           sx={{ 
             flexGrow: 1, 
-            minHeight: 300,
+            minHeight: { xs: 250, sm: 280 },
             display: 'flex',
             flexDirection: 'column',
-            mt: 2
+            mt: 1,
+            boxShadow: 'none',
+            border: '1px solid rgba(0, 0, 0, 0.12)',
+            overflowX: 'auto'
           }}
         >
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell>
+                <TableCell 
+                  sx={{ 
+                    py: { xs: 0.75, sm: 1 },
+                    px: { xs: 1, sm: 2 },
+                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   <TableSortLabel
                     active={sortField === 'name'}
                     direction={sortField === 'name' ? sortDirection : 'asc'}
@@ -177,16 +235,34 @@ const UserOrdersTable: React.FC = () => {
                     Name
                   </TableSortLabel>
                 </TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === 'email'}
-                    direction={sortField === 'email' ? sortDirection : 'asc'}
-                    onClick={() => handleSort('email')}
+                {!isMobile && (
+                  <TableCell 
+                    sx={{ 
+                      py: 1,
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
-                    Email
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">
+                    <TableSortLabel
+                      active={sortField === 'email'}
+                      direction={sortField === 'email' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('email')}
+                    >
+                      Email
+                    </TableSortLabel>
+                  </TableCell>
+                )}
+                <TableCell 
+                  align="right"
+                  sx={{ 
+                    py: { xs: 0.75, sm: 1 },
+                    px: { xs: 1, sm: 2 },
+                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   <TableSortLabel
                     active={sortField === 'orderCount'}
                     direction={sortField === 'orderCount' ? sortDirection : 'asc'}
@@ -195,13 +271,22 @@ const UserOrdersTable: React.FC = () => {
                     Orders
                   </TableSortLabel>
                 </TableCell>
-                <TableCell align="right">
+                <TableCell 
+                  align="right"
+                  sx={{ 
+                    py: { xs: 0.75, sm: 1 },
+                    px: { xs: 1, sm: 2 },
+                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   <TableSortLabel
                     active={sortField === 'totalAmount'}
                     direction={sortField === 'totalAmount' ? sortDirection : 'asc'}
                     onClick={() => handleSort('totalAmount')}
                   >
-                    Total Amount
+                    {isMobile ? 'Amount' : 'Total Amount'}
                   </TableSortLabel>
                 </TableCell>
               </TableRow>
@@ -209,16 +294,36 @@ const UserOrdersTable: React.FC = () => {
             <TableBody>
               {sortedUserStats.length > 0 ? (
                 sortedUserStats.map((user) => (
-                  <TableRow key={user.userId} hover>
-                    <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-                    <TableCell>{user.email}</TableCell>
+                  <TableRow 
+                    key={user.userId} 
+                    hover
+                    sx={{ 
+                      '& .MuiTableCell-root': { 
+                        py: { xs: 0.5, sm: 0.75 },
+                        px: { xs: 1, sm: 2 },
+                        fontSize: { xs: '0.7rem', sm: '0.8rem' }
+                      }
+                    }}
+                  >
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      {isMobile 
+                        ? `${user.firstName.charAt(0)}. ${user.lastName}` 
+                        : `${user.firstName} ${user.lastName}`}
+                    </TableCell>
+                    {!isMobile && (
+                      <TableCell>{user.email}</TableCell>
+                    )}
                     <TableCell align="right">{user.orderCount}</TableCell>
                     <TableCell align="right">${user.totalAmount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} align="center">
+                  <TableCell 
+                    colSpan={isMobile ? 3 : 4} 
+                    align="center"
+                    sx={{ py: 2, fontSize: { xs: '0.7rem', sm: '0.8rem' } }}
+                  >
                     No data available for this time period
                   </TableCell>
                 </TableRow>

@@ -10,7 +10,9 @@ import {
   Tooltip,
   Stack,
   Snackbar,
-  Alert
+  Alert,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { 
@@ -25,7 +27,8 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FileDownload as FileDownloadIcon
+  FileDownload as FileDownloadIcon,
+  FilterList as FilterListIcon
 } from '@mui/icons-material';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
@@ -37,6 +40,10 @@ import { useAuth } from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
 
 const OrdersPage: React.FC = () => {
+  const theme = useTheme();
+  const isXsScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMdScreen = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  
   const { authState } = useAuth();
   const hasViewAllOrdersPermission = authState.user?.permissions ? 
     canViewAllOrders(authState.user.permissions) : false;
@@ -45,7 +52,7 @@ const OrdersPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
-    pageSize: 10
+    pageSize: isXsScreen ? 5 : 10
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([
     {
@@ -98,6 +105,14 @@ const OrdersPage: React.FC = () => {
     fetchStatusCounts();
   }, [paginationModel.page, paginationModel.pageSize, sortModel, filters]);
 
+  // Update pagination model when screen size changes
+  useEffect(() => {
+    setPaginationModel(prev => ({
+      ...prev,
+      pageSize: isXsScreen ? 5 : 10
+    }));
+  }, [isXsScreen]);
+
   const handlePaginationModelChange = (model: GridPaginationModel) => {
     setPaginationModel(model);
   };
@@ -105,8 +120,6 @@ const OrdersPage: React.FC = () => {
   const handleSortModelChange = (model: GridSortModel) => {
     setSortModel(model);
   };
-
-
 
   const handleDeleteClick = (order: Order) => {
     setSelectedOrder(order);
@@ -130,7 +143,6 @@ const OrdersPage: React.FC = () => {
   const handleCloseError = () => {
     setError(null);
   };
-
 
   const handleExportExcel = async () => {
     try {
@@ -187,153 +199,209 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    // Debug: Log the first order to see its structure
-    if (orders.length > 0) {
-      console.log('First order:', orders[0]);
-    }
-  }, [orders]);
-
-  const columns: GridColDef[] = [
-    { field: 'orderNumber', headerName: 'Order Number', flex: 1 },
-    { 
-      field: 'marketplace', 
-      headerName: 'Marketplace', 
-      flex: 1,
-      valueGetter: (params: any) => {
-        const marketplace = params.name;
-        return marketplace ?? '';
-      }
-    },
-    { 
-      field: 'customer', 
-      headerName: 'Customer', 
-      flex: 1,
-      valueGetter: (params: any) => {
-        const customer = params.name;
-        return customer ?? '';
-      }
-    },
-    { 
-      field: 'deliveryDate', 
-      headerName: 'Delivery Date', 
-      flex: 1,
-      valueFormatter: (params: any) => {
-        if (!params) return '';
-        try {
-          return format(new Date(params), 'MMM dd, yyyy');
-        } catch (e) {
-          return 'Invalid Date';
+  // Define columns based on screen size
+  const getColumns = (): GridColDef[] => {
+    // Base columns definition
+    const baseColumns: GridColDef[] = [
+      { 
+        field: 'orderNumber', 
+        headerName: 'Order #', 
+        flex: 0.8,
+        minWidth: 100
+      },
+      { 
+        field: 'marketplace', 
+        headerName: 'Marketplace', 
+        flex: 1,
+        minWidth: 120,
+        valueGetter: (params: any) => {
+          const marketplace = params.row.marketplace?.name;
+          return marketplace ?? '';
         }
-      }
-    },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
-      flex: 1,
-      renderCell: (params: any) => {
-        const displayStatus = getDisplayStatus(params.value as string);
-        return (
-          <Chip
-            label={displayStatus}
-            sx={{ 
-              backgroundColor: getStatusChipColor(params.value as string),
-              color: '#fff',
-              fontWeight: 'bold'
-            }}
-            size="small"
-          />
-        );
-      }
-    },
-    { 
-      field: 'createdAt', 
-      headerName: 'Created At', 
-      flex: 1,
-      valueFormatter: (params: any) => {
-        if (!params) return '';
-        try {
-          return format(new Date(params), 'MMM dd, yyyy');
-        } catch (e) {
-          return 'Invalid Date';
+      },
+      { 
+        field: 'customer', 
+        headerName: 'Customer', 
+        flex: 1,
+        minWidth: 120,
+        valueGetter: (params: any) => {
+          const customer = params.row.customer?.name;
+          return customer ?? '';
         }
-      }
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 1,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box>
-          <Tooltip title="View">
-            <IconButton
-              component={RouterLink}
-              to={`/orders/${params.row.id}`}
+      },
+      { 
+        field: 'deliveryDate', 
+        headerName: 'Delivery', 
+        flex: 1,
+        minWidth: 110,
+        valueFormatter: (params: any) => {
+          if (!params.value) return '';
+          try {
+            // Use shorter date format on medium screens
+            return format(new Date(params.value), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
+          } catch (e) {
+            return 'Invalid Date';
+          }
+        }
+      },
+      { 
+        field: 'status', 
+        headerName: 'Status', 
+        flex: 0.8,
+        minWidth: 100,
+        renderCell: (params: GridRenderCellParams) => {
+          const displayStatus = getDisplayStatus(params.value as string);
+          return (
+            <Chip
+              label={displayStatus}
+              sx={{ 
+                backgroundColor: getStatusChipColor(params.value as string),
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '0.7rem',
+                height: 24
+              }}
               size="small"
-            >
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {authState.user?.roles?.includes('ORDER_UPDATE') && (
-            <Tooltip title="Edit">
+            />
+          );
+        }
+      },
+      { 
+        field: 'createdAt', 
+        headerName: 'Created', 
+        flex: 1,
+        minWidth: 110,
+        valueFormatter: (params: any) => {
+          if (!params.value) return '';
+          try {
+            // Use shorter date format on medium screens
+            return format(new Date(params.value), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
+          } catch (e) {
+            return 'Invalid Date';
+          }
+        }
+      },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        flex: 0.7,
+        minWidth: 100,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip title="View">
               <IconButton
                 component={RouterLink}
-                to={`/orders/${params.row.id}/edit`}
+                to={`/orders/${params.row.id}`}
                 size="small"
               >
-                <EditIcon fontSize="small" />
+                <VisibilityIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
-          {authState.user?.roles?.includes('ORDER_DELETE') && (
-            <Tooltip title="Delete">
-              <IconButton
-                onClick={() => handleDeleteClick(params.row)}
-                size="small"
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      )
+            {authState.user?.roles?.includes('ORDER_UPDATE') && !isXsScreen && (
+              <Tooltip title="Edit">
+                <IconButton
+                  component={RouterLink}
+                  to={`/orders/${params.row.id}/edit`}
+                  size="small"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {authState.user?.roles?.includes('ORDER_DELETE') && !isXsScreen && (
+              <Tooltip title="Delete">
+                <IconButton
+                  onClick={() => handleDeleteClick(params.row)}
+                  size="small"
+                  color="error"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        )
+      }
+    ];
+    
+    // Filter columns based on screen size
+    if (isXsScreen) {
+      return baseColumns.filter(column => 
+        ['orderNumber', 'status', 'actions'].includes(column.field)
+      );
     }
-  ];
+    
+    if (isMdScreen) {
+      return baseColumns.filter(column => 
+        ['orderNumber', 'marketplace', 'customer', 'status', 'actions'].includes(column.field)
+      );
+    }
+    
+    return baseColumns;
+  };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ my: 4 }}>
-        <Grid container spacing={3}>
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           <Grid size={{ xs: 12 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box 
+              display="flex" 
+              flexDirection={{ xs: 'column', sm: 'row' }} 
+              justifyContent="space-between" 
+              alignItems={{ xs: 'flex-start', sm: 'center' }} 
+              mb={{ xs: 1, sm: 2 }}
+              gap={1}
+            >
               <Box>
-                <Typography variant="h4" component="h1" gutterBottom>
+                <Typography 
+                  variant="h4" 
+                  component="h1" 
+                  gutterBottom
+                  sx={{ 
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+                    mb: { xs: 0.5, sm: 1 }
+                  }}
+                >
                   Orders
                 </Typography>
                 {!hasViewAllOrdersPermission && (
-                  <Typography variant="subtitle2" color="text.secondary">
+                  <Typography 
+                    variant="subtitle2" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                  >
                     You are viewing only orders created by you. Contact an administrator for access to all orders.
                   </Typography>
                 )}
               </Box>
-              <Stack direction="row" spacing={2}>
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }} 
+                spacing={{ xs: 1, sm: 2 }}
+                width={{ xs: '100%', sm: 'auto' }}
+              >
                 <Button
                   variant="outlined"
-                  startIcon={<FileDownloadIcon />}
+                  startIcon={isXsScreen ? null : <FileDownloadIcon />}
                   onClick={handleExportExcel}
+                  fullWidth
+                  size="small"
+                  sx={{ width: { sm: 'auto' } }}
                 >
-                  Export to Excel
+                  {isXsScreen ? 'Export' : 'Export to Excel'}
                 </Button>
                 <Button
                   variant="contained"
                   color="primary"
-                  startIcon={<AddIcon />}
+                  startIcon={isXsScreen ? null : <AddIcon />}
                   component={RouterLink}
                   to="/orders/new"
+                  fullWidth
+                  size="small"
+                  sx={{ width: { sm: 'auto' } }}
                 >
-                  New Order
+                  {isXsScreen ? 'New' : 'New Order'}
                 </Button>
               </Stack>
             </Box>
@@ -341,9 +409,9 @@ const OrdersPage: React.FC = () => {
 
           {/* Status Cards */}
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
               {statusCounts.map((statusCount) => (
-                <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={statusCount.status}>
+                <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={statusCount.status}>
                   <OrderStatsCard
                     status={statusCount.status}
                     count={statusCount.count}
@@ -356,14 +424,20 @@ const OrdersPage: React.FC = () => {
 
           {/* Orders DataGrid */}
           <Grid size={{ xs: 12 }}>
-            <Paper sx={{ height: 600, width: '100%' }}>
+            <Paper 
+              sx={{ 
+                height: { xs: 500, sm: 600 }, 
+                width: '100%',
+                overflow: 'hidden'
+              }}
+            >
               <DataGrid
                 rows={orders}
-                columns={columns}
+                columns={getColumns()}
                 pagination
                 paginationMode="server"
                 rowCount={totalItems}
-                pageSizeOptions={[5, 10, 25]}
+                pageSizeOptions={isXsScreen ? [5, 10] : [5, 10, 25]}
                 paginationModel={paginationModel}
                 onPaginationModelChange={handlePaginationModelChange}
                 sortingMode="server"
@@ -375,17 +449,42 @@ const OrdersPage: React.FC = () => {
                     sortModel: [{ field: 'createdAt', sort: 'desc' }]
                   },
                   pagination: {
-                    paginationModel: { page: 0, pageSize: 10 }
+                    paginationModel: { page: 0, pageSize: isXsScreen ? 5 : 10 }
                   }
                 }}
                 disableRowSelectionOnClick
                 loading={loading}
                 getRowId={(row) => row.id}
+                sx={{
+                  '& .MuiDataGrid-cell': {
+                    fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
+                    py: { xs: 0.75, sm: 1, md: 1.5 }
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' }
+                  },
+                  '& .MuiDataGrid-footerContainer': {
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: { xs: 1, sm: 0 }
+                  },
+                  '& .MuiTablePagination-toolbar': {
+                    flexWrap: 'wrap',
+                    justifyContent: { xs: 'center', sm: 'flex-end' }
+                  },
+                  '& .MuiTablePagination-displayedRows': {
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  },
+                  '& .MuiTablePagination-selectLabel': {
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }
+                }}
               />
             </Paper>
           </Grid>
         </Grid>
       </Box>
+      
       {/* Delete Dialog */}
       {selectedOrder && (
         <OrderDeleteDialog
@@ -404,8 +503,18 @@ const OrdersPage: React.FC = () => {
         autoHideDuration={6000} 
         onClose={handleCloseError}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          bottom: { xs: 16, sm: 24 }
+        }}
       >
-        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+        <Alert 
+          onClose={handleCloseError} 
+          severity="error" 
+          sx={{ 
+            width: '100%',
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+          }}
+        >
           {error}
         </Alert>
       </Snackbar>
