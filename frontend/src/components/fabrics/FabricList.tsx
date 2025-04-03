@@ -1,19 +1,20 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardContent,
-  CardMedia,
   Typography,
-  Grid,
   Chip,
   IconButton,
-  CardActions,
   Tooltip,
-  Divider,
-  Paper,
   Stack,
-  useTheme
+  useTheme,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Avatar
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -48,43 +49,138 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
   };
   
   return (
-    <Grid container spacing={theme.customSpacing.section * 1}>
-      {fabrics.map((fabric) => (
-        <Grid item xs={12} sm={6} md={3} key={fabric.id}>
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              height: '100%',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[8],
-              }
-            }}
-          >
-            <Card sx={{ 
-              height: '100%', 
-              display: 'flex', 
-              flexDirection: 'column',
-              border: 'none',
-              borderRadius: 2,
-            }}>
-              <Box sx={{ position: 'relative', paddingTop: '50%', backgroundColor: '#f5f5f5' }}>
-                {/* Active/Inactive Badge */}
+    <TableContainer component={Paper} elevation={2}>
+      <Table sx={{ minWidth: 650 }}>
+        <TableHead>
+          <TableRow sx={{ backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50] }}>
+            <TableCell width="80px">Image</TableCell>
+            <TableCell>Name & ID</TableCell>
+            <TableCell width="120px">Created Date</TableCell>
+            <TableCell>Tags</TableCell>
+            <TableCell width="100px">Status</TableCell>
+            <TableCell width="120px" align="right">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {fabrics.map((fabric) => (
+            <TableRow 
+              key={fabric.id}
+              sx={{ 
+                '&:hover': { 
+                  backgroundColor: theme.palette.action.hover 
+                },
+                transition: 'background-color 0.2s ease'
+              }}
+            >
+              {/* Image Column */}
+              <TableCell>
+                {fabric.imageId ? (
+                  <Avatar
+                    variant="rounded"
+                    src={getFileUrl(fabric.imageId) || ''}
+                    alt={fabric.name}
+                    sx={{ width: 60, height: 60, borderRadius: 1 }}
+                  />
+                ) : (
+                  <Box 
+                    sx={{ 
+                      width: 60, 
+                      height: 60, 
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
+                      color: theme.palette.text.secondary,
+                      borderRadius: 1,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    No Image
+                  </Box>
+                )}
+              </TableCell>
+              
+              {/* Name & ID Column */}
+              <TableCell>
+                <Typography 
+                  variant="subtitle2" 
+                  sx={{ 
+                    fontWeight: 600,
+                    mb: 0.5
+                  }}
+                >
+                  {fabric.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  ID: {fabric.id}
+                </Typography>
+              </TableCell>
+              
+              {/* Created Date Column */}
+              <TableCell>
                 <Box sx={{ 
-                  position: 'absolute', 
-                  top: 8, 
-                  right: 8, 
-                  zIndex: 1,
-                  backgroundColor: fabric.active ? 'rgba(46, 125, 50, 0.9)' : 'rgba(211, 47, 47, 0.9)',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  color: 'text.secondary',
+                  fontSize: '0.7rem'
+                }}>
+                  <CalendarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.75rem' }} />
+                  <Typography variant="caption">
+                    {formatDate(fabric.createdAt)}
+                  </Typography>
+                </Box>
+              </TableCell>
+              
+              {/* Tags Column */}
+              <TableCell>
+                {fabric.tags.length > 0 ? (
+                  <Stack 
+                    direction="row" 
+                    spacing={0.5} 
+                    sx={{ 
+                      flexWrap: 'wrap', 
+                      gap: 0.5
+                    }}
+                  >
+                    {fabric.tags.map((tag) => (
+                      <Chip
+                        key={tag.id}
+                        label={tag.name}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={{ 
+                          borderRadius: 1,
+                          height: '20px',
+                          '& .MuiChip-label': {
+                            px: 0.75,
+                            fontSize: '0.65rem',
+                          }
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography variant="caption" color="text.secondary">
+                    No tags
+                  </Typography>
+                )}
+              </TableCell>
+              
+              {/* Status Column */}
+              <TableCell>
+                <Box sx={{ 
+                  backgroundColor: fabric.active 
+                    ? theme.palette.success.main 
+                    : theme.palette.error.main,
                   color: 'white',
                   borderRadius: '4px',
                   padding: '2px 8px',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   fontSize: '0.7rem',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  width: 'fit-content'
                 }}>
                   {fabric.active ? (
                     <>
@@ -98,112 +194,11 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
                     </>
                   )}
                 </Box>
-                {fabric.imageId ? (
-                  <CardMedia
-                    component="img"
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                    image={getFileUrl(fabric.imageId) || ''}
-                    alt={fabric.name}
-                  />
-                ) : (
-                  <Box 
-                    sx={{ 
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: theme.palette.grey[100],
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    <Typography variant="body2">No Image</Typography>
-                  </Box>
-                )}
-              </Box>
+              </TableCell>
               
-              <CardContent sx={{ flexGrow: 1, pt: theme.customSpacing.item * 2, px: theme.customSpacing.item * 2, pb: theme.customSpacing.item }}>
-                <Typography 
-                  gutterBottom 
-                  variant="subtitle2" 
-                  component="div" 
-                  sx={{ 
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: 'vertical',
-                    mb: 0.5,
-                  }}
-                >
-                  {fabric.name}
-                </Typography>
-                
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  color: 'text.secondary',
-                  fontSize: '0.7rem',
-                  mb: theme.customSpacing.item
-                }}>
-                  <CalendarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.75rem' }} />
-                  <Typography variant="caption">
-                    {formatDate(fabric.createdAt)}
-                  </Typography>
-                </Box>
-                
-                {fabric.tags.length > 0 && (
-                  <Box sx={{ mt: theme.customSpacing.item / 2 }}>
-                    <Stack 
-                      direction="row" 
-                      spacing={0.5} 
-                      sx={{ 
-                        flexWrap: 'wrap', 
-                        gap: 0.5,
-                        maxHeight: '48px',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {fabric.tags.map((tag) => (
-                        <Chip
-                          key={tag.id}
-                          label={tag.name}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                          sx={{ 
-                            borderRadius: 1,
-                            height: '20px',
-                            '& .MuiChip-label': {
-                              px: 0.75,
-                              fontSize: '0.65rem',
-                            }
-                          }}
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
-              </CardContent>
-              
-              <Divider />
-              
-              <CardActions sx={{ justifyContent: 'space-between', px: theme.customSpacing.item * 2, py: theme.customSpacing.item }}>
-                <Typography variant="caption" color="text.secondary">
-                  ID: {fabric.id}
-                </Typography>
-                <Box>
+              {/* Actions Column */}
+              <TableCell align="right">
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Tooltip title={fabric.active ? "Set Inactive" : "Set Active"}>
                     <IconButton 
                       onClick={async () => {
@@ -221,7 +216,13 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
                       size="small"
                       color={fabric.active ? "success" : "default"}
                       sx={{ 
-                        '&:hover': { backgroundColor: fabric.active ? theme.palette.success.light + '20' : theme.palette.grey[300] + '40' }
+                        '&:hover': { 
+                          backgroundColor: fabric.active 
+                            ? theme.palette.success.light + '20' 
+                            : (theme.palette.mode === 'dark' 
+                                ? theme.palette.grey[700] + '40' 
+                                : theme.palette.grey[300] + '40')
+                        }
                       }}
                     >
                       {fabric.active ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
@@ -252,12 +253,12 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
                     </IconButton>
                   </Tooltip>
                 </Box>
-              </CardActions>
-            </Card>
-          </Paper>
-        </Grid>
-      ))}
-    </Grid>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

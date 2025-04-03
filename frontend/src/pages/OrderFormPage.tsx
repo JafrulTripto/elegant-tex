@@ -3,37 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Container,
-  Divider,
-  FormControl,
   Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  TextField,
-  Typography,
-  IconButton,
   Alert,
   CircularProgress,
-  InputAdornment,
-  Autocomplete,
-  Avatar,
-  FormHelperText
+  Typography
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import {
-  ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
-import { Formik, Form, Field, FieldProps, FormikHelpers } from 'formik';
+import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { Formik, Form, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
-import { DELIVERY_CHANNELS, OrderFormData, OrderProductFormData } from '../types/order';
+import { OrderFormData, OrderProductFormData } from '../types/order';
 import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
 import { Fabric } from '../types/fabric';
@@ -44,9 +23,11 @@ import * as productTypeService from '../services/productType.service';
 import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
-import OrderFileUpload from '../components/orders/OrderFileUpload';
-import OrderImagePreview from '../components/orders/OrderImagePreview';
 import CustomerSelection from '../components/customers/CustomerSelection';
+import MarketplaceSelector from '../components/orders/orderForm/MarketplaceSelector';
+import DeliveryInformationSection from '../components/orders/orderForm/DeliveryInformationSection';
+import ProductFormSection from '../components/orders/orderForm/ProductFormSection';
+import OrderSummarySection from '../components/orders/orderForm/OrderSummarySection';
 
 // Validation schema for order form
 const OrderValidationSchema = Yup.object().shape({
@@ -322,35 +303,6 @@ const OrderFormPage: React.FC = () => {
       loadFabrics(fabricPage + 1);
     }
   };
-  
-  // Function to render fabric option with image
-  const renderFabricOption = (props: React.ComponentPropsWithRef<'li'>, fabric: Fabric) => {
-    const { key, ...otherProps } = props;
-    return (
-      <li key={key} {...otherProps}>
-        <Box display="flex" alignItems="center" gap={1}>
-        {fabric.imageId ? (
-          <Avatar 
-            src={getFileUrl(fabric.imageId) || undefined}
-            alt={fabric.name}
-            variant="rounded"
-            sx={{ width: 40, height: 40 }}
-          >
-            {fabric.name.charAt(0)}
-          </Avatar>
-        ) : (
-          <Avatar 
-            variant="rounded"
-            sx={{ width: 40, height: 40 }}
-          >
-            {fabric.name.charAt(0)}
-          </Avatar>
-        )}
-        <Typography>{fabric.name}</Typography>
-        </Box>
-      </li>
-    );
-  };
 
   // Handle form submission
   const handleSubmit = async (values: OrderFormData, { setSubmitting }: FormikHelpers<OrderFormData>) => {
@@ -383,16 +335,6 @@ const OrderFormPage: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  // Calculate total price
-  const calculateTotal = (products: OrderProductFormData[], deliveryCharge: number) => {
-    const productsTotal = products.reduce(
-      (sum, product) => sum + product.price * product.quantity,
-      0
-    );
-    
-    return productsTotal + deliveryCharge;
   };
 
   if (loading) {
@@ -455,36 +397,11 @@ const OrderFormPage: React.FC = () => {
               <Grid container spacing={3}>
                 {/* Marketplace Selection */}
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Marketplace
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-
-                    <FormControl 
-                      fullWidth 
-                      error={touched.marketplaceId && Boolean(errors.marketplaceId)}
-                    >
-                      <InputLabel id="marketplace-label">Select Marketplace</InputLabel>
-                      <Field
-                        name="marketplaceId"
-                        as={Select}
-                        labelId="marketplace-label"
-                        id="marketplace"
-                        label="Select Marketplace"
-                        required
-                      >
-                        {marketplaces.map((marketplace) => (
-                          <MenuItem key={marketplace.id} value={marketplace.id}>
-                            {marketplace.name}
-                          </MenuItem>
-                        ))}
-                      </Field>
-                      {touched.marketplaceId && errors.marketplaceId && (
-                        <FormHelperText>{errors.marketplaceId as string}</FormHelperText>
-                      )}
-                    </FormControl>
-                  </Paper>
+                  <MarketplaceSelector 
+                    marketplaces={marketplaces}
+                    touched={touched}
+                    errors={errors}
+                  />
                 </Grid>
 
                 {/* Customer Selection */}
@@ -515,360 +432,33 @@ const OrderFormPage: React.FC = () => {
 
                 {/* Delivery Information */}
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Delivery Information
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl 
-                          fullWidth
-                          error={touched.deliveryChannel && Boolean(errors.deliveryChannel)}
-                        >
-                          <InputLabel id="delivery-channel-label">Delivery Channel</InputLabel>
-                          <Field
-                            name="deliveryChannel"
-                            as={Select}
-                            labelId="delivery-channel-label"
-                            id="deliveryChannel"
-                            label="Delivery Channel"
-                            required
-                          >
-                            {DELIVERY_CHANNELS.map((channel) => (
-                              <MenuItem key={channel} value={channel}>
-                                {channel}
-                              </MenuItem>
-                            ))}
-                          </Field>
-                          {touched.deliveryChannel && errors.deliveryChannel && (
-                            <FormHelperText>{errors.deliveryChannel as string}</FormHelperText>
-                          )}
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Field name="deliveryCharge">
-                          {({ field, meta }: FieldProps) => (
-                            <TextField
-                              {...field}
-                              fullWidth
-                              label="Delivery Charge"
-                              type="number"
-                              InputProps={{
-                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                inputProps: { step: 0.01 } // Remove min to use Formik/Yup validation instead
-                              }}
-                              error={meta.touched && Boolean(meta.error)}
-                              helperText={meta.touched && meta.error}
-                              required
-                            />
-                          )}
-                        </Field>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                          <DatePicker
-                            label="Delivery Date"
-                            value={values.deliveryDate ? new Date(values.deliveryDate) : null}
-                            onChange={(date) => {
-                              if (date) {
-                                setFieldValue('deliveryDate', date.toISOString().split('T')[0]);
-                              }
-                            }}
-                            slotProps={{ 
-                              textField: { 
-                                fullWidth: true, 
-                                required: true,
-                                error: touched.deliveryDate && Boolean(errors.deliveryDate),
-                                helperText: touched.deliveryDate && (errors.deliveryDate as string)
-                              } 
-                            }}
-                          />
-                        </LocalizationProvider>
-                      </Grid>
-                    </Grid>
-                  </Paper>
+                  <DeliveryInformationSection
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    setFieldValue={setFieldValue}
+                  />
                 </Grid>
 
                 {/* Products */}
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h6">Products</Typography>
-                      <Button
-                        variant="outlined"
-                        startIcon={<AddIcon />}
-                        onClick={() => {
-                          const updatedProducts = [...values.products, createEmptyProduct()];
-                          setFieldValue('products', updatedProducts);
-                        }}
-                      >
-                        Add Product
-                      </Button>
-                    </Box>
-                    <Divider sx={{ mb: 2 }} />
-
-                    {values.products.map((product, index) => (
-                      <Card key={index} sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0' }}>
-                        <CardContent>
-                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="subtitle1">Product #{index + 1}</Typography>
-                            {values.products.length > 1 && (
-                              <IconButton
-                                color="error"
-                                onClick={() => {
-                                  const updatedProducts = [...values.products];
-                                  updatedProducts.splice(index, 1);
-                                  setFieldValue('products', updatedProducts.length ? updatedProducts : [createEmptyProduct()]);
-                                }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
-                          </Box>
-
-                          <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
-                              <FormControl 
-                                fullWidth
-                                error={
-                                  touched.products && 
-                                  Array.isArray(touched.products) &&
-                                  touched.products[index] && 
-                                  touched.products[index]?.productType && 
-                                  Boolean(errors.products && 
-                                  Array.isArray(errors.products) &&
-                                  errors.products[index] && 
-                                  typeof errors.products[index] === 'object' &&
-                                  'productType' in errors.products[index])
-                                }
-                              >
-                                <InputLabel id={`product-type-label-${index}`}>Product Type</InputLabel>
-                                <Field
-                                  name={`products[${index}].productType`}
-                                  as={Select}
-                                  labelId={`product-type-label-${index}`}
-                                  id={`productType-${index}`}
-                                  label="Product Type"
-                                  required
-                                >
-                                  {productTypes.map((type) => (
-                                    <MenuItem key={type.id} value={type.name}>
-                                      {type.name}
-                                    </MenuItem>
-                                  ))}
-                                </Field>
-                                {touched.products && 
-                                 Array.isArray(touched.products) &&
-                                 touched.products[index] && 
-                                 touched.products[index]?.productType && 
-                                 errors.products && 
-                                 Array.isArray(errors.products) &&
-                                 errors.products[index] && 
-                                 typeof errors.products[index] === 'object' &&
-                                 'productType' in errors.products[index] && (
-                                  <FormHelperText>{(errors.products[index] as any).productType}</FormHelperText>
-                                )}
-                              </FormControl>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Autocomplete
-                                id={`fabric-${index}`}
-                                options={fabrics}
-                                getOptionLabel={(option) => option.name}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                value={fabrics.find(f => f.id === product.fabricId) || null}
-                                onChange={(_, newValue) => {
-                                  setFieldValue(`products[${index}].fabricId`, newValue?.id || 0);
-                                }}
-                                renderInput={(params) => (
-                                  <TextField 
-                                    {...params} 
-                                    label="Fabric" 
-                                    required
-                                    error={
-                                      touched.products && 
-                                      Array.isArray(touched.products) &&
-                                      touched.products[index] && 
-                                      touched.products[index]?.fabricId && 
-                                      Boolean(errors.products && 
-                                      Array.isArray(errors.products) &&
-                                      errors.products[index] && 
-                                      typeof errors.products[index] === 'object' &&
-                                      'fabricId' in errors.products[index])
-                                    }
-                                    helperText={
-                                      touched.products && 
-                                      Array.isArray(touched.products) &&
-                                      touched.products[index] && 
-                                      touched.products[index]?.fabricId && 
-                                      errors.products && 
-                                      Array.isArray(errors.products) &&
-                                      errors.products[index] && 
-                                      typeof errors.products[index] === 'object' &&
-                                      'fabricId' in errors.products[index] ?
-                                      (errors.products[index] as any).fabricId : undefined
-                                    }
-                                  />
-                                )}
-                                renderOption={renderFabricOption}
-                                ListboxProps={{
-                                  onScroll: handleFabricListScroll
-                                }}
-                                loading={loadingFabrics}
-                                loadingText="Loading fabrics..."
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Field name={`products[${index}].quantity`}>
-                                {({ field, meta }: FieldProps) => (
-                                  <TextField
-                                    {...field}
-                                    fullWidth
-                                    label="Quantity"
-                                    type="number"
-                                    InputProps={{ 
-                                      inputProps: { min: 0 } // Use Formik/Yup validation instead of browser validation
-                                    }}
-                                    error={meta.touched && Boolean(meta.error)}
-                                    helperText={meta.touched && meta.error}
-                                    required
-                                  />
-                                )}
-                              </Field>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Field name={`products[${index}].price`}>
-                                {({ field, meta }: FieldProps) => (
-                                  <TextField
-                                    {...field}
-                                    fullWidth
-                                    label="Price"
-                                    type="number"
-                                    InputProps={{
-                                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                      inputProps: { step: 0.01 } // Remove min to use Formik/Yup validation instead
-                                    }}
-                                    error={meta.touched && Boolean(meta.error)}
-                                    helperText={meta.touched && meta.error}
-                                    required
-                                  />
-                                )}
-                              </Field>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Field name={`products[${index}].description`}>
-                                {({ field, meta }: FieldProps) => (
-                                  <TextField
-                                    {...field}
-                                    fullWidth
-                                    label="Description (Optional)"
-                                    multiline
-                                    rows={2}
-                                    error={meta.touched && Boolean(meta.error)}
-                                    helperText={meta.touched && meta.error}
-                                  />
-                                )}
-                              </Field>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="subtitle2" gutterBottom>
-                                Product Images (Optional)
-                              </Typography>
-                              
-                              {/* Display existing images if any */}
-                              {product.existingImages && product.existingImages.length > 0 && (
-                                <Box mb={2}>
-                                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                                    Existing Images:
-                                  </Typography>
-                                  <Box display="flex" flexWrap="wrap" gap={1}>
-                                    {product.existingImages.map((image, imgIndex) => (
-                                      <OrderImagePreview
-                                        key={`existing-${imgIndex}-${image.imageId}`}
-                                        imageId={image.imageId}
-                                        width={100}
-                                        height={100}
-                                        showDeleteButton={true}
-                                        onDelete={() => {
-                                          // Remove from imageIds
-                                          const updatedImageIds = [...(product.imageIds || [])];
-                                          const idIndex = updatedImageIds.indexOf(image.imageId);
-                                          if (idIndex !== -1) {
-                                            updatedImageIds.splice(idIndex, 1);
-                                          }
-                                          
-                                          // Remove from existingImages
-                                          const updatedExistingImages = [...(product.existingImages || [])];
-                                          updatedExistingImages.splice(imgIndex, 1);
-                                          
-                                          // Update the product
-                                          setFieldValue(`products[${index}].imageIds`, updatedImageIds);
-                                          setFieldValue(`products[${index}].existingImages`, updatedExistingImages);
-                                        }}
-                                      />
-                                    ))}
-                                  </Box>
-                                </Box>
-                              )}
-                              
-                              {/* Upload new images */}
-                              <Typography variant="body2" color="textSecondary" gutterBottom>
-                                {product.existingImages && product.existingImages.length > 0 ? 'Add New Images:' : 'Upload Images:'}
-                              </Typography>
-                              <OrderFileUpload
-                                onFileSelect={(files: File[]) => {
-                                  setFieldValue(`products[${index}].tempImages`, files);
-                                }}
-                                selectedFiles={product.tempImages || []}
-                                onRemoveFile={(imgIndex) => {
-                                  const tempImages = [...(product.tempImages || [])];
-                                  tempImages.splice(imgIndex, 1);
-                                  setFieldValue(`products[${index}].tempImages`, tempImages);
-                                }}
-                                accept="image/*"
-                                multiple
-                                maxFileSize={5} // 5MB max file size
-                              />
-                            </Grid>
-                          </Grid>
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                    {errors.products && typeof errors.products === 'string' && (
-                      <Alert severity="error" sx={{ mt: 1, mb: 2 }}>
-                        {errors.products}
-                      </Alert>
-                    )}
-
-                    {/* Order Summary */}
-                    <Box mt={3}>
-                      <Typography variant="h6" gutterBottom>
-                        Order Summary
-                      </Typography>
-                      <Divider sx={{ mb: 2 }} />
-
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body1">
-                            Products Subtotal: ${values.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body1">
-                            Delivery Charge: ${values.deliveryCharge.toFixed(2)}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Typography variant="h6">
-                            Total: ${calculateTotal(values.products, values.deliveryCharge).toFixed(2)}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  </Paper>
+                  <ProductFormSection
+                    products={values.products}
+                    productTypes={productTypes}
+                    fabrics={fabrics}
+                    handleFabricListScroll={handleFabricListScroll}
+                    loadingFabrics={loadingFabrics}
+                    touched={touched}
+                    errors={errors}
+                    setFieldValue={setFieldValue}
+                    createEmptyProduct={createEmptyProduct}
+                  />
+                  
+                  {/* Order Summary */}
+                  <OrderSummarySection
+                    products={values.products}
+                    deliveryCharge={values.deliveryCharge}
+                  />
                 </Grid>
 
                 {/* Submit Button */}

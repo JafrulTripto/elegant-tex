@@ -138,21 +138,6 @@ const UserOrdersTable: React.FC = () => {
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  // Function to get shortened email for mobile view
-  const getShortenedEmail = (email: string): string => {
-    if (!isMobile) return email;
-    
-    const parts = email.split('@');
-    if (parts.length !== 2) return email;
-    
-    const username = parts[0];
-    const domain = parts[1];
-    
-    // If username is already short, don't truncate
-    if (username.length <= 8) return email;
-    
-    return `${username.substring(0, 6)}...@${domain}`;
-  };
 
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>

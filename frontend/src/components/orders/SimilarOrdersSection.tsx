@@ -46,7 +46,6 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
   const [error, setError] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   useEffect(() => {
     const fetchSimilarOrders = async () => {
