@@ -27,8 +27,7 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FileDownload as FileDownloadIcon,
-  FilterList as FilterListIcon
+  FileDownload as FileDownloadIcon
 } from '@mui/icons-material';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';

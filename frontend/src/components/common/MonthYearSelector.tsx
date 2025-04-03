@@ -34,9 +34,6 @@ const MonthYearSelector: React.FC<MonthYearSelectorProps> = ({
     const selectedOption = options.find(option => option.value === value);
     onChange(value, selectedOption?.isFullYear || false);
   };
-
-  // Get the selected option for display
-  const selectedOption = options.find(option => option.value === selectedValue);
   
   // For mobile, we might want to show a shorter label
   const getDisplayLabel = (option: MonthSelectorOption) => {
