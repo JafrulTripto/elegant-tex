@@ -27,8 +27,7 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FileDownload as FileDownloadIcon,
-  FilterList as FilterListIcon
+  FileDownload as FileDownloadIcon
 } from '@mui/icons-material';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
@@ -215,7 +214,7 @@ const OrdersPage: React.FC = () => {
         flex: 1,
         minWidth: 120,
         valueGetter: (params: any) => {
-          const marketplace = params.row.marketplace?.name;
+          const marketplace = params.name;
           return marketplace ?? '';
         }
       },
@@ -225,7 +224,7 @@ const OrdersPage: React.FC = () => {
         flex: 1,
         minWidth: 120,
         valueGetter: (params: any) => {
-          const customer = params.row.customer?.name;
+          const customer = params.name;
           return customer ?? '';
         }
       },
@@ -235,10 +234,12 @@ const OrdersPage: React.FC = () => {
         flex: 1,
         minWidth: 110,
         valueFormatter: (params: any) => {
-          if (!params.value) return '';
+          console.log('Delivery Date:', params);
+          
+          if (!params) return '';
           try {
             // Use shorter date format on medium screens
-            return format(new Date(params.value), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
+            return format(new Date(params), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
           } catch (e) {
             return 'Invalid Date';
           }
@@ -272,10 +273,10 @@ const OrdersPage: React.FC = () => {
         flex: 1,
         minWidth: 110,
         valueFormatter: (params: any) => {
-          if (!params.value) return '';
+          if (!params) return '';
           try {
             // Use shorter date format on medium screens
-            return format(new Date(params.value), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
+            return format(new Date(params), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
           } catch (e) {
             return 'Invalid Date';
           }
