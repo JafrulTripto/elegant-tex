@@ -629,9 +629,9 @@ const RoleManagement: React.FC = () => {
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={handleDeleteRole}
-        onCancel={handleCloseDeleteDialog}
+        onClose={handleCloseDeleteDialog}
         loading={loading}
-        severity="error"
+        confirmColor="error"
       />
       
       {/* Snackbars */}
