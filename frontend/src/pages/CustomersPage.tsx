@@ -3,49 +3,40 @@ import {
   Box,
   Button,
   Container,
-  Paper,
   Typography,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
-  CircularProgress,
+  IconButton,
   Alert,
-  Tooltip
+  CircularProgress,
+  SelectChangeEvent,
+  useTheme,
+  alpha
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Phone as PhoneIcon,
-  LocationOn as LocationIcon
-} from '@mui/icons-material';
+import { layoutUtils } from '../theme/styleUtils';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import { Customer, CustomerRequest } from '../types/customer';
 import * as customerService from '../services/customer.service';
+import { useCustomerFilters } from '../hooks/useCustomerFilters';
+import { FilterChips, ConfirmationDialog, Pagination } from '../components/common';
+import CustomerSearch from '../components/customers/CustomerSearch';
+import CustomerTable from '../components/customers/CustomerTable';
+import CustomerForm from '../components/customers/CustomerForm';
 
 const CustomersPage: React.FC = () => {
+  const theme = useTheme();
+  
   // State
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState<number>(0);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [totalElements, setTotalElements] = useState<number>(0);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  
+  // Dialog state
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerRequest>({
     name: '',
@@ -56,26 +47,71 @@ const CustomersPage: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
+  
+  // Delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
-  // Load customers on mount and when page/rowsPerPage changes
+  // Use the customer filters hook
+  const {
+    filterParams,
+    searchTerm,
+    setSearchTerm,
+    handleSearchSubmit,
+    handlePageChange,
+    handlePageSizeChange,
+    handleSortChange,
+    handleRemoveFilter,
+    handleClearAllFilters,
+    activeFilterChips,
+    activeFilterCount
+  } = useCustomerFilters({
+    page: 0,
+    size: 10,
+    sortBy: 'id',
+    sortDir: 'asc'
+  });
+
+  // Adapter for page size change
+  const handlePageSizeChangeAdapter = (event: SelectChangeEvent) => {
+    // Convert SelectChangeEvent to the format expected by handlePageSizeChange
+    const adaptedEvent = {
+      target: { value: parseInt(event.target.value, 10) }
+    } as React.ChangeEvent<{ value: unknown }>;
+    
+    handlePageSizeChange(adaptedEvent);
+  };
+
+  // Load customers when filter params change
   useEffect(() => {
     loadCustomers();
-  }, [page, rowsPerPage]);
+  }, [filterParams]);
 
   // Load customers
-  const loadCustomers = async (search?: string) => {
+  const loadCustomers = async () => {
     setLoading(true);
     setError(null);
     
     try {
       let result;
-      if (search) {
-        result = await customerService.searchCustomers(search, page, rowsPerPage);
+      if (filterParams.search) {
+        result = await customerService.searchCustomers(
+          filterParams.search,
+          filterParams.page || 0,
+          filterParams.size || 10
+        );
       } else {
-        result = await customerService.getCustomers(page, rowsPerPage);
+        result = await customerService.getCustomers(
+          filterParams.page || 0,
+          filterParams.size || 10
+        );
       }
       
       setCustomers(result.content);
+      // Calculate total pages based on total elements and page size
+      const calculatedTotalPages = Math.ceil(result.totalElements / (filterParams.size || 10));
+      setTotalPages(calculatedTotalPages);
       setTotalElements(result.totalElements);
     } catch (err) {
       console.error('Error loading customers:', err);
@@ -83,30 +119,6 @@ const CustomersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Handle search
-  const handleSearch = () => {
-    setPage(0);
-    loadCustomers(searchTerm);
-  };
-
-  // Handle search input keypress
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  // Handle page change
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
   };
 
   // Open create dialog
@@ -138,17 +150,17 @@ const CustomersPage: React.FC = () => {
   };
 
   // Open delete dialog
-  const handleOpenDeleteDialog = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setDeleteDialogOpen(true);
+  const handleOpenDeleteDialog = (customerId: number) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (customer) {
+      setCustomerToDelete(customer);
+      setDeleteDialogOpen(true);
+    }
   };
 
-  // Handle form field changes
-  const handleFormChange = (field: keyof CustomerRequest, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Handle form data change
+  const handleFormDataChange = (data: CustomerRequest) => {
+    setFormData(data);
   };
 
   // Handle form submission
@@ -173,7 +185,7 @@ const CustomersPage: React.FC = () => {
       
       // Close dialog and reload customers
       setDialogOpen(false);
-      loadCustomers(searchTerm);
+      loadCustomers();
     } catch (err) {
       console.error('Error saving customer:', err);
       setFormError('Failed to save customer. Please try again later.');
@@ -182,29 +194,43 @@ const CustomersPage: React.FC = () => {
     }
   };
 
-  // Handle delete
-  const handleDelete = async () => {
-    if (!selectedCustomer) return;
+  // Handle delete confirmation
+  const handleConfirmDelete = async () => {
+    if (!customerToDelete) return;
     
-    setSubmitting(true);
+    setDeleting(true);
     
     try {
-      await customerService.deleteCustomer(selectedCustomer.id);
+      await customerService.deleteCustomer(customerToDelete.id);
       setDeleteDialogOpen(false);
-      loadCustomers(searchTerm);
+      loadCustomers();
     } catch (err) {
       console.error('Error deleting customer:', err);
       setError('Failed to delete customer. Please try again later.');
     } finally {
-      setSubmitting(false);
+      setDeleting(false);
     }
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box my={4}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" component="h1">
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
+        {/* Header */}
+        <Box sx={{ 
+          ...layoutUtils.spaceBetweenFlex, 
+          mb: theme.customSpacing.section,
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 1, sm: 0 }
+        }}>
+          <Typography 
+            variant="h4" 
+            component="h1"
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+              mb: { xs: 0.5, sm: 0 }
+            }}
+          >
             Customers
           </Typography>
           <Button
@@ -217,223 +243,131 @@ const CustomersPage: React.FC = () => {
           </Button>
         </Box>
 
+        {/* Error Alert */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert 
+            severity="error" 
+            sx={{ mb: theme.customSpacing.section }}
+            onClose={() => setError(null)}
+          >
             {error}
           </Alert>
         )}
 
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Box display="flex" alignItems="center">
-            <TextField
-              fullWidth
-              placeholder="Search by name or phone"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={handleSearchKeyPress}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleSearch}
-                      disabled={loading}
-                    >
-                      Search
-                    </Button>
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Box>
-        </Paper>
-
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Address</TableCell>
-                <TableCell>Alternative Phone</TableCell>
-                <TableCell>Facebook ID</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : customers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    No customers found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                customers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell>{customer.name}</TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center">
-                        <PhoneIcon fontSize="small" sx={{ mr: 1 }} />
-                        {customer.phone}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title={customer.address}>
-                        <Box display="flex" alignItems="center">
-                          <LocationIcon fontSize="small" sx={{ mr: 1 }} />
-                          {customer.address.length > 30
-                            ? `${customer.address.substring(0, 30)}...`
-                            : customer.address}
-                        </Box>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>{customer.alternativePhone || '-'}</TableCell>
-                    <TableCell>{customer.facebookId || '-'}</TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleOpenEditDialog(customer)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleOpenDeleteDialog(customer)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={totalElements}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+        {/* Search and Filter */}
+        <Box sx={{ mb: theme.customSpacing.section }}>
+          <CustomerSearch
+            searchTerm={searchTerm}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onSearchSubmit={handleSearchSubmit}
+            activeFilterCount={activeFilterCount}
           />
-        </TableContainer>
+          
+          {/* Active Filter Chips */}
+          {activeFilterCount > 0 && (
+            <FilterChips
+              filters={activeFilterChips}
+              onRemoveFilter={handleRemoveFilter}
+              onClearAll={handleClearAllFilters}
+            />
+          )}
+        </Box>
+
+        {/* Customer Table */}
+        <CustomerTable
+          customers={customers}
+          loading={loading}
+          onEdit={handleOpenEditDialog}
+          onDelete={handleOpenDeleteDialog}
+          sortBy={filterParams.sortBy || 'id'}
+          sortDir={(filterParams.sortDir as 'asc' | 'desc') || 'asc'}
+          onSort={handleSortChange}
+        />
+        
+        {/* Pagination */}
+        <Box sx={{ mt: theme.customSpacing.section }}>
+          <Pagination
+            page={filterParams.page || 0}
+            size={filterParams.size || 10}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            itemsCount={customers.length}
+            loading={loading}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChangeAdapter}
+            pageSizeOptions={[5, 10, 25, 50]}
+          />
+        </Box>
+
+        {/* Customer Form Dialog */}
+        <Dialog 
+          open={dialogOpen} 
+          onClose={() => setDialogOpen(false)} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{
+            sx: { borderRadius: theme.shape.borderRadius }
+          }}
+        >
+          <DialogTitle>
+            {selectedCustomer ? 'Edit Customer' : 'Add Customer'}
+            <IconButton
+              aria-label="close"
+              onClick={() => setDialogOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <CustomerForm
+              initialData={formData}
+              onDataChange={handleFormDataChange}
+              isSubmitting={submitting}
+              submitError={formError || undefined}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button 
+              onClick={() => setDialogOpen(false)} 
+              color="inherit"
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              color="primary"
+              variant="contained"
+              disabled={submitting}
+              sx={{ 
+                borderRadius: 1.25,
+                background: submitting ? undefined : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                '&:hover': {
+                  background: submitting ? undefined : `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                  boxShadow: submitting ? undefined : `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}`
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              {submitting ? <CircularProgress size={24} /> : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Confirm Delete"
+          message={`Are you sure you want to delete the customer "${customerToDelete?.name}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmColor="error"
+          loading={deleting}
+        />
       </Box>
-
-      {/* Customer Form Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {selectedCustomer ? 'Edit Customer' : 'Add Customer'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1 }}>
-            {formError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {formError}
-              </Alert>
-            )}
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Name"
-                  value={formData.name}
-                  onChange={(e) => handleFormChange('name', e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone"
-                  value={formData.phone}
-                  onChange={(e) => handleFormChange('phone', e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Address"
-                  multiline
-                  rows={3}
-                  value={formData.address}
-                  onChange={(e) => handleFormChange('address', e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Alternative Phone (Optional)"
-                  value={formData.alternativePhone}
-                  onChange={(e) => handleFormChange('alternativePhone', e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Facebook ID (Optional)"
-                  value={formData.facebookId}
-                  onChange={(e) => handleFormChange('facebookId', e.target.value)}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            color="primary"
-            variant="contained"
-            disabled={submitting}
-          >
-            {submitting ? 'Saving...' : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete the customer "{selectedCustomer?.name}"?
-          </Typography>
-          <Typography color="error" sx={{ mt: 1 }}>
-            This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDelete}
-            color="error"
-            variant="contained"
-            disabled={submitting}
-          >
-            {submitting ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

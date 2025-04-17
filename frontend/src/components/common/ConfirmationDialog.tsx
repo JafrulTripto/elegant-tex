@@ -3,68 +3,80 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   DialogActions,
   Button,
-  CircularProgress
+  Typography,
+  Box,
+  CircularProgress,
+  useTheme
 } from '@mui/material';
 
 interface ConfirmationDialogProps {
   open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
-  onCancel: () => void;
+  confirmColor?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
   loading?: boolean;
-  severity?: 'warning' | 'error' | 'info' | 'success';
+  icon?: React.ReactElement;
 }
 
 const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   open,
+  onClose,
+  onConfirm,
   title,
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  onConfirm,
-  onCancel,
+  confirmColor = 'primary',
   loading = false,
-  severity = 'warning'
+  icon
 }) => {
-  // Map severity to button color
-  const buttonColorMap = {
-    warning: 'warning',
-    error: 'error',
-    info: 'primary',
-    success: 'success'
-  };
-  
-  const buttonColor = buttonColorMap[severity] as 'warning' | 'error' | 'primary' | 'success';
+  const theme = useTheme();
 
   return (
     <Dialog
       open={open}
-      onClose={onCancel}
-      aria-labelledby="confirmation-dialog-title"
-      aria-describedby="confirmation-dialog-description"
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: theme.shape.borderRadius }
+      }}
     >
-      <DialogTitle id="confirmation-dialog-title">{title}</DialogTitle>
+      <DialogTitle>
+        {title}
+      </DialogTitle>
       <DialogContent>
-        <DialogContentText id="confirmation-dialog-description">
-          {message}
-        </DialogContentText>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+          {icon && (
+            <Box sx={{ color: `${confirmColor}.main`, mt: 0.5 }}>
+              {icon}
+            </Box>
+          )}
+          <Typography variant="body1">
+            {message}
+          </Typography>
+        </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancel} disabled={loading}>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={onClose}
+          color="inherit"
+          disabled={loading}
+        >
           {cancelText}
         </Button>
-        <Button 
-          onClick={onConfirm} 
-          color={buttonColor} 
-          variant="contained" 
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color={confirmColor}
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : undefined}
+          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {confirmText}
         </Button>

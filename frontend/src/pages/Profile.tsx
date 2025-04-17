@@ -20,7 +20,10 @@ import {
   DialogTitle,
   IconButton,
   Tooltip,
+  Container,
+  useTheme
 } from '@mui/material';
+import { spacing, layoutUtils } from '../theme/styleUtils';
 import { Edit as EditIcon, Save as SaveIcon, Lock as LockIcon, PhotoCamera } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
@@ -188,276 +191,287 @@ const Profile: React.FC = () => {
     );
   }
   
+  const theme = useTheme();
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <Typography variant="h4" gutterBottom>
-        Profile
-      </Typography>
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
+        <Typography 
+          variant="h4" 
+          component="h1"
+          sx={{ 
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            mb: theme.customSpacing.element
+          }}
+        >
+          Profile
+        </Typography>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: theme.customSpacing.section }}>
+            {error}
+          </Alert>
+        )}
+        
+        {success && (
+          <Alert severity="success" sx={{ mb: theme.customSpacing.section }}>
+            {success}
+          </Alert>
+        )}
       
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          {success}
-        </Alert>
-      )}
-      
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card elevation={2} sx={{ borderRadius: 2 }}>
-            <CardHeader
-              title="Profile Picture"
-              subheader={user.phone}
-            />
-            <Divider />
-            <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-              <Box sx={{ position: 'relative' }}>
-                {user.profileImageId ? (
-                  <ImagePreview
-                    imageId={user.profileImageId}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    width={120}
-                    height={120}
-                    borderRadius="50%"
-                    fallbackText={user.phone.charAt(0).toUpperCase()}
-                  />
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
+          <Grid item xs={12} md={4}>
+            <Card elevation={2} sx={{ borderRadius: 2, ...spacing.contentPadding(theme) }}>
+              <CardHeader
+                title="Profile Picture"
+                subheader={user.phone}
+              />
+              <Divider />
+              <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                <Box sx={{ position: 'relative' }}>
+                  {user.profileImageId ? (
+                    <ImagePreview
+                      imageId={user.profileImageId}
+                      alt={`${user.firstName} ${user.lastName}`}
+                      width={120}
+                      height={120}
+                      borderRadius="50%"
+                      fallbackText={user.phone.charAt(0).toUpperCase()}
+                    />
+                  ) : (
+                    <Avatar
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        fontSize: '3rem',
+                        mb: 2,
+                        bgcolor: 'primary.main',
+                      }}
+                    >
+                      {user.phone.charAt(0).toUpperCase()}
+                    </Avatar>
+                  )}
+                  <Tooltip title="Change profile picture">
+                    <IconButton 
+                      sx={{ 
+                        position: 'absolute', 
+                        bottom: 0, 
+                        right: 0,
+                        bgcolor: 'background.paper',
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                      onClick={() => setShowUploadDialog(true)}
+                    >
+                      <PhotoCamera />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Typography variant="body1" sx={{ mt: 2 }}>
+                  {user.firstName} {user.lastName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {user.email}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} md={8}>
+            <Paper
+              component="form"
+              onSubmit={handleSubmit}
+              elevation={2}
+              sx={{ borderRadius: 2, ...spacing.contentPadding(theme) }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6">Personal Information</Typography>
+                {!editing ? (
+                  <Button
+                    startIcon={<EditIcon />}
+                    onClick={handleEdit}
+                    variant="outlined"
+                    size="small"
+                  >
+                    Edit
+                  </Button>
                 ) : (
-                  <Avatar
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      fontSize: '3rem',
-                      mb: 2,
-                      bgcolor: 'primary.main',
-                    }}
+                  <Button
+                    onClick={handleCancel}
+                    variant="outlined"
+                    size="small"
+                    color="secondary"
                   >
-                    {user.phone.charAt(0).toUpperCase()}
-                  </Avatar>
+                    Cancel
+                  </Button>
                 )}
-                <Tooltip title="Change profile picture">
-                  <IconButton 
-                    sx={{ 
-                      position: 'absolute', 
-                      bottom: 0, 
-                      right: 0,
-                      bgcolor: 'background.paper',
-                      '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                    onClick={() => setShowUploadDialog(true)}
-                  >
-                    <PhotoCamera />
-                  </IconButton>
-                </Tooltip>
               </Box>
-              <Typography variant="body1" sx={{ mt: 2 }}>
-                {user.firstName} {user.lastName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user.email}
-              </Typography>
-            </CardContent>
-          </Card>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    disabled={!editing || loading}
+                    variant={editing ? 'outlined' : 'filled'}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    disabled={!editing || loading}
+                    variant={editing ? 'outlined' : 'filled'}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    value={formData.email}
+                    disabled={true}
+                    variant="filled"
+                    helperText={user.emailVerified ? 'Verified' : 'Not verified'}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Username"
+                    value={user.phone}
+                    disabled={true}
+                    variant="filled"
+                  />
+                </Grid>
+              </Grid>
+              
+              {editing && (
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    startIcon={<SaveIcon />}
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </Box>
+              )}
+            </Paper>
+            
+            <Paper
+              elevation={2}
+              sx={{ borderRadius: 2, mt: theme.customSpacing.section, ...spacing.contentPadding(theme) }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6">Security</Typography>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Button
+                variant="outlined"
+                startIcon={<LockIcon />}
+                onClick={() => setOpenPasswordDialog(true)}
+              >
+                Change Password
+              </Button>
+            </Paper>
+          </Grid>
         </Grid>
         
-        <Grid item xs={12} md={8}>
-          <Paper
-            component="form"
-            onSubmit={handleSubmit}
-            elevation={2}
-            sx={{ p: 3, borderRadius: 2 }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h6">Personal Information</Typography>
-              {!editing ? (
-                <Button
-                  startIcon={<EditIcon />}
-                  onClick={handleEdit}
-                  variant="outlined"
-                  size="small"
-                >
-                  Edit
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleCancel}
-                  variant="outlined"
-                  size="small"
-                  color="secondary"
-                >
-                  Cancel
-                </Button>
-              )}
-            </Box>
-            <Divider sx={{ mb: 3 }} />
+        {/* Password Change Dialog */}
+        <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+          <DialogTitle>Change Password</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              To change your password, please enter your current password and then your new password.
+            </DialogContentText>
             
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="First Name"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  disabled={!editing || loading}
-                  variant={editing ? 'outlined' : 'filled'}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Last Name"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  disabled={!editing || loading}
-                  variant={editing ? 'outlined' : 'filled'}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  value={formData.email}
-                  disabled={true}
-                  variant="filled"
-                  helperText={user.emailVerified ? 'Verified' : 'Not verified'}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Username"
-                  value={user.phone}
-                  disabled={true}
-                  variant="filled"
-                />
-              </Grid>
-            </Grid>
-            
-            {editing && (
-              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </Box>
+            {passwordError && (
+              <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+                {passwordError}
+              </Alert>
             )}
-          </Paper>
-          
-          <Paper
-            elevation={2}
-            sx={{ p: 3, borderRadius: 2, mt: 3 }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h6">Security</Typography>
-            </Box>
-            <Divider sx={{ mb: 3 }} />
             
-            <Button
+            <TextField
+              margin="dense"
+              label="Current Password"
+              type="password"
+              fullWidth
               variant="outlined"
-              startIcon={<LockIcon />}
-              onClick={() => setOpenPasswordDialog(true)}
-            >
-              Change Password
+              name="currentPassword"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              label="New Password"
+              type="password"
+              fullWidth
+              variant="outlined"
+              name="newPassword"
+              value={passwordData.newPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              label="Confirm New Password"
+              type="password"
+              fullWidth
+              variant="outlined"
+              name="confirmPassword"
+              value={passwordData.confirmPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenPasswordDialog(false)}>Cancel</Button>
+            <Button onClick={handlePasswordSubmit} disabled={loading}>
+              {loading ? 'Changing...' : 'Change Password'}
             </Button>
-          </Paper>
-        </Grid>
-      </Grid>
-      
-      {/* Password Change Dialog */}
-      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
-        <DialogTitle>Change Password</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            To change your password, please enter your current password and then your new password.
-          </DialogContentText>
-          
-          {passwordError && (
-            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-              {passwordError}
-            </Alert>
-          )}
-          
-          <TextField
-            margin="dense"
-            label="Current Password"
-            type="password"
-            fullWidth
-            variant="outlined"
-            name="currentPassword"
-            value={passwordData.currentPassword}
-            onChange={handlePasswordChange}
-            required
-          />
-          <TextField
-            margin="dense"
-            label="New Password"
-            type="password"
-            fullWidth
-            variant="outlined"
-            name="newPassword"
-            value={passwordData.newPassword}
-            onChange={handlePasswordChange}
-            required
-          />
-          <TextField
-            margin="dense"
-            label="Confirm New Password"
-            type="password"
-            fullWidth
-            variant="outlined"
-            name="confirmPassword"
-            value={passwordData.confirmPassword}
-            onChange={handlePasswordChange}
-            required
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenPasswordDialog(false)}>Cancel</Button>
-          <Button onClick={handlePasswordSubmit} disabled={loading}>
-            {loading ? 'Changing...' : 'Change Password'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      
-      {/* Profile Image Upload Dialog */}
-      <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
-        <DialogTitle>Upload Profile Picture</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Select an image file to use as your profile picture.
-          </DialogContentText>
-          
-          {uploadError && (
-            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-              {uploadError}
-            </Alert>
-          )}
-          
-          <FileUpload
-            onFileSelected={handleProfileImageUpload}
-            accept="image/*"
-            maxSize={2 * 1024 * 1024} // 2MB
-            label="Select a profile image"
-            buttonText="Choose Image"
-            isLoading={uploadLoading}
-            error={uploadError || undefined}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowUploadDialog(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          </DialogActions>
+        </Dialog>
+        
+        {/* Profile Image Upload Dialog */}
+        <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
+          <DialogTitle>Upload Profile Picture</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Select an image file to use as your profile picture.
+            </DialogContentText>
+            
+            {uploadError && (
+              <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+                {uploadError}
+              </Alert>
+            )}
+            
+            <FileUpload
+              onFileSelected={handleProfileImageUpload}
+              accept="image/*"
+              maxSize={2 * 1024 * 1024} // 2MB
+              label="Select a profile image"
+              buttonText="Choose Image"
+              isLoading={uploadLoading}
+              error={uploadError || undefined}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowUploadDialog(false)}>Cancel</Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Container>
   );
 };
 

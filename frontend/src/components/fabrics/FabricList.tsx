@@ -11,17 +11,15 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Paper,
-  Avatar
+  Avatar,
+  alpha
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
   Delete as DeleteIcon, 
   CalendarToday as CalendarIcon,
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
   ToggleOn as ToggleOnIcon,
   ToggleOff as ToggleOffIcon
 } from '@mui/icons-material';
@@ -29,15 +27,28 @@ import { Fabric } from '../../types/fabric';
 import { getFileUrl } from '../../services/fileStorage.service';
 import { toggleFabricActive } from '../../services/fabric.service';
 import { format } from 'date-fns';
+import { SortableTableHead, StatusChip } from '../common';
+import type { Column } from '../common';
 
 interface FabricListProps {
   fabrics: Fabric[];
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleActive?: (fabric: Fabric) => void;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+  onSort?: (column: string) => void;
 }
 
-const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onToggleActive }) => {
+const FabricList: React.FC<FabricListProps> = ({ 
+  fabrics, 
+  onEdit, 
+  onDelete, 
+  onToggleActive,
+  sortBy = 'id',
+  sortDir = 'asc',
+  onSort
+}) => {
   const theme = useTheme();
   
   const formatDate = (dateString: string) => {
@@ -47,20 +58,35 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
       return dateString;
     }
   };
+
+  const columns: Column[] = [
+    { id: 'image', label: 'Image', sortable: false, width: 80 },
+    { id: 'name', label: 'Name & ID', sortable: true },
+    { id: 'createdAt', label: 'Created Date', sortable: true, width: 120 },
+    { id: 'tags', label: 'Tags', sortable: false },
+    { id: 'active', label: 'Status', sortable: true, width: 100 },
+    { id: 'actions', label: 'Actions', sortable: false, width: 120, align: 'right' }
+  ];
   
   return (
-    <TableContainer component={Paper} elevation={2}>
+    <TableContainer 
+      component={Paper} 
+      elevation={2} 
+      sx={{ 
+        borderRadius: 1.25,
+        transition: 'box-shadow 0.2s ease-in-out',
+        '&:hover': {
+          boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.08)}`
+        }
+      }}
+    >
       <Table sx={{ minWidth: 650 }}>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50] }}>
-            <TableCell width="80px">Image</TableCell>
-            <TableCell>Name & ID</TableCell>
-            <TableCell width="120px">Created Date</TableCell>
-            <TableCell>Tags</TableCell>
-            <TableCell width="100px">Status</TableCell>
-            <TableCell width="120px" align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
+        <SortableTableHead 
+          columns={columns} 
+          sortBy={sortBy} 
+          sortDir={sortDir} 
+          onSort={onSort || (() => {})} 
+        />
         <TableBody>
           {fabrics.map((fabric) => (
             <TableRow 
@@ -79,7 +105,7 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
                     variant="rounded"
                     src={getFileUrl(fabric.imageId) || ''}
                     alt={fabric.name}
-                    sx={{ width: 60, height: 60, borderRadius: 1 }}
+                    sx={{ width: 60, height: 60, borderRadius: 1.25 }}
                   />
                 ) : (
                   <Box 
@@ -91,7 +117,7 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
                       justifyContent: 'center',
                       backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
                       color: theme.palette.text.secondary,
-                      borderRadius: 1,
+                      borderRadius: 1.25,
                       fontSize: '0.75rem'
                     }}
                   >
@@ -150,7 +176,7 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
                         color="primary"
                         variant="outlined"
                         sx={{ 
-                          borderRadius: 1,
+                          borderRadius: 1.25,
                           height: '20px',
                           '& .MuiChip-label': {
                             px: 0.75,
@@ -169,31 +195,9 @@ const FabricList: React.FC<FabricListProps> = ({ fabrics, onEdit, onDelete, onTo
               
               {/* Status Column */}
               <TableCell>
-                <Box sx={{ 
-                  backgroundColor: fabric.active 
-                    ? theme.palette.success.main 
-                    : theme.palette.error.main,
-                  color: 'white',
-                  borderRadius: '4px',
-                  padding: '2px 8px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  fontSize: '0.7rem',
-                  fontWeight: 'bold',
-                  width: 'fit-content'
-                }}>
-                  {fabric.active ? (
-                    <>
-                      <ActiveIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.75rem' }} />
-                      Active
-                    </>
-                  ) : (
-                    <>
-                      <InactiveIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.75rem' }} />
-                      Inactive
-                    </>
-                  )}
-                </Box>
+                <StatusChip 
+                  status={fabric.active ? 'active' : 'inactive'} 
+                />
               </TableCell>
               
               {/* Actions Column */}

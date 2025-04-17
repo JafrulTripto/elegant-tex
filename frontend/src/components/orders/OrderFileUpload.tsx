@@ -32,7 +32,7 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
   onFileSelect,
   selectedFiles,
   onRemoveFile,
-  maxFiles = 5,
+  maxFiles = 10,
   maxFileSize = 5, // Default max file size: 5MB
   accept = 'image/*',
   multiple = true,
@@ -120,10 +120,10 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
       newFiles.push(validFiles[i]);
     }
     
-    // Check total size of all files (limit to 10MB total to match server config)
+    // Check total size of all files (limit to 50MB total to match server config)
     const totalSizeInBytes = newFiles.reduce((sum, file) => sum + file.size, 0);
     const totalSizeInMB = totalSizeInBytes / (1024 * 1024);
-    const maxTotalSize = 10; // 10MB max total size (matching server config)
+    const maxTotalSize = 50; // 50MB max total size (matching server config)
     
     if (totalSizeInMB > maxTotalSize) {
       setSizeError(`Total file size (${totalSizeInMB.toFixed(2)}MB) exceeds the maximum allowed (${maxTotalSize}MB)`);
