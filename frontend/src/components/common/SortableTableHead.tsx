@@ -1,5 +1,5 @@
 import React from 'react';
-import { TableHead, TableRow, TableCell, TableSortLabel, Box } from '@mui/material';
+import { TableHead, TableRow, TableCell, Box } from '@mui/material';
 import { ArrowUpward as ArrowUpIcon, ArrowDownward as ArrowDownIcon } from '@mui/icons-material';
 
 export interface Column {

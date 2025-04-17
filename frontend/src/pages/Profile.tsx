@@ -23,7 +23,7 @@ import {
   Container,
   useTheme
 } from '@mui/material';
-import { spacing, layoutUtils } from '../theme/styleUtils';
+import { spacing } from '../theme/styleUtils';
 import { Edit as EditIcon, Save as SaveIcon, Lock as LockIcon, PhotoCamera } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
