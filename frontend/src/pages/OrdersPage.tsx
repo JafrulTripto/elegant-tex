@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material';
+import { spacing, layoutUtils } from '../theme/styleUtils';
 import Grid from '@mui/material/Grid2';
 import { 
   DataGrid, 
@@ -348,12 +349,13 @@ const OrdersPage: React.FC = () => {
         <Grid container spacing={{ xs: 2, sm: 3 }}>
           <Grid size={{ xs: 12 }}>
             <Box 
-              display="flex" 
-              flexDirection={{ xs: 'column', sm: 'row' }} 
-              justifyContent="space-between" 
-              alignItems={{ xs: 'flex-start', sm: 'center' }} 
-              mb={{ xs: 1, sm: 2 }}
-              gap={1}
+              sx={{
+                ...layoutUtils.spaceBetweenFlex,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                mb: theme.customSpacing.section,
+                gap: 1
+              }}
             >
               <Box>
                 <Typography 
@@ -387,7 +389,6 @@ const OrdersPage: React.FC = () => {
                   startIcon={isXsScreen ? null : <FileDownloadIcon />}
                   onClick={handleExportExcel}
                   fullWidth
-                  size="small"
                   sx={{ width: { sm: 'auto' } }}
                 >
                   {isXsScreen ? 'Export' : 'Export to Excel'}
@@ -399,7 +400,6 @@ const OrdersPage: React.FC = () => {
                   component={RouterLink}
                   to="/orders/new"
                   fullWidth
-                  size="small"
                   sx={{ width: { sm: 'auto' } }}
                 >
                   {isXsScreen ? 'New' : 'New Order'}
@@ -410,7 +410,7 @@ const OrdersPage: React.FC = () => {
 
           {/* Status Cards */}
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1}>
+            <Grid container spacing={theme.customSpacing.item}>
               {statusCounts.map((statusCount) => (
                 <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={statusCount.status}>
                   <OrderStatsCard
@@ -429,7 +429,8 @@ const OrdersPage: React.FC = () => {
               sx={{ 
                 height: { xs: 500, sm: 600 }, 
                 width: '100%',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                ...spacing.contentPadding(theme)
               }}
             >
               <DataGrid

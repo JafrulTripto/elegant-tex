@@ -6,60 +6,103 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogActions,
   IconButton,
-  Pagination,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
   Alert,
   CircularProgress,
-  TextField,
-  InputAdornment,
+  SelectChangeEvent,
   useTheme,
+  Container,
 } from '@mui/material';
-import { spacing, layoutUtils } from '../theme/styleUtils';
-import { Add as AddIcon, Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
+import { layoutUtils } from '../theme/styleUtils';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import MarketplaceList from '../components/marketplaces/MarketplaceList';
 import MarketplaceForm from '../components/marketplaces/MarketplaceForm';
+import MarketplaceSearch from '../components/marketplaces/MarketplaceSearch';
+import MarketplaceFilterDialog from '../components/marketplaces/MarketplaceFilterDialog';
 import { getMarketplaces, createMarketplace, updateMarketplace, deleteMarketplace, getMarketplaceById, uploadMarketplaceImage, toggleMarketplaceActive } from '../services/marketplace.service';
 import { Marketplace, MarketplaceFormData } from '../types/marketplace';
+import { useMarketplaceFilters } from '../hooks/useMarketplaceFilters';
+import { FilterChips, ConfirmationDialog, Pagination } from '../components/common';
 
 const MarketplacesPage: React.FC = () => {
+  const theme = useTheme();
+  
+  // State
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalElements, setTotalElements] = useState<number>(0);
   
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(8);
-  const [totalPages, setTotalPages] = useState(0);
-  const [sortBy, setSortBy] = useState('id');
-  const [sortDir, setSortDir] = useState('asc');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [activeOnly, setActiveOnly] = useState(false);
-  
-  const [openDialog, setOpenDialog] = useState(false);
+  // Dialog state
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedMarketplaceId, setSelectedMarketplaceId] = useState<number | null>(null);
   const [initialFormData, setInitialFormData] = useState<Partial<MarketplaceFormData>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // Delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [marketplaceToDelete, setMarketplaceToDelete] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
+  // Filter dialog state
+  const [filterDialogOpen, setFilterDialogOpen] = useState<boolean>(false);
+
+  // Use the marketplace filters hook
+  const {
+    filterParams,
+    searchTerm,
+    setSearchTerm,
+    handleSearchSubmit,
+    handlePageChange,
+    handlePageSizeChange,
+    handleFilterApply,
+    handleRemoveFilter,
+    handleClearAllFilters,
+    activeFilterChips,
+    activeFilterCount
+  } = useMarketplaceFilters({
+    page: 0,
+    size: 8,
+    sortBy: 'id',
+    sortDir: 'asc'
+  });
+
+  // Adapter for page size change
+  const handlePageSizeChangeAdapter = (event: SelectChangeEvent) => {
+    // Convert SelectChangeEvent to the format expected by handlePageSizeChange
+    const adaptedEvent = {
+      target: { value: parseInt(event.target.value, 10) }
+    } as React.ChangeEvent<{ value: unknown }>;
+    
+    handlePageSizeChange(adaptedEvent);
+  };
+
+  // Load marketplaces when filter params change
+  useEffect(() => {
+    loadMarketplaces();
+  }, [filterParams]);
+
+  // Load marketplaces
   const loadMarketplaces = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await getMarketplaces(page, size, sortBy, sortDir, debouncedSearchQuery, activeOnly);
+      const response = await getMarketplaces(
+        filterParams.page || 0,
+        filterParams.size || 8,
+        filterParams.sortBy || 'id',
+        filterParams.sortDir || 'asc',
+        filterParams.search,
+        filterParams.active
+      );
+      
       setMarketplaces(response.content);
       setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements || 0);
       
       setLoading(false);
     } catch (err) {
@@ -69,20 +112,7 @@ const MarketplacesPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    loadMarketplaces();
-  }, [page, size, sortBy, sortDir, debouncedSearchQuery, activeOnly]);
-  
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setPage(0); // Reset to first page when search changes
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
+  // Open dialog for creating a new marketplace
   const handleCreateClick = () => {
     setDialogMode('create');
     setSelectedMarketplaceId(null);
@@ -90,6 +120,7 @@ const MarketplacesPage: React.FC = () => {
     setOpenDialog(true);
   };
 
+  // Open dialog for editing a marketplace
   const handleEditClick = async (id: number) => {
     try {
       setLoading(true);
@@ -113,16 +144,19 @@ const MarketplacesPage: React.FC = () => {
     }
   };
 
+  // Open delete confirmation dialog
   const handleDeleteClick = (id: number) => {
     setMarketplaceToDelete(id);
     setDeleteDialogOpen(true);
   };
 
+  // Close dialog
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSubmitError(null);
   };
 
+  // Handle form submission
   const handleFormSubmit = async (data: MarketplaceFormData, tempImageFile?: File) => {
     try {
       setSubmitting(true);
@@ -158,6 +192,7 @@ const MarketplacesPage: React.FC = () => {
     }
   };
 
+  // Handle delete confirmation
   const handleConfirmDelete = async () => {
     if (!marketplaceToDelete) return;
     
@@ -182,241 +217,178 @@ const MarketplacesPage: React.FC = () => {
     }
   };
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value - 1);
+  // Handle toggle active status
+  const handleToggleActiveStatus = async (marketplace: Marketplace) => {
+    try {
+      await toggleMarketplaceActive(marketplace.id);
+      // Refresh the list
+      loadMarketplaces();
+    } catch (err) {
+      console.error('Error toggling marketplace status:', err);
+      setError('Failed to update marketplace status. Please try again.');
+    }
   };
-
-  const handleSizeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSize(event.target.value as number);
-    setPage(0);
-  };
-
-  const handleSortByChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSortBy(event.target.value as string);
-  };
-
-  const handleSortDirChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSortDir(event.target.value as string);
-  };
-
-  const theme = useTheme();
 
   return (
-    <Box sx={{ ...spacing.container(theme) }}>
-      <Box sx={{ ...layoutUtils.spaceBetweenFlex, mb: theme.customSpacing.section }}>
-        <Typography variant="h4" component="h1">
-          Marketplaces
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleCreateClick}
-        >
-          Add Marketplace
-        </Button>
-      </Box>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: theme.customSpacing.section }}>
-          {error}
-        </Alert>
-      )}
-      
-      <Box sx={{ mb: theme.customSpacing.section }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              placeholder="Search marketplaces by name"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery && (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      onClick={() => setSearchQuery('')}
-                      edge="end"
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={8}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={3}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Sort By</InputLabel>
-                  <Select
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={handleSortByChange as any}
-                  >
-                    <MenuItem value="id">ID</MenuItem>
-                    <MenuItem value="name">Name</MenuItem>
-                    <MenuItem value="createdAt">Created Date</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Direction</InputLabel>
-                  <Select
-                    value={sortDir}
-                    label="Direction"
-                    onChange={handleSortDirChange as any}
-                  >
-                    <MenuItem value="asc">Ascending</MenuItem>
-                    <MenuItem value="desc">Descending</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={activeOnly ? "active" : "all"}
-                    label="Status"
-                    onChange={(e) => setActiveOnly(e.target.value === "active")}
-                  >
-                    <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="active">Active Only</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Items Per Page</InputLabel>
-                  <Select
-                    value={size}
-                    label="Items Per Page"
-                    onChange={handleSizeChange as any}
-                  >
-                    <MenuItem value={4}>4</MenuItem>
-                    <MenuItem value={8}>8</MenuItem>
-                    <MenuItem value={12}>12</MenuItem>
-                    <MenuItem value={20}>20</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Box>
-      
-      {loading ? (
-        <Box sx={{ ...layoutUtils.centeredFlex, my: theme.customSpacing.section * 2 }}>
-          <CircularProgress />
-        </Box>
-      ) : marketplaces.length === 0 ? (
-        <Box sx={{ textAlign: 'center', my: theme.customSpacing.section * 2 }}>
-          <Typography variant="body1">No marketplaces found.</Typography>
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
+        {/* Header */}
+        <Box sx={{ 
+          ...layoutUtils.spaceBetweenFlex, 
+          mb: theme.customSpacing.section,
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 1, sm: 0 }
+        }}>
+          <Typography 
+            variant="h4" 
+            component="h1"
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+              mb: { xs: 0.5, sm: 0 }
+            }}
+          >
+            Marketplaces
+          </Typography>
           <Button
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
             onClick={handleCreateClick}
-            sx={{ mt: theme.customSpacing.element }}
           >
-            Add Your First Marketplace
+            Add Marketplace
           </Button>
         </Box>
-      ) : (
-        <>
-          <MarketplaceList
-            marketplaces={marketplaces}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteClick}
-            onToggleActive={async (marketplace) => {
-              try {
-                await toggleMarketplaceActive(marketplace.id);
-                // Refresh the list
-                loadMarketplaces();
-              } catch (err) {
-                console.error('Error toggling marketplace status:', err);
-                setError('Failed to update marketplace status. Please try again.');
-              }
-            }}
+      
+        {/* Error Alert */}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: theme.customSpacing.section }}
+            onClose={() => setError(null)}
+          >
+            {error}
+          </Alert>
+        )}
+        
+        {/* Search and Filter */}
+        <Box sx={{ mb: theme.customSpacing.section }}>
+          <MarketplaceSearch
+            searchTerm={searchTerm}
+            onSearchChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            onSearchSubmit={handleSearchSubmit}
+            onFilterClick={() => setFilterDialogOpen(true)}
+            activeFilterCount={activeFilterCount}
           />
           
-          <Box sx={{ ...layoutUtils.centeredFlex, mt: theme.customSpacing.section * 1.5 }}>
-            <Pagination
-              count={totalPages}
-              page={page + 1}
-              onChange={handlePageChange}
-              color="primary"
+          {/* Active Filter Chips */}
+          {activeFilterCount > 0 && (
+            <FilterChips
+              filters={activeFilterChips}
+              onRemoveFilter={handleRemoveFilter}
+              onClearAll={handleClearAllFilters}
             />
+          )}
+        </Box>
+        
+        {/* Marketplace List */}
+        {loading ? (
+          <Box sx={{ ...layoutUtils.centeredFlex, my: theme.customSpacing.section * 2 }}>
+            <CircularProgress />
           </Box>
-        </>
-      )}
-      
-      {/* Create/Edit Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          {dialogMode === 'create' ? 'Create Marketplace' : 'Edit Marketplace'}
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <MarketplaceForm
-            initialData={initialFormData}
-            marketplaceId={selectedMarketplaceId || undefined}
-            onSubmit={handleFormSubmit}
-            isSubmitting={submitting}
-            submitError={submitError || undefined}
-          />
-        </DialogContent>
-      </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete this marketplace? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setDeleteDialogOpen(false)}
-            disabled={deleting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
-            disabled={deleting}
-          >
-            {deleting ? <CircularProgress size={24} /> : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        ) : marketplaces.length === 0 ? (
+          <Box sx={{ textAlign: 'center', my: theme.customSpacing.section * 2 }}>
+            <Typography variant="body1">No marketplaces found.</Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleCreateClick}
+              sx={{ mt: theme.customSpacing.element }}
+            >
+              Add Your First Marketplace
+            </Button>
+          </Box>
+        ) : (
+          <>
+            <MarketplaceList
+              marketplaces={marketplaces}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+              onToggleActive={handleToggleActiveStatus}
+            />
+            
+            {/* Pagination */}
+            <Box sx={{ mt: theme.customSpacing.section }}>
+              <Pagination
+                page={filterParams.page || 0}
+                size={filterParams.size || 8}
+                totalPages={totalPages}
+                totalElements={totalElements}
+                itemsCount={marketplaces.length}
+                loading={loading}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChangeAdapter}
+                pageSizeOptions={[4, 8, 12, 20]}
+              />
+            </Box>
+          </>
+        )}
+        
+        {/* Create/Edit Dialog */}
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: { borderRadius: theme.shape.borderRadius }
+          }}
+        >
+          <DialogTitle>
+            {dialogMode === 'create' ? 'Create Marketplace' : 'Edit Marketplace'}
+            <IconButton
+              aria-label="close"
+              onClick={handleCloseDialog}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <MarketplaceForm
+              initialData={initialFormData}
+              marketplaceId={selectedMarketplaceId || undefined}
+              onSubmit={handleFormSubmit}
+              isSubmitting={submitting}
+              submitError={submitError || undefined}
+            />
+          </DialogContent>
+        </Dialog>
+        
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Confirm Delete"
+          message="Are you sure you want to delete this marketplace? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmColor="error"
+          loading={deleting}
+        />
+        
+        {/* Filter Dialog */}
+        <MarketplaceFilterDialog
+          open={filterDialogOpen}
+          onClose={() => setFilterDialogOpen(false)}
+          onApplyFilter={handleFilterApply}
+          currentFilters={filterParams}
+          loading={loading}
+        />
+      </Box>
+    </Container>
   );
 };
 

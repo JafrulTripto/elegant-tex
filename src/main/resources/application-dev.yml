@@ -4,8 +4,8 @@ spring:
       on-profile: dev
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB  
+      max-file-size: 50MB
+      max-request-size: 50MB  
   application:
     name: elegant-tex
   datasource:
@@ -63,7 +63,7 @@ app:
   file-storage:
     upload-dir: ${FILE_UPLOAD_DIR:uploads}
     allowed-file-types: jpg,jpeg,png,gif
-    max-file-size: 20971520  # 20MB in bytes
+    max-file-size: 52428800  # 50MB in bytes
     # S3 Configuration
     use-s3-storage: ${USE_S3_STORAGE:false}
     s3-bucket-name: ${S3_BUCKET_NAME:}

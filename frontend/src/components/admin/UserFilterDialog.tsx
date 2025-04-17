@@ -1,33 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
+  Box,
+  Typography,
+  FormControlLabel,
+  Switch,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Grid,
-  Typography,
-  Divider,
-  Box,
-  IconButton,
   SelectChangeEvent,
-  Checkbox,
-  FormControlLabel,
-  FormGroup
+  useTheme,
+  alpha
 } from '@mui/material';
-import { Close as CloseIcon, FilterList as FilterIcon } from '@mui/icons-material';
-import { UserFilterParams, Role } from '../../types';
+import { 
+  Person as PersonIcon,
+  Email as EmailIcon,
+  VerifiedUser as VerifiedUserIcon
+} from '@mui/icons-material';
+import { FilterDialog, FilterTab } from '../common';
+import { UserFilterParams } from '../../hooks/useUserFilters';
+import { Role } from '../../types';
 
 interface UserFilterDialogProps {
   open: boolean;
   onClose: () => void;
-  onApplyFilter: (filters: UserFilterParams) => void;
-  roles: Role[];
+  onApplyFilter: (filters: Partial<UserFilterParams>) => void;
   currentFilters: UserFilterParams;
+  roles: Role[];
   loading?: boolean;
 }
 
@@ -35,39 +34,50 @@ const UserFilterDialog: React.FC<UserFilterDialogProps> = ({
   open,
   onClose,
   onApplyFilter,
-  roles,
   currentFilters,
+  roles,
   loading = false
 }) => {
-  const [filters, setFilters] = useState<UserFilterParams>({
-    emailVerified: undefined,
-    accountVerified: undefined,
-    roles: []
-  });
+  const theme = useTheme();
+  const [filters, setFilters] = useState<Partial<UserFilterParams>>({});
 
   // Initialize filters from props
   useEffect(() => {
-    setFilters(currentFilters);
+    if (open) {
+      setFilters({
+        emailVerified: currentFilters.emailVerified,
+        accountVerified: currentFilters.accountVerified,
+        roles: currentFilters.roles || []
+      });
+    }
   }, [currentFilters, open]);
 
-  const handleSelectChange = (e: SelectChangeEvent<string[]>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: typeof value === 'string' ? [value] : value }));
+  // Handle email verified toggle
+  const handleEmailVerifiedChange = (value: boolean | undefined) => {
+    setFilters(prev => ({ ...prev, emailVerified: value }));
   };
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    
-    // Toggle between true, undefined (not false, as we want to use undefined to mean "any")
-    const newValue = checked ? true : undefined;
-    setFilters(prev => ({ ...prev, [name]: newValue }));
+  // Handle account verified toggle
+  const handleAccountVerifiedChange = (value: boolean | undefined) => {
+    setFilters(prev => ({ ...prev, accountVerified: value }));
   };
 
+  // Handle role selection
+  const handleRoleChange = (event: SelectChangeEvent<string[]>) => {
+    const { value } = event.target;
+    setFilters(prev => ({
+      ...prev,
+      roles: typeof value === 'string' ? [value] : value
+    }));
+  };
+
+  // Handle apply filter
   const handleApplyFilter = () => {
     onApplyFilter(filters);
     onClose();
   };
 
+  // Handle clear filter
   const handleClearFilter = () => {
     const clearedFilters = {
       emailVerified: undefined,
@@ -79,93 +89,178 @@ const UserFilterDialog: React.FC<UserFilterDialogProps> = ({
     onClose();
   };
 
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box display="flex" alignItems="center">
-            <FilterIcon sx={{ mr: 1 }} />
-            <Typography variant="h6">Filter Users</Typography>
-          </Box>
-          <IconButton edge="end" color="inherit" onClick={onClose} aria-label="close">
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      
-      <Divider />
-      
-      <DialogContent>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="roles-label">Roles</InputLabel>
-              <Select
-                labelId="roles-label"
-                id="roles"
-                name="roles"
-                multiple
-                value={filters.roles || []}
-                onChange={handleSelectChange}
-                label="Roles"
-                disabled={loading}
-              >
-                {roles.map((role) => (
-                  <MenuItem key={role.id} value={role.name}>
-                    {role.name.replace('ROLE_', '')}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+  // Count active filters
+  const getActiveFilterCount = (): number => {
+    let count = 0;
+    if (filters.emailVerified !== undefined) count++;
+    if (filters.accountVerified !== undefined) count++;
+    if (filters.roles && filters.roles.length > 0) count++;
+    return count;
+  };
+
+  // Create filter tabs
+  const filterTabs: FilterTab[] = [
+    {
+      label: "Email Status",
+      icon: <EmailIcon />,
+      content: (
+        <Box>
+          <Typography variant="subtitle2" gutterBottom color="primary">
+            Email Verification Status
+          </Typography>
           
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
-              Status Filters
-            </Typography>
-            <FormGroup>
+          <Box sx={{ 
+            p: 2, 
+            borderRadius: theme.shape.borderRadius,
+            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            mb: 2
+          }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <FormControlLabel
                 control={
-                  <Checkbox
+                  <Switch
                     checked={filters.emailVerified === true}
-                    onChange={handleCheckboxChange}
-                    name="emailVerified"
-                    disabled={loading}
+                    onChange={() => handleEmailVerifiedChange(
+                      filters.emailVerified === true ? undefined : true
+                    )}
+                    color="success"
                   />
                 }
-                label="Email Verified"
+                label="Show verified emails only"
               />
               
               <FormControlLabel
                 control={
-                  <Checkbox
-                    checked={filters.accountVerified === true}
-                    onChange={handleCheckboxChange}
-                    name="accountVerified"
-                    disabled={loading}
+                  <Switch
+                    checked={filters.emailVerified === false}
+                    onChange={() => handleEmailVerifiedChange(
+                      filters.emailVerified === false ? undefined : false
+                    )}
+                    color="error"
                   />
                 }
-                label="Account Active"
+                label="Show unverified emails only"
               />
-            </FormGroup>
-          </Grid>
-        </Grid>
-      </DialogContent>
-      
-      <Divider />
-      
-      <DialogActions>
-        <Button onClick={handleClearFilter} color="inherit" disabled={loading}>
-          Clear Filters
-        </Button>
-        <Button onClick={onClose} color="inherit" disabled={loading}>
-          Cancel
-        </Button>
-        <Button onClick={handleApplyFilter} color="primary" variant="contained" disabled={loading}>
-          Apply Filters
-        </Button>
-      </DialogActions>
-    </Dialog>
+            </Box>
+          </Box>
+        </Box>
+      )
+    },
+    {
+      label: "Account Status",
+      icon: <VerifiedUserIcon />,
+      content: (
+        <Box>
+          <Typography variant="subtitle2" gutterBottom color="primary">
+            Account Status
+          </Typography>
+          
+          <Box sx={{ 
+            p: 2, 
+            borderRadius: theme.shape.borderRadius,
+            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            mb: 2
+          }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filters.accountVerified === true}
+                    onChange={() => handleAccountVerifiedChange(
+                      filters.accountVerified === true ? undefined : true
+                    )}
+                    color="success"
+                  />
+                }
+                label="Show active accounts only"
+              />
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filters.accountVerified === false}
+                    onChange={() => handleAccountVerifiedChange(
+                      filters.accountVerified === false ? undefined : false
+                    )}
+                    color="error"
+                  />
+                }
+                label="Show inactive accounts only"
+              />
+            </Box>
+          </Box>
+        </Box>
+      )
+    },
+    {
+      label: "Roles",
+      icon: <PersonIcon />,
+      content: (
+        <Box>
+          <Typography variant="subtitle2" gutterBottom color="primary">
+            Filter by Roles
+          </Typography>
+          
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="roles-label">Selected Roles</InputLabel>
+            <Select
+              labelId="roles-label"
+              id="roles"
+              multiple
+              value={filters.roles || []}
+              onChange={handleRoleChange}
+              label="Selected Roles"
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Box
+                      key={value}
+                      sx={{
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        backgroundColor: value === 'ROLE_ADMIN' 
+                          ? theme.palette.primary.main + '20'
+                          : theme.palette.grey[200],
+                        color: value === 'ROLE_ADMIN'
+                          ? theme.palette.primary.main
+                          : theme.palette.text.secondary,
+                        borderRadius: theme.shape.borderRadius,
+                        px: 1,
+                        py: 0.25,
+                        display: 'inline-block'
+                      }}
+                    >
+                      {value.replace('ROLE_', '')}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            >
+              {roles.map((role) => (
+                <MenuItem key={role.id} value={role.name}>
+                  {role.name.replace('ROLE_', '')}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      )
+    }
+  ];
+
+  return (
+    <FilterDialog
+      open={open}
+      onClose={onClose}
+      onApplyFilter={handleApplyFilter}
+      onClearFilter={handleClearFilter}
+      title="Filter Users"
+      tabs={filterTabs}
+      loading={loading}
+      activeFilterCount={getActiveFilterCount()}
+    />
   );
 };
 
