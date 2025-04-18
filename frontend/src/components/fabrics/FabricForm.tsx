@@ -4,12 +4,10 @@ import {
   Button,
   TextField,
   Typography,
-  Paper,
   Grid,
   Autocomplete,
   Chip,
   CircularProgress,
-  FormHelperText,
   FormControlLabel,
   Switch,
   useTheme,
@@ -22,7 +20,7 @@ import {
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { spacing, layoutUtils } from '../../theme/styleUtils';
+import { layoutUtils } from '../../theme/styleUtils';
 import { FabricFormData } from '../../types/fabric';
 import { searchTags } from '../../services/tag.service';
 import ImageUploadArea from '../common/ImageUploadArea';
