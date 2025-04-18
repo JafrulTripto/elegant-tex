@@ -157,6 +157,81 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         orderRepository.deleteById(id);
     }
     
+    /**
+     * Reuse a cancelled or returned order to create a new order
+     */
+    @Override
+    @Transactional
+    public OrderResponse reuseOrder(Long orderId, Long userId) {
+        log.info("Reusing order with ID: {} for user ID: {}", orderId, userId);
+        
+        // Get the source order with products
+        Order sourceOrder = orderRepository.findByIdWithProductsAndFabrics(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
+        
+        // Verify that the order is cancelled or returned
+        if (sourceOrder.getStatus() != OrderStatus.CANCELLED && sourceOrder.getStatus() != OrderStatus.RETURNED) {
+            throw new IllegalStateException("Only cancelled or returned orders can be reused");
+        }
+        
+        // Get current user
+        User currentUser = getUserById(userId);
+        
+        // Create a new order based on the source order
+        Order newOrder = Order.builder()
+                .marketplace(sourceOrder.getMarketplace())
+                .customer(sourceOrder.getCustomer())
+                .deliveryChannel(sourceOrder.getDeliveryChannel())
+                .deliveryCharge(sourceOrder.getDeliveryCharge())
+                .deliveryDate(sourceOrder.getDeliveryDate())
+                .status(OrderStatus.ORDER_CREATED)
+                .totalAmount(sourceOrder.getTotalAmount())
+                .createdBy(currentUser)
+                .orderNumber("TEMP-" + System.currentTimeMillis()) // Temporary order number
+                .build();
+        
+        // Save the order first to get the ID
+        Order savedOrder = orderRepository.save(newOrder);
+        
+        // Generate and set the custom order number
+        String orderNumber = String.format("ET-ORD-%04d", savedOrder.getId());
+        savedOrder.setOrderNumber(orderNumber);
+        
+        // Save again with the proper order number
+        savedOrder = orderRepository.save(savedOrder);
+        
+        // Create initial status history with note about reusing the original order
+        OrderStatusHistory statusHistory = OrderStatusHistory.builder()
+                .order(savedOrder)
+                .status(OrderStatus.ORDER_CREATED)
+                .notes("Order created by reusing order #" + sourceOrder.getOrderNumber())
+                .updatedBy(currentUser)
+                .build();
+        
+        orderStatusHistoryRepository.save(statusHistory);
+        
+        // Copy products from source order to new order
+        for (OrderProduct sourceProduct : sourceOrder.getProducts()) {
+            OrderProduct newProduct = OrderProduct.builder()
+                    .order(savedOrder)
+                    .productType(sourceProduct.getProductType())
+                    .fabric(sourceProduct.getFabric())
+                    .quantity(sourceProduct.getQuantity())
+                    .price(sourceProduct.getPrice())
+                    .description(sourceProduct.getDescription())
+                    .build();
+            
+            OrderProduct savedProduct = orderProductRepository.save(newProduct);
+            
+            // Copy images if needed
+            if (sourceProduct.getImages() != null && !sourceProduct.getImages().isEmpty()) {
+                productHandler.copyProductImages(sourceProduct, savedProduct);
+            }
+        }
+        
+        return orderMapper.mapOrderToResponse(savedOrder);
+    }
+    
     // Helper methods
     
     /**
