@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -14,7 +14,12 @@ import {
   Paper,
   Stack,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { alpha } from '@mui/material/styles';
@@ -23,7 +28,8 @@ import {
   Person as PersonIcon,
   ShoppingBag as ProductIcon,
   AttachMoney as MoneyIcon,
-  ArrowForward as ArrowIcon
+  ArrowForward as ArrowIcon,
+  Replay as ReplayIcon
 } from '@mui/icons-material';
 import { Order } from '../../types/order';
 import * as orderService from '../../services/order.service';
@@ -44,8 +50,12 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
   const [similarOrders, setSimilarOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [reuseDialogOpen, setReuseDialogOpen] = useState<boolean>(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [reuseLoading, setReuseLoading] = useState<boolean>(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSimilarOrders = async () => {
@@ -63,6 +73,27 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
 
     fetchSimilarOrders();
   }, [orderId]);
+  
+  const handleReuseOrder = async () => {
+    if (!selectedOrderId) return;
+    
+    setReuseLoading(true);
+    try {
+      const newOrderId = await orderService.reuseOrder(selectedOrderId);
+      setReuseDialogOpen(false);
+      navigate(`/orders/${newOrderId}`);
+    } catch (err) {
+      console.error('Error reusing order:', err);
+      setError('Failed to reuse order');
+    } finally {
+      setReuseLoading(false);
+    }
+  };
+  
+  const openReuseDialog = (id: number) => {
+    setSelectedOrderId(id);
+    setReuseDialogOpen(true);
+  };
 
   // Get status chip color
   const getStatusColor = (status: string): string => {
@@ -347,7 +378,19 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
               </Paper>
             </CardContent>
             
-            <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1, px: { xs: 1, sm: 2 } }}>
+            <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1, px: { xs: 1, sm: 2 }, gap: 1 }}>
+              <Button 
+                onClick={() => openReuseDialog(order.id)}
+                size="small" 
+                startIcon={<ReplayIcon fontSize={isMobile ? "inherit" : "small"} />}
+                color="primary"
+                sx={{ 
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                  py: { xs: 0.5, sm: 1 }
+                }}
+              >
+                Reuse Order
+              </Button>
               <Button 
                 component={Link}
                 to={`/orders/${order.id}`}
@@ -364,6 +407,38 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
           </Card>
         );
       })}
+      
+      {/* Reuse Order Confirmation Dialog */}
+      <Dialog
+        open={reuseDialogOpen}
+        onClose={() => setReuseDialogOpen(false)}
+        aria-labelledby="reuse-order-dialog-title"
+      >
+        <DialogTitle id="reuse-order-dialog-title">
+          Reuse Cancelled Order
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will create a new order based on the selected cancelled order. 
+            The new order will have the same products, marketplace, and delivery details, 
+            but you'll be able to assign it to a new customer. Do you want to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReuseDialogOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleReuseOrder} 
+            color="primary" 
+            variant="contained"
+            disabled={reuseLoading}
+            startIcon={reuseLoading ? <CircularProgress size={16} color="inherit" /> : <ReplayIcon />}
+          >
+            {reuseLoading ? 'Creating...' : 'Create New Order'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
