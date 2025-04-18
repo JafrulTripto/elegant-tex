@@ -205,4 +205,39 @@ public class OrderProductHandler {
             }
         }
     }
+    
+    /**
+     * Copy images from one product to another
+     * @param sourceProduct The source product to copy images from
+     * @param targetProduct The target product to copy images to
+     */
+    public void copyProductImages(OrderProduct sourceProduct, OrderProduct targetProduct) {
+        log.info("Copying images from product ID: {} to product ID: {}", sourceProduct.getId(), targetProduct.getId());
+        
+        // Get all images from the source product
+        List<OrderProductImage> sourceImages = orderProductImageRepository.findByOrderProductId(sourceProduct.getId());
+        
+        if (sourceImages == null || sourceImages.isEmpty()) {
+            log.info("No images to copy from product ID: {}", sourceProduct.getId());
+            return;
+        }
+        
+        // Copy each image to the target product
+        for (OrderProductImage sourceImage : sourceImages) {
+            try {
+                // Create a new image reference for the target product
+                OrderProductImage targetImage = OrderProductImage.builder()
+                        .orderProduct(targetProduct)
+                        .imageId(sourceImage.getImageId())
+                        .imageUrl(sourceImage.getImageUrl())
+                        .build();
+                
+                orderProductImageRepository.save(targetImage);
+                log.info("Copied image ID: {} to product ID: {}", sourceImage.getImageId(), targetProduct.getId());
+            } catch (Exception e) {
+                log.error("Error copying image ID: {} to product ID: {}", sourceImage.getImageId(), targetProduct.getId(), e);
+                // Continue with other images
+            }
+        }
+    }
 }

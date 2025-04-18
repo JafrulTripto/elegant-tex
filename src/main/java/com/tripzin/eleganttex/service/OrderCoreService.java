@@ -44,4 +44,12 @@ public interface OrderCoreService {
      * @param hasReadAllPermission whether the user has permission to delete all orders
      */
     void deleteOrder(Long id, Long currentUserId, boolean hasReadAllPermission);
+    
+    /**
+     * Reuse a cancelled or returned order to create a new order
+     * @param orderId the ID of the order to reuse
+     * @param userId the ID of the user creating the new order
+     * @return the newly created order
+     */
+    OrderResponse reuseOrder(Long orderId, Long userId);
 }

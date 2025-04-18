@@ -298,6 +298,16 @@ export const getSimilarOrders = async (id: number, limit: number = 5): Promise<O
   return response.data;
 };
 
+/**
+ * Reuse a cancelled or returned order to create a new order
+ * @param id the order ID to reuse
+ * @returns the ID of the newly created order
+ */
+export const reuseOrder = async (id: number): Promise<number> => {
+  const response = await api.post(`${BASE_URL}/${id}/reuse`);
+  return response.data.id;
+};
+
 export const downloadBlob = (blob: Blob, fileName: string): void => {
   // Create a URL for the blob
   const url = window.URL.createObjectURL(blob);
@@ -337,6 +347,7 @@ const orderService = {
   getMarketplaceOrderStatistics,
   getMarketplaceOrderStatisticsByMonth,
   getSimilarOrders,
+  reuseOrder,
   downloadBlob,
   getLastMonthOrders,
   getMonthlyOrderCountAndAmount

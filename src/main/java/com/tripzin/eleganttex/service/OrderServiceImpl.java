@@ -214,4 +214,9 @@ public class OrderServiceImpl implements OrderService {
     public List<Map<String, Object>> getMonthlyOrderCountAndAmount(Integer month, Integer year, boolean currentMonth) {
         return orderStatisticsService.getMonthlyOrderCountAndAmount(month, year, currentMonth);
     }
+    
+    @Override
+    public OrderResponse reuseOrder(Long orderId, Long userId) {
+        return orderCoreService.reuseOrder(orderId, userId);
+    }
 }
