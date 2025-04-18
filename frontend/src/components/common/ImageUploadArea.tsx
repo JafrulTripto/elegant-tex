@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
-  Button,
   Typography,
   CircularProgress,
   IconButton,

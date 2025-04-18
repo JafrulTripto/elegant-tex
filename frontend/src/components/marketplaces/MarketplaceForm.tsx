@@ -8,7 +8,6 @@ import {
   Autocomplete,
   Chip,
   CircularProgress,
-  FormHelperText,
   FormControlLabel,
   Switch,
   useTheme,
@@ -22,7 +21,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LanguageIcon from '@mui/icons-material/Language';
 import PeopleIcon from '@mui/icons-material/People';
-import { spacing, layoutUtils } from '../../theme/styleUtils';
+import { layoutUtils } from '../../theme/styleUtils';
 import { User } from '../../types';
 import { MarketplaceFormData } from '../../types/marketplace';
 import { userService } from '../../services/user.service';
