@@ -4,7 +4,6 @@ import {
   Button,
   TextField,
   Typography,
-  Paper,
   Grid,
   Autocomplete,
   Chip,
@@ -13,13 +12,21 @@ import {
   FormControlLabel,
   Switch,
   useTheme,
+  Card,
+  CardContent,
+  Tooltip,
+  alpha,
+  IconButton,
 } from '@mui/material';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import LanguageIcon from '@mui/icons-material/Language';
+import PeopleIcon from '@mui/icons-material/People';
 import { spacing, layoutUtils } from '../../theme/styleUtils';
 import { User } from '../../types';
 import { MarketplaceFormData } from '../../types/marketplace';
 import { userService } from '../../services/user.service';
-import FileUpload from '../common/FileUpload';
-import ImagePreview from '../common/ImagePreview';
+import ImageUploadArea from '../common/ImageUploadArea';
 import { uploadMarketplaceImage } from '../../services/marketplace.service';
 
 interface MarketplaceFormProps {
@@ -180,156 +187,202 @@ const MarketplaceForm: React.FC<MarketplaceFormProps> = ({
   const theme = useTheme();
   
   return (
-    <Paper elevation={2} sx={{ ...spacing.container(theme) }}>
-      <Typography variant="h6" component="h2" gutterBottom>
-        {marketplaceId ? 'Edit Marketplace' : 'Create Marketplace'}
-      </Typography>
-      
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Grid container spacing={theme.customSpacing.element * 4}>
-          <Grid item xs={12} md={8}>
-            <TextField
-              name="name"
-              label="Marketplace Name"
-              fullWidth
-              required
-              value={formData.name}
-              onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
-              disabled={isSubmitting}
-              margin="normal"
-            />
-            
-            <TextField
-              name="pageUrl"
-              label="Page URL"
-              fullWidth
-              required
-              value={formData.pageUrl}
-              onChange={handleChange}
-              error={!!errors.pageUrl}
-              helperText={errors.pageUrl || 'Enter the full URL including http:// or https://'}
-              disabled={isSubmitting}
-              margin="normal"
-            />
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
-                  name="active"
-                  color="primary"
-                  disabled={isSubmitting}
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      noValidate
+      sx={{ p: theme.customSpacing.element}}
+    >
+      <Grid container spacing={theme.customSpacing.element * 2}>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ mb: 3, borderRadius: 2, boxShadow: 'none' }}>
+            <CardContent sx={{ p: 1.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <LanguageIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                Basic Information
+              </Typography>
+
+              <TextField
+                name="name"
+                label="Marketplace Name"
+                fullWidth
+                required
+                value={formData.name}
+                onChange={handleChange}
+                error={!!errors.name}
+                helperText={errors.name || "Enter the name of your marketplace"}
+                disabled={isSubmitting}
+                margin="normal"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                name="pageUrl"
+                label="Page URL"
+                fullWidth
+                required
+                value={formData.pageUrl}
+                onChange={handleChange}
+                error={!!errors.pageUrl}
+                helperText={errors.pageUrl || 'Enter the full URL including http:// or https://'}
+                disabled={isSubmitting}
+                margin="normal"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mb: 2,
+                p: 1,
+                backgroundColor: alpha(
+                  formData.active ? theme.palette.success.main : theme.palette.grey[500],
+                  0.1
+                ),
+                borderRadius: 1.5,
+              }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.active}
+                      onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                      name="active"
+                      color={formData.active ? "success" : "default"}
+                      disabled={isSubmitting}
+                    />
+                  }
+                  label={
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 'medium',
+                        color: formData.active ? theme.palette.success.dark : theme.palette.text.secondary
+                      }}
+                    >
+                      {formData.active ? "Active" : "Inactive"}
+                    </Typography>
+                  }
                 />
-              }
-              label={formData.active ? "Active" : "Inactive"}
-              sx={{ mt: theme.customSpacing.element, mb: theme.customSpacing.item }}
-            />
-            
-            <Autocomplete
-              multiple
-              options={users}
-              loading={loadingUsers}
-              value={selectedUsers}
-              onChange={handleUserChange}
-              getOptionLabel={(option) => `${option.firstName || ''} ${option.lastName || ''} (${option.email})`}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Members"
-                  margin="normal"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={`${option.firstName || ''} ${option.lastName || ''}`}
-                    {...getTagProps({ index })}
+                <Tooltip title="Active marketplaces are visible to users and can be selected for orders">
+                  <IconButton size="small" sx={{ ml: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </CardContent>
+          </Card>
+
+          <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none' }}>
+            <CardContent sx={{ p: 1.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <PeopleIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                Members
+              </Typography>
+
+              <Autocomplete
+                multiple
+                options={users}
+                loading={loadingUsers}
+                value={selectedUsers}
+                onChange={handleUserChange}
+                getOptionLabel={(option) => `${option.firstName || ''} ${option.lastName || ''} (${option.email})`}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Members"
+                    placeholder="Add members..."
+                    margin="normal"
+                    helperText="Select users who can manage this marketplace"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingUsers ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
                   />
-                ))
-              }
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Box sx={{ mb: theme.customSpacing.element }}>
-              <Typography variant="subtitle1" gutterBottom>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      label={`${option.firstName || ''} ${option.lastName || ''}`}
+                      {...getTagProps({ index })}
+                      sx={{
+                        m: 0.5,
+                        borderRadius: 1,
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.dark,
+                      }}
+                    />
+                  ))
+                }
+                disabled={isSubmitting}
+                disableCloseOnSelect
+                openOnFocus
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ height: '100%', borderRadius: 2, boxShadow: 'none' }}>
+            <CardContent sx={{ p: 1.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <AddPhotoAlternateIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
                 Marketplace Image
               </Typography>
-              
-              {tempImagePreview ? (
-                // Show temporary image preview for new marketplaces
-                <Box
-                  component="img"
-                  src={tempImagePreview}
-                  alt="Marketplace Preview"
-                  sx={{
-                    height: 200,
-                    width: '100%',
-                    objectFit: 'cover',
-                    borderRadius: 1,
-                  }}
-                />
-              ) : (
-                // Show stored image for existing marketplaces
-                <ImagePreview
-                  imageId={formData.imageId}
-                  height={200}
-                  width="100%"
-                  alt="Marketplace"
-                />
-              )}
-            </Box>
-            
-            <FileUpload
-              onFileSelected={handleImageUpload}
-              accept="image/*"
-              label="Upload Image"
-              buttonText="Choose Image"
-              isLoading={uploadingImage}
-              error={imageError || undefined}
-            />
-            <FormHelperText>
-              {marketplaceId
-                ? 'Upload an image for your marketplace'
-                : tempImageFile
-                  ? 'Image will be uploaded after marketplace creation'
-                  : 'Select an image for your new marketplace'}
-            </FormHelperText>
-          </Grid>
+
+              <ImageUploadArea
+                imageId={formData.imageId}
+                previewUrl={tempImagePreview}
+                onFileSelected={handleImageUpload}
+                onImageRemove={() => {
+                  if (tempImagePreview) {
+                    URL.revokeObjectURL(tempImagePreview);
+                    setTempImagePreview(null);
+                  }
+                  setTempImageFile(null);
+                  setFormData(prev => ({ ...prev, imageId: undefined }));
+                }}
+                isLoading={uploadingImage}
+                error={imageError}
+                height={250}
+                alt="Marketplace"
+                helperText={
+                  marketplaceId
+                    ? 'Upload an image for your marketplace'
+                    : tempImageFile
+                      ? 'Image will be uploaded after marketplace creation'
+                      : 'Select an image for your new marketplace'
+                }
+              />
+            </CardContent>
+          </Card>
         </Grid>
-        
-        {submitError && (
-          <Typography color="error" sx={{ mt: theme.customSpacing.element }}>
-            {submitError}
-          </Typography>
-        )}
-        
-        <Box sx={{ mt: theme.customSpacing.section, ...layoutUtils.endFlex }}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={isSubmitting}
-            sx={{ minWidth: 120 }}
-          >
-            {isSubmitting ? <CircularProgress size={24} /> : marketplaceId ? 'Update' : 'Create'}
-          </Button>
-        </Box>
+      </Grid>
+
+      {submitError && (
+        <Typography color="error" sx={{ mt: 2, p: 2, borderRadius: 1, bgcolor: alpha(theme.palette.error.main, 0.1) }}>
+          {submitError}
+        </Typography>
+      )}
+
+      <Box sx={{ mt: theme.customSpacing.section, ...layoutUtils.endFlex }}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={isSubmitting}
+          sx={{ minWidth: 120, borderRadius: 2, py: 1 }}
+        >
+          {isSubmitting ? <CircularProgress size={24} /> : marketplaceId ? 'Update' : 'Create'}
+        </Button>
       </Box>
-    </Paper>
+    </Box>
   );
 };
 

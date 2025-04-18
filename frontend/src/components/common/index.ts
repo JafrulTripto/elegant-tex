@@ -4,6 +4,7 @@ import FileUpload from './FileUpload';
 import FilterChips, { FilterChip } from './FilterChips';
 import FilterDialog, { FilterTab } from './FilterDialog';
 import ImagePreview from './ImagePreview';
+import ImageUploadArea from './ImageUploadArea';
 import MonthYearSelector from './MonthYearSelector';
 import Pagination from './Pagination';
 import ResendVerificationDialog from './ResendVerificationDialog';
@@ -18,6 +19,7 @@ export {
   FilterChips,
   FilterDialog,
   ImagePreview,
+  ImageUploadArea,
   MonthYearSelector,
   Pagination,
   ResendVerificationDialog,

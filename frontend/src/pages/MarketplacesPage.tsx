@@ -26,14 +26,14 @@ import { FilterChips, ConfirmationDialog, Pagination } from '../components/commo
 
 const MarketplacesPage: React.FC = () => {
   const theme = useTheme();
-  
+
   // State
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalElements, setTotalElements] = useState<number>(0);
-  
+
   // Dialog state
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
@@ -41,7 +41,7 @@ const MarketplacesPage: React.FC = () => {
   const [initialFormData, setInitialFormData] = useState<Partial<MarketplaceFormData>>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  
+
   // Delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [marketplaceToDelete, setMarketplaceToDelete] = useState<number | null>(null);
@@ -76,7 +76,7 @@ const MarketplacesPage: React.FC = () => {
     const adaptedEvent = {
       target: { value: parseInt(event.target.value, 10) }
     } as React.ChangeEvent<{ value: unknown }>;
-    
+
     handlePageSizeChange(adaptedEvent);
   };
 
@@ -90,7 +90,7 @@ const MarketplacesPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await getMarketplaces(
         filterParams.page || 0,
         filterParams.size || 8,
@@ -99,11 +99,11 @@ const MarketplacesPage: React.FC = () => {
         filterParams.search,
         filterParams.active
       );
-      
+
       setMarketplaces(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements || 0);
-      
+
       setLoading(false);
     } catch (err) {
       console.error('Error loading marketplaces:', err);
@@ -125,7 +125,7 @@ const MarketplacesPage: React.FC = () => {
     try {
       setLoading(true);
       const marketplace = await getMarketplaceById(id);
-      
+
       setDialogMode('edit');
       setSelectedMarketplaceId(id);
       setInitialFormData({
@@ -161,12 +161,12 @@ const MarketplacesPage: React.FC = () => {
     try {
       setSubmitting(true);
       setSubmitError(null);
-      
+
       if (dialogMode === 'create') {
         // Create the marketplace first
         const response = await createMarketplace(data);
         const newMarketplaceId = response.id;
-        
+
         // If there's a temporary image file, upload it now
         if (tempImageFile && newMarketplaceId) {
           try {
@@ -181,7 +181,7 @@ const MarketplacesPage: React.FC = () => {
         // For edits, the image handling is already taken care of by the MarketplaceForm component
         await updateMarketplace(selectedMarketplaceId!, data);
       }
-      
+
       setOpenDialog(false);
       loadMarketplaces();
       setSubmitting(false);
@@ -195,7 +195,7 @@ const MarketplacesPage: React.FC = () => {
   // Handle delete confirmation
   const handleConfirmDelete = async () => {
     if (!marketplaceToDelete) return;
-    
+
     try {
       setDeleting(true);
       await deleteMarketplace(marketplaceToDelete);
@@ -204,14 +204,14 @@ const MarketplacesPage: React.FC = () => {
       setDeleting(false);
     } catch (err: any) {
       console.error('Error deleting marketplace:', err);
-      
+
       // Check if this is the foreign key constraint error
       if (err.response?.data?.message?.includes('referenced by one or more orders')) {
         setError('This marketplace cannot be deleted because it is being used in one or more orders. Please remove the marketplace from all orders before deleting.');
       } else {
         setError('Failed to delete marketplace. Please try again.');
       }
-      
+
       setDeleteDialogOpen(false);
       setDeleting(false);
     }
@@ -233,17 +233,17 @@ const MarketplacesPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
       <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
         {/* Header */}
-        <Box sx={{ 
-          ...layoutUtils.spaceBetweenFlex, 
+        <Box sx={{
+          ...layoutUtils.spaceBetweenFlex,
           mb: theme.customSpacing.section,
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'flex-start', sm: 'center' },
           gap: { xs: 1, sm: 0 }
         }}>
-          <Typography 
-            variant="h4" 
+          <Typography
+            variant="h4"
             component="h1"
-            sx={{ 
+            sx={{
               fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
               mb: { xs: 0.5, sm: 0 }
             }}
@@ -259,18 +259,18 @@ const MarketplacesPage: React.FC = () => {
             Add Marketplace
           </Button>
         </Box>
-      
+
         {/* Error Alert */}
         {error && (
-          <Alert 
-            severity="error" 
+          <Alert
+            severity="error"
             sx={{ mb: theme.customSpacing.section }}
             onClose={() => setError(null)}
           >
             {error}
           </Alert>
         )}
-        
+
         {/* Search and Filter */}
         <Box sx={{ mb: theme.customSpacing.section }}>
           <MarketplaceSearch
@@ -280,7 +280,7 @@ const MarketplacesPage: React.FC = () => {
             onFilterClick={() => setFilterDialogOpen(true)}
             activeFilterCount={activeFilterCount}
           />
-          
+
           {/* Active Filter Chips */}
           {activeFilterCount > 0 && (
             <FilterChips
@@ -290,7 +290,7 @@ const MarketplacesPage: React.FC = () => {
             />
           )}
         </Box>
-        
+
         {/* Marketplace List */}
         {loading ? (
           <Box sx={{ ...layoutUtils.centeredFlex, my: theme.customSpacing.section * 2 }}>
@@ -317,7 +317,7 @@ const MarketplacesPage: React.FC = () => {
               onDelete={handleDeleteClick}
               onToggleActive={handleToggleActiveStatus}
             />
-            
+
             {/* Pagination */}
             <Box sx={{ mt: theme.customSpacing.section }}>
               <Pagination
@@ -334,18 +334,23 @@ const MarketplacesPage: React.FC = () => {
             </Box>
           </>
         )}
-        
+
         {/* Create/Edit Dialog */}
         <Dialog
           open={openDialog}
           onClose={handleCloseDialog}
           maxWidth="md"
           fullWidth
-          PaperProps={{
-            sx: { borderRadius: theme.shape.borderRadius }
-          }}
         >
-          <DialogTitle>
+          <DialogTitle
+            sx={{
+              background: (theme) =>
+                `linear-gradient(45deg, ${theme.customColors.navyBlue} 30%, ${theme.customColors.teal} 90%)`,
+              color: 'white',
+              borderRadius: '4px 4px 0 0',
+              position: 'relative',
+              padding: 2
+            }}>
             {dialogMode === 'create' ? 'Create Marketplace' : 'Edit Marketplace'}
             <IconButton
               aria-label="close"
@@ -365,7 +370,7 @@ const MarketplacesPage: React.FC = () => {
             />
           </DialogContent>
         </Dialog>
-        
+
         {/* Delete Confirmation Dialog */}
         <ConfirmationDialog
           open={deleteDialogOpen}
@@ -378,7 +383,7 @@ const MarketplacesPage: React.FC = () => {
           confirmColor="error"
           loading={deleting}
         />
-        
+
         {/* Filter Dialog */}
         <MarketplaceFilterDialog
           open={filterDialogOpen}
