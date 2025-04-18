@@ -13,12 +13,19 @@ import {
   FormControlLabel,
   Switch,
   useTheme,
+  Card,
+  CardContent,
+  Tooltip,
+  alpha,
+  IconButton,
 } from '@mui/material';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { spacing, layoutUtils } from '../../theme/styleUtils';
 import { FabricFormData } from '../../types/fabric';
 import { searchTags } from '../../services/tag.service';
-import FileUpload from '../common/FileUpload';
-import ImagePreview from '../common/ImagePreview';
+import ImageUploadArea from '../common/ImageUploadArea';
 import { uploadFabricImage } from '../../services/fabric.service';
 
 interface FabricFormProps {
@@ -49,8 +56,6 @@ const FabricForm: React.FC<FabricFormProps> = ({
   const [searchingTags, setSearchingTags] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  
-  // New state for storing temporary image file
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
   const [tempImagePreview, setTempImagePreview] = useState<string | null>(null);
 
@@ -61,25 +66,21 @@ const FabricForm: React.FC<FabricFormProps> = ({
         setTagOptions([]);
         return;
       }
-      
+
       try {
-        console.log('Searching for tags with query:', tagInputValue);
         setSearchingTags(true);
         const tags = await searchTags(tagInputValue);
-        console.log('Tags search result:', tags);
-        
-        // Make sure we have valid tags before mapping
+
         if (Array.isArray(tags) && tags.length > 0) {
           setTagOptions(tags.map(tag => tag.name));
         } else {
-          console.log('No tags found or invalid response format');
           setTagOptions([]);
         }
-        
+
         setSearchingTags(false);
       } catch (err) {
         console.error('Error searching tags:', err);
-        setTagOptions([]); // Reset options on error
+        setTagOptions([]);
         setSearchingTags(false);
       }
     };
@@ -91,56 +92,40 @@ const FabricForm: React.FC<FabricFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error when field is edited
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleTagChange = (_: React.SyntheticEvent, newValue: string[]) => {
-    console.log('Tag selection changed:', newValue);
-    setFormData(prev => ({
-      ...prev,
-      tagNames: newValue,
-    }));
+    setFormData(prev => ({ ...prev, tagNames: newValue }));
   };
 
   const handleImageUpload = async (file: File) => {
     if (!fabricId) {
-      // For new fabrics, store the file temporarily and create a preview
       try {
         setImageError(null);
         setTempImageFile(file);
-        
-        // Create a preview URL for the temporary image
         const previewUrl = URL.createObjectURL(file);
         setTempImagePreview(previewUrl);
-        
-        return () => {
-          // Clean up the object URL when component unmounts or when no longer needed
-          URL.revokeObjectURL(previewUrl);
-        };
+        return () => URL.revokeObjectURL(previewUrl);
       } catch (err) {
         console.error('Error creating image preview:', err);
         setImageError('Failed to preview image. Please try again.');
       }
     } else {
-      // For existing fabrics, upload the image immediately
       try {
         setUploadingImage(true);
         setImageError(null);
-        
         const response = await uploadFabricImage(fabricId, file);
         setFormData(prev => ({ ...prev, imageId: response.imageId }));
-        
-        // Clear temporary image if there was one
+
         if (tempImagePreview) {
           URL.revokeObjectURL(tempImagePreview);
           setTempImagePreview(null);
         }
         setTempImageFile(null);
-        
         setUploadingImage(false);
       } catch (err) {
         console.error('Error uploading image:', err);
@@ -152,28 +137,19 @@ const FabricForm: React.FC<FabricFormProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    console.log('Submitting fabric form with data:', formData);
-    // Pass the temporary image file to the parent component for handling after fabric creation
+    if (!validateForm()) return;
     await onSubmit(formData, tempImageFile || undefined);
   };
 
-  // Clean up object URL when component unmounts
   useEffect(() => {
     return () => {
       if (tempImagePreview) {
@@ -183,165 +159,205 @@ const FabricForm: React.FC<FabricFormProps> = ({
   }, [tempImagePreview]);
 
   const theme = useTheme();
-  
+
   return (
-    <Paper elevation={2} sx={{ ...spacing.container(theme) }}>
-      <Typography variant="h6" component="h2" gutterBottom>
-        {fabricId ? 'Edit Fabric' : 'Create Fabric'}
-      </Typography>
-      
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Grid container spacing={theme.customSpacing.element * 4}>
-          <Grid item xs={12} md={8}>
-            <TextField
-              name="name"
-              label="Fabric Name"
-              fullWidth
-              required
-              value={formData.name}
-              onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
-              disabled={isSubmitting}
-              margin="normal"
-            />
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
-                  name="active"
-                  color="primary"
-                  disabled={isSubmitting}
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      noValidate
+      sx={{ p: theme.customSpacing.element}}
+    >
+      <Grid container spacing={theme.customSpacing.element * 2}>
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ mb: 3, borderRadius: 2, boxShadow: 'none' }}>
+            <CardContent sx={{ p: 1.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                Basic Information
+              </Typography>
+
+              <TextField
+                name="name"
+                label="Fabric Name"
+                fullWidth
+                required
+                value={formData.name}
+                onChange={handleChange}
+                error={!!errors.name}
+                helperText={errors.name || "Enter the name of your fabric"}
+                disabled={isSubmitting}
+                margin="normal"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mb: 2,
+                p: 1,
+                backgroundColor: alpha(
+                  formData.active ? theme.palette.success.main : theme.palette.grey[500],
+                  0.1
+                ),
+                borderRadius: 1.5,
+              }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.active}
+                      onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                      name="active"
+                      color={formData.active ? "success" : "default"}
+                      disabled={isSubmitting}
+                    />
+                  }
+                  label={
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 'medium',
+                        color: formData.active ? theme.palette.success.dark : theme.palette.text.secondary
+                      }}
+                    >
+                      {formData.active ? "Active" : "Inactive"}
+                    </Typography>
+                  }
                 />
-              }
-              label={formData.active ? "Active" : "Inactive"}
-              sx={{ mt: theme.customSpacing.element, mb: theme.customSpacing.item }}
-            />
-            
-            <Autocomplete
-              multiple
-              freeSolo
-              options={tagOptions}
-              loading={searchingTags}
-              value={formData.tagNames}
-              onChange={handleTagChange}
-              inputValue={tagInputValue}
-              onInputChange={(_, newInputValue) => {
-                setTagInputValue(newInputValue);
-              }}
-              filterOptions={(options, params) => {
-                const filtered = options.filter(option => 
-                  option.toLowerCase().includes(params.inputValue.toLowerCase())
-                );
-                
-                // Add the option to create a new tag if it doesn't exist
-                const inputValue = params.inputValue.trim();
-                if (inputValue !== '' && !options.includes(inputValue)) {
-                  filtered.push(inputValue);
-                }
-                
-                return filtered;
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Tags"
-                  margin="normal"
-                  helperText="Type to search for existing tags or create new ones"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {searchingTags ? <CircularProgress color="inherit" size={20} /> : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option}
-                    {...getTagProps({ index })}
+                <Tooltip title="Active fabrics are visible to users and can be selected for orders">
+                  <IconButton size="small" sx={{ ml: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </CardContent>
+          </Card>
+
+          <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none' }}>
+            <CardContent sx={{ p: 1.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <LocalOfferIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+                Tags
+              </Typography>
+
+              <Autocomplete
+                multiple
+                freeSolo
+                options={tagOptions}
+                loading={searchingTags}
+                value={formData.tagNames}
+                onChange={handleTagChange}
+                inputValue={tagInputValue}
+                onInputChange={(_, newInputValue) => {
+                  setTagInputValue(newInputValue);
+                }}
+                filterOptions={(options, params) => {
+                  const filtered = options.filter(option =>
+                    option.toLowerCase().includes(params.inputValue.toLowerCase())
+                  );
+
+                  const inputValue = params.inputValue.trim();
+                  if (inputValue !== '' && !options.includes(inputValue)) {
+                    filtered.push(inputValue);
+                  }
+
+                  return filtered;
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Tags"
+                    placeholder="Add tags..."
+                    margin="normal"
+                    helperText="Type to search for existing tags or create new ones"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {searchingTags ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
                   />
-                ))
-              }
-              disabled={isSubmitting}
-              disableCloseOnSelect
-              openOnFocus
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <Box sx={{ mb: theme.customSpacing.element }}>
-              <Typography variant="subtitle1" gutterBottom>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      label={option}
+                      {...getTagProps({ index })}
+                      sx={{
+                        m: 0.5,
+                        borderRadius: 1,
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.dark,
+                      }}
+                    />
+                  ))
+                }
+                disabled={isSubmitting}
+                disableCloseOnSelect
+                openOnFocus
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card variant="outlined" sx={{ height: '100%', borderRadius: 2, boxShadow: 'none' }}>
+            <CardContent sx={{ p: 1.5 }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <AddPhotoAlternateIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
                 Fabric Image
               </Typography>
-              
-              {tempImagePreview ? (
-                // Show temporary image preview for new fabrics
-                <Box
-                  component="img"
-                  src={tempImagePreview}
-                  alt="Fabric Preview"
-                  sx={{
-                    height: 200,
-                    width: '100%',
-                    objectFit: 'cover',
-                    borderRadius: 1,
-                  }}
-                />
-              ) : (
-                // Show stored image for existing fabrics
-                <ImagePreview
-                  imageId={formData.imageId}
-                  height={200}
-                  width="100%"
-                  alt="Fabric"
-                />
-              )}
-            </Box>
-            
-            <FileUpload
-              onFileSelected={handleImageUpload}
-              accept="image/*"
-              label="Upload Image"
-              buttonText="Choose Image"
-              isLoading={uploadingImage}
-              error={imageError || undefined}
-            />
-            <FormHelperText>
-              {fabricId
-                ? 'Upload an image for your fabric'
-                : tempImageFile
-                  ? 'Image will be uploaded after fabric creation'
-                  : 'Select an image for your new fabric'}
-            </FormHelperText>
-          </Grid>
+
+              <ImageUploadArea
+                imageId={formData.imageId}
+                previewUrl={tempImagePreview}
+                onFileSelected={handleImageUpload}
+                onImageRemove={() => {
+                  if (tempImagePreview) {
+                    URL.revokeObjectURL(tempImagePreview);
+                    setTempImagePreview(null);
+                  }
+                  setTempImageFile(null);
+                  setFormData(prev => ({ ...prev, imageId: undefined }));
+                }}
+                isLoading={uploadingImage}
+                error={imageError}
+                height={250}
+                alt="Fabric"
+                helperText={
+                  fabricId
+                    ? 'Upload an image for your fabric'
+                    : tempImageFile
+                      ? 'Image will be uploaded after fabric creation'
+                      : 'Select an image for your new fabric'
+                }
+              />
+            </CardContent>
+          </Card>
         </Grid>
-        
-        {submitError && (
-          <Typography color="error" sx={{ mt: theme.customSpacing.element }}>
-            {submitError}
-          </Typography>
-        )}
-        
-        <Box sx={{ mt: theme.customSpacing.section, ...layoutUtils.endFlex }}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={isSubmitting}
-            sx={{ minWidth: 120 }}
-          >
-            {isSubmitting ? <CircularProgress size={24} /> : fabricId ? 'Update' : 'Create'}
-          </Button>
-        </Box>
+      </Grid>
+
+      {submitError && (
+        <Typography color="error" sx={{ mt: 2, p: 2, borderRadius: 1, bgcolor: alpha(theme.palette.error.main, 0.1) }}>
+          {submitError}
+        </Typography>
+      )}
+
+      <Box sx={{ mt: theme.customSpacing.section, ...layoutUtils.endFlex }}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={isSubmitting}
+          sx={{ minWidth: 120, borderRadius: 2, py: 1 }}
+        >
+          {isSubmitting ? <CircularProgress size={24} /> : fabricId ? 'Update' : 'Create'}
+        </Button>
       </Box>
-    </Paper>
+    </Box>
+
   );
 };
 

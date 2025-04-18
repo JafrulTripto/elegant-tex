@@ -352,11 +352,17 @@ const FabricsPage: React.FC = () => {
           onClose={handleCloseDialog}
           maxWidth="md"
           fullWidth
-          PaperProps={{
-            sx: { borderRadius: theme.shape.borderRadius }
-          }}
         >
-          <DialogTitle>
+          <DialogTitle
+          sx={{
+            background: (theme) => 
+              `linear-gradient(45deg, ${theme.customColors.navyBlue} 30%, ${theme.customColors.teal} 90%)`,
+            color: 'white',
+            borderRadius: '4px 4px 0 0',
+            position: 'relative',
+            padding: 2
+          }}
+          >
             {dialogMode === 'create' ? 'Create Fabric' : 'Edit Fabric'}
             <IconButton
               aria-label="close"
