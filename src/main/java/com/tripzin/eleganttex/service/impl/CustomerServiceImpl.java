@@ -1,10 +1,12 @@
-package com.tripzin.eleganttex.service;
+package com.tripzin.eleganttex.service.impl;
 
 import com.tripzin.eleganttex.dto.request.CustomerRequest;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
 import com.tripzin.eleganttex.entity.Customer;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.repository.CustomerRepository;
+import com.tripzin.eleganttex.service.CustomerService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

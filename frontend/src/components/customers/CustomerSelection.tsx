@@ -208,7 +208,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Phone Number *"
+                  label="Phone Number"
                   value={customerData.phone}
                   onChange={(e) => handleCustomerDataChange('phone', e.target.value)}
                   required
@@ -228,7 +228,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Name *"
+                  label="Name"
                   value={customerData.name}
                   onChange={(e) => handleCustomerDataChange('name', e.target.value)}
                   required
@@ -237,7 +237,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Address *"
+                  label="Address"
                   value={customerData.address}
                   onChange={(e) => handleCustomerDataChange('address', e.target.value)}
                   multiline

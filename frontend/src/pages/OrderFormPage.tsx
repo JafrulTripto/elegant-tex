@@ -34,68 +34,68 @@ const OrderValidationSchema = Yup.object().shape({
   marketplaceId: Yup.number()
     .required('Marketplace is required')
     .min(1, 'Please select a marketplace'),
-  
+
   customerId: Yup.number().nullable(),
-  
+
   customerData: Yup.object().nullable(),
-  
+
   // Custom test to validate customer information
   // Either customerId must be provided OR customerData must be complete
   customerValidation: Yup.mixed().test(
     'customer-validation',
     'Please select a customer or fill in all required customer fields',
-    function() {
+    function () {
       const { customerId, customerData } = this.parent;
-      
+
       // If customerId is provided, we're good
       if (customerId) return true;
-      
+
       // If no customerId, then customerData must be complete
-      if (customerData && 
-          customerData.name && 
-          customerData.phone && 
-          customerData.address) {
+      if (customerData &&
+        customerData.name &&
+        customerData.phone &&
+        customerData.address) {
         return true;
       }
-      
+
       // Neither condition met, validation fails
       return false;
     }
   ),
-  
+
   deliveryChannel: Yup.string()
     .required('Delivery channel is required'),
-  
+
   deliveryCharge: Yup.number()
     .required('Delivery charge is required')
     .min(0, 'Delivery charge must be a positive number'),
-  
+
   deliveryDate: Yup.date()
     .required('Delivery date is required'),
-  
+
   products: Yup.array().of(
     Yup.object().shape({
       productType: Yup.string()
         .required('Product type is required'),
-      
+
       fabricId: Yup.number()
         .required('Fabric is required')
         .min(1, 'Please select a fabric'),
-      
+
       quantity: Yup.number()
         .required('Quantity is required')
         .min(1, 'Quantity must be at least 1'),
-      
+
       price: Yup.number()
         .required('Price is required')
         .min(0.01, 'Price must be greater than 0'),
-      
+
       description: Yup.string()
         .notRequired(),
-      
+
       imageIds: Yup.array()
         .notRequired(),
-      
+
       tempImages: Yup.array()
         .notRequired()
     })
@@ -107,7 +107,7 @@ const OrderFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const isEditMode = Boolean(id);
-  const hasViewAllOrdersPermission = authState.user?.permissions ? 
+  const hasViewAllOrdersPermission = authState.user?.permissions ?
     canViewAllOrders(authState.user.permissions) : false;
   const [accessDenied, setAccessDenied] = useState<boolean>(false);
 
@@ -136,7 +136,7 @@ const OrderFormPage: React.FC = () => {
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [formValues, setFormValues] = useState<OrderFormData>(initialValues);
-  
+
   // Fabric pagination state
   const [fabricPage, setFabricPage] = useState<number>(0);
   const [fabricPageSize] = useState<number>(50);
@@ -161,7 +161,7 @@ const OrderFormPage: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Check if user is authenticated
         if (!authState.user) {
@@ -169,35 +169,35 @@ const OrderFormPage: React.FC = () => {
           setLoading(false);
           return;
         }
-        
+
         // Load active marketplaces associated with the current user
         const userMarketplaces = await marketplaceService.getUserMarketplaces(authState.user.id);
         // Filter only active marketplaces
         const activeMarketplaces = userMarketplaces.filter(marketplace => marketplace.active);
         setMarketplaces(activeMarketplaces);
-        
+
         // Load initial active fabrics with pagination
         await loadFabrics(0);
-        
+
         // Load active product types
         const productTypesData = await productTypeService.getActiveProductTypes();
         setProductTypes(productTypesData);
-        
+
         // If edit mode, load order data
         if (isEditMode && id) {
           try {
             const orderData = await orderService.getOrderById(parseInt(id));
-            
+
             // Check if user has permission to edit this order
-            if (!hasViewAllOrdersPermission && 
-                authState.user && 
-                orderData.createdBy.id !== authState.user.id) {
+            if (!hasViewAllOrdersPermission &&
+              authState.user &&
+              orderData.createdBy.id !== authState.user.id) {
               setAccessDenied(true);
               setError('You do not have permission to edit this order. You can only edit orders created by you.');
               setLoading(false);
               return;
             }
-            
+
             // Transform order data to form data
             const transformedProducts = orderData.products.map(product => ({
               id: product.id, // Include the product ID for updates
@@ -214,7 +214,7 @@ const OrderFormPage: React.FC = () => {
                 imageUrl: getFileUrl(img.imageId) || ''
               }))
             }));
-            
+
             setFormValues({
               marketplaceId: orderData.marketplace.id,
               customerId: orderData.customer.id,
@@ -249,27 +249,27 @@ const OrderFormPage: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, [id, isEditMode, authState.user]);
-  
+
   // Function to load fabrics with pagination
   const loadFabrics = async (page: number) => {
     if (!hasMoreFabrics && page > 0) return;
-    
+
     setLoadingFabrics(true);
     try {
       const response = await fabricService.getFabrics(page, fabricPageSize);
-      
+
       // Filter only active fabrics
       const activeFabrics = response.content.filter((fabric: Fabric) => fabric.active);
-      
+
       if (page === 0) {
         setFabrics(activeFabrics);
       } else {
         setFabrics(prev => [...prev, ...activeFabrics]);
       }
-      
+
       // If we filtered out some fabrics, we might need to load more to fill the page
       const filteredOutCount = response.content.length - activeFabrics.length;
       if (filteredOutCount > 0 && !response.last) {
@@ -290,11 +290,11 @@ const OrderFormPage: React.FC = () => {
       setLoadingFabrics(false);
     }
   };
-  
+
   // Handle scroll event to load more fabrics
   const handleFabricListScroll = (event: React.UIEvent<HTMLUListElement>) => {
     const listboxNode = event.currentTarget;
-    
+
     if (
       !loadingFabrics &&
       hasMoreFabrics &&
@@ -307,7 +307,7 @@ const OrderFormPage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (values: OrderFormData, { setSubmitting }: FormikHelpers<OrderFormData>) => {
     setError(null);
-    
+
     try {
       // Submit form with the current values
       if (isEditMode && id) {
@@ -315,19 +315,19 @@ const OrderFormPage: React.FC = () => {
       } else {
         await orderService.createOrder(values);
       }
-      
+
       // Navigate to orders page
       navigate('/orders');
     } catch (err: any) {
       console.error('Error submitting form:', err);
-      
+
       // Display specific error message if available
       if (err.message) {
         setError(err.message);
       } else {
         setError('Failed to save order. Please try again later.');
       }
-      
+
       // If it's a file size error, scroll to the top to make sure the error is visible
       if (err.message && err.message.includes('file size')) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -344,7 +344,7 @@ const OrderFormPage: React.FC = () => {
       </Box>
     );
   }
-  
+
   if (accessDenied) {
     return (
       <Container maxWidth="lg">
@@ -397,10 +397,25 @@ const OrderFormPage: React.FC = () => {
               <Grid container spacing={3}>
                 {/* Marketplace Selection */}
                 <Grid item xs={12}>
-                  <MarketplaceSelector 
+                  <MarketplaceSelector
                     marketplaces={marketplaces}
                     touched={touched}
                     errors={errors}
+                  />
+                </Grid>
+
+                {/* Products */}
+                <Grid item xs={12}>
+                  <ProductFormSection
+                    products={values.products}
+                    productTypes={productTypes}
+                    fabrics={fabrics}
+                    handleFabricListScroll={handleFabricListScroll}
+                    loadingFabrics={loadingFabrics}
+                    touched={touched}
+                    errors={errors}
+                    setFieldValue={setFieldValue}
+                    createEmptyProduct={createEmptyProduct}
                   />
                 </Grid>
 
@@ -438,28 +453,14 @@ const OrderFormPage: React.FC = () => {
                     errors={errors}
                     setFieldValue={setFieldValue}
                   />
-                </Grid>
-
-                {/* Products */}
-                <Grid item xs={12}>
-                  <ProductFormSection
-                    products={values.products}
-                    productTypes={productTypes}
-                    fabrics={fabrics}
-                    handleFabricListScroll={handleFabricListScroll}
-                    loadingFabrics={loadingFabrics}
-                    touched={touched}
-                    errors={errors}
-                    setFieldValue={setFieldValue}
-                    createEmptyProduct={createEmptyProduct}
-                  />
-                  
                   {/* Order Summary */}
                   <OrderSummarySection
                     products={values.products}
                     deliveryCharge={values.deliveryCharge}
                   />
                 </Grid>
+
+
 
                 {/* Submit Button */}
                 <Grid item xs={12}>

@@ -1,9 +1,11 @@
-package com.tripzin.eleganttex.service;
+package com.tripzin.eleganttex.service.impl;
 
 import com.tripzin.eleganttex.entity.ProductType;
 import com.tripzin.eleganttex.exception.BadRequestException;
 import com.tripzin.eleganttex.exception.AppException;
 import com.tripzin.eleganttex.repository.ProductTypeRepository;
+import com.tripzin.eleganttex.service.ProductTypeService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -42,7 +42,7 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
 
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
-          <FormControl 
+          <FormControl
             fullWidth
             error={touched.deliveryChannel && Boolean(errors.deliveryChannel)}
           >
@@ -74,9 +74,11 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
                 fullWidth
                 label="Delivery Charge"
                 type="number"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  inputProps: { step: 0.01 }
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    inputProps: { step: 0.01 }
+                  }
                 }}
                 error={meta.touched && Boolean(meta.error)}
                 helperText={meta.touched && meta.error}
@@ -95,13 +97,13 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
                   setFieldValue('deliveryDate', date.toISOString().split('T')[0]);
                 }
               }}
-              slotProps={{ 
-                textField: { 
-                  fullWidth: true, 
+              slotProps={{
+                textField: {
+                  fullWidth: true,
                   required: true,
                   error: touched.deliveryDate && Boolean(errors.deliveryDate),
                   helperText: touched.deliveryDate && (errors.deliveryDate as string)
-                } 
+                }
               }}
             />
           </LocalizationProvider>

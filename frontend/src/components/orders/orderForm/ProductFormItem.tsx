@@ -167,9 +167,11 @@ const ProductFormItem: React.FC<ProductFormItemProps> = ({
                   fullWidth
                   label="Price"
                   type="number"
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    inputProps: { step: 0.01 }
+                  slotProps={{
+                    input: {
+                      startAdornment:<InputAdornment position="start">$</InputAdornment>,
+                      inputProps: { step: 0.01 }
+                    }
                   }}
                   error={meta.touched && Boolean(meta.error)}
                   helperText={meta.touched && meta.error}
