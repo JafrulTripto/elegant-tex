@@ -59,6 +59,19 @@ logging:
     org.springframework.security: INFO
     com.tripzin.eleganttex: DEBUG
 
+# Monitoring Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
 # Springdoc OpenAPI Configuration
 springdoc:
   api-docs:

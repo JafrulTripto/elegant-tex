@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   Card,
@@ -37,7 +37,7 @@ interface ProductFormItemProps {
   setFieldValue: (field: string, value: any) => void;
 }
 
-const ProductFormItem: React.FC<ProductFormItemProps> = ({
+const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
   product,
   index,
   productTypes,
@@ -257,6 +257,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
 
+// Use React.memo to prevent unnecessary re-renders
 export default ProductFormItem;

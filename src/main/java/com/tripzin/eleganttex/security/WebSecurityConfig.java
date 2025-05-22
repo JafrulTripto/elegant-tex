@@ -77,7 +77,8 @@ public class WebSecurityConfig {
                     .requestMatchers("/static/**").permitAll()
                     .requestMatchers("/files/**").permitAll()
                     .requestMatchers("/uploads/**").permitAll()
-                    .requestMatchers("/tags/search").permitAll() // Allow tag search without authentication
+                    .requestMatchers("/tags/search").permitAll()
+                    .requestMatchers("/actuator/prometheus").permitAll() // ✅ allow Prometheus scraping
                     .anyRequest().authenticated()
             );
         
