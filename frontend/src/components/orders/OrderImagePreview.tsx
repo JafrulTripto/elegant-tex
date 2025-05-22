@@ -80,17 +80,12 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   
   // Set up the image URL
   useEffect(() => {
-    let objectUrl = '';
     setLoading(true);
     setError(false);
     
     if (imageUrl) {
       // Check if this is an object URL (starts with blob:)
-      const isObjectUrl = imageUrl.startsWith('blob:');
       setSrc(imageUrl);
-      if (isObjectUrl) {
-        objectUrl = imageUrl;
-      }
     } else if (imageId) {
       const url = getFileUrl(imageId);
       if (url) {
