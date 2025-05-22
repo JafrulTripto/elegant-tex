@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Alert,
   Box,
@@ -25,7 +25,7 @@ interface ProductFormSectionProps {
   createEmptyProduct: () => OrderProductFormData;
 }
 
-const ProductFormSection: React.FC<ProductFormSectionProps> = ({
+const ProductFormSection: React.FC<ProductFormSectionProps> = memo(({
   products,
   productTypes,
   fabrics,
@@ -81,6 +81,6 @@ const ProductFormSection: React.FC<ProductFormSectionProps> = ({
       )}
     </Paper>
   );
-};
+});
 
 export default ProductFormSection;

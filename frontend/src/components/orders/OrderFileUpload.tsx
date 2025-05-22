@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -13,6 +13,12 @@ import {
   Image as ImageIcon
 } from '@mui/icons-material';
 import OrderImagePreview from './OrderImagePreview';
+
+// Interface for file with object URL
+interface FileWithUrl {
+  file: File;
+  url: string;
+}
 
 interface OrderFileUploadProps {
   onFileSelect: (files: File[]) => void;
@@ -44,6 +50,42 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [sizeError, setSizeError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [filesWithUrls, setFilesWithUrls] = useState<FileWithUrl[]>([]);
+  
+  // Create object URLs when selectedFiles change
+  useEffect(() => {
+    // Clean up old URLs first
+    filesWithUrls.forEach(fileWithUrl => {
+      URL.revokeObjectURL(fileWithUrl.url);
+    });
+    
+    // Create new URLs for current files
+    const newFilesWithUrls = selectedFiles.map(file => {
+      // Check if we already have a URL for this file
+      const existingFileWithUrl = filesWithUrls.find(
+        fileWithUrl => fileWithUrl.file === file
+      );
+      
+      if (existingFileWithUrl) {
+        return existingFileWithUrl;
+      }
+      
+      // Create new URL if not found
+      return {
+        file,
+        url: URL.createObjectURL(file)
+      };
+    });
+    
+    setFilesWithUrls(newFilesWithUrls);
+    
+    // Clean up URLs when component unmounts
+    return () => {
+      newFilesWithUrls.forEach(fileWithUrl => {
+        URL.revokeObjectURL(fileWithUrl.url);
+      });
+    };
+  }, [selectedFiles]);
 
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -235,11 +277,11 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
           
           {/* Image previews */}
           <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
-            {selectedFiles.map((file, index) => (
+            {filesWithUrls.map((fileWithUrl, index) => (
               <OrderImagePreview
-                key={`preview-${index}-${file.name}`}
-                imageUrl={URL.createObjectURL(file)}
-                imageName={file.name}
+                key={`preview-${index}-${fileWithUrl.file.name}`}
+                imageUrl={fileWithUrl.url}
+                imageName={fileWithUrl.file.name}
                 showDeleteButton={true}
                 onRemove={() => onRemoveFile(index)}
               />

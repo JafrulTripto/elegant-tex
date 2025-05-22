@@ -80,12 +80,17 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
   
   // Set up the image URL
   useEffect(() => {
-    console.log('imageUrl:', imageUrl);
-    console.log('imageId:', imageId);
+    let objectUrl = '';
     setLoading(true);
     setError(false);
+    
     if (imageUrl) {
+      // Check if this is an object URL (starts with blob:)
+      const isObjectUrl = imageUrl.startsWith('blob:');
       setSrc(imageUrl);
+      if (isObjectUrl) {
+        objectUrl = imageUrl;
+      }
     } else if (imageId) {
       const url = getFileUrl(imageId);
       if (url) {
@@ -98,6 +103,12 @@ const OrderImagePreview: React.FC<OrderImagePreviewProps> = ({
       setError(true);
       setLoading(false);
     }
+    
+    // Cleanup function to revoke object URL if we created one
+    return () => {
+      // We don't revoke object URLs that were passed as props
+      // as they are managed by the parent component
+    };
   }, [imageUrl, imageId]);
 
   const handleImageError = () => {

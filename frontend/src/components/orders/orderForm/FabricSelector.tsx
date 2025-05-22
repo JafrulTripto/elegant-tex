@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Autocomplete,
   Avatar,
@@ -19,7 +19,7 @@ interface FabricSelectorProps {
   helperText?: string;
 }
 
-const FabricSelector: React.FC<FabricSelectorProps> = ({
+const FabricSelector: React.FC<FabricSelectorProps> = memo(({
   fabrics,
   selectedFabricId,
   onFabricChange,
@@ -83,6 +83,6 @@ const FabricSelector: React.FC<FabricSelectorProps> = ({
       loadingText="Loading fabrics..."
     />
   );
-};
+});
 
 export default FabricSelector;

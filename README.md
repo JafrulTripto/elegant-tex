@@ -64,6 +64,9 @@ Elegant-Tex is a robust web application built with Spring Boot and React that em
 - iText for PDF generation
 - Resend/SMTP for email services
 - Maven for dependency management
+- Spring Boot Actuator & Micrometer for metrics collection
+- Prometheus for metrics storage
+- Grafana for metrics visualization and monitoring
 
 ### Frontend
 - React 18
@@ -138,6 +141,7 @@ API documentation is available at `/api/v1/api-docs` and Swagger UI at `/api/v1/
 ## Additional Documentation
 
 - [S3 Storage Implementation](S3_STORAGE_README.md) - Details on how file storage works with S3
+- [Grafana Monitoring](GRAFANA_MONITORING.md) - Guide on using Grafana for application monitoring
 
 ## Troubleshooting
 
@@ -157,6 +161,12 @@ API documentation is available at `/api/v1/api-docs` and Swagger UI at `/api/v1/
    - Check file size limits in application.yml
    - Verify storage directory permissions
    - For S3, confirm AWS credentials and bucket permissions
+
+4. **Monitoring Issues**
+   - Verify Prometheus is running and accessible at http://localhost:9090
+   - Check Grafana is running and accessible at http://localhost:3000
+   - Ensure the application is exposing metrics at /api/v1/actuator/prometheus
+   - Verify Prometheus is correctly scraping metrics from the application
 
 ## License
 
