@@ -19,6 +19,7 @@ public class OrderResponse {
 
     private Long id;
     private String orderNumber;
+    private String orderType;
     private MarketplaceResponse marketplace;
     private CustomerResponse customer;
     private String deliveryChannel;

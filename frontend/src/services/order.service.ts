@@ -21,6 +21,7 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
   
   // Convert OrderFormData to OrderRequest
   const orderRequest: OrderRequest = {
+    orderType: orderData.orderType,
     marketplaceId: orderData.marketplaceId,
     customerId: orderData.customerId,
     customerData: orderData.customerData,
@@ -81,6 +82,7 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
   
   // Convert OrderFormData to OrderRequest
   const orderRequest: OrderRequest = {
+    orderType: orderData.orderType,
     marketplaceId: orderData.marketplaceId,
     customerId: orderData.customerId,
     customerData: orderData.customerData,

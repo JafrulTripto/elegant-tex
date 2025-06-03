@@ -15,6 +15,7 @@ import * as Yup from 'yup';
 import { OrderFormData, OrderProductFormData } from '../types/order';
 import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
+import { OrderType } from '../types/orderType';
 import { Fabric } from '../types/fabric';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
@@ -25,15 +26,22 @@ import useAuth from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
 import CustomerSelection from '../components/customers/CustomerSelection';
 import MarketplaceSelector from '../components/orders/orderForm/MarketplaceSelector';
+import OrderTypeSelector from '../components/orders/orderForm/OrderTypeSelector';
 import DeliveryInformationSection from '../components/orders/orderForm/DeliveryInformationSection';
 import ProductFormSection from '../components/orders/orderForm/ProductFormSection';
 import OrderSummarySection from '../components/orders/orderForm/OrderSummarySection';
 
 // Validation schema for order form
 const OrderValidationSchema = Yup.object().shape({
+  orderType: Yup.string()
+    .required('Order type is required'),
+    
   marketplaceId: Yup.number()
-    .required('Marketplace is required')
-    .min(1, 'Please select a marketplace'),
+    .when('orderType', {
+      is: OrderType.MARKETPLACE,
+      then: (schema) => schema.required('Marketplace is required for marketplace orders').min(1, 'Please select a marketplace'),
+      otherwise: (schema) => schema.notRequired()
+    }),
   
   customerId: Yup.number().nullable(),
   
@@ -113,6 +121,7 @@ const OrderFormPage: React.FC = () => {
 
   // Initial form values
   const initialValues: OrderFormData = {
+    orderType: OrderType.MARKETPLACE,
     marketplaceId: 0,
     customerId: undefined,
     customerData: {
@@ -216,7 +225,8 @@ const OrderFormPage: React.FC = () => {
             }));
             
             setFormValues({
-              marketplaceId: orderData.marketplace.id,
+              orderType: orderData.orderType as OrderType,
+              marketplaceId: orderData.marketplace?.id || 0,
               customerId: orderData.customer.id,
               customerValidation: undefined, // Added for validation purposes
               deliveryChannel: orderData.deliveryChannel,
@@ -395,6 +405,15 @@ const OrderFormPage: React.FC = () => {
           {({ values, errors, touched, setFieldValue, isSubmitting }) => (
             <Form noValidate>
               <Grid container spacing={3}>
+                {/* Order Type Selection */}
+                <Grid item xs={12}>
+                  <OrderTypeSelector
+                    touched={touched}
+                    errors={errors}
+                    setFieldValue={setFieldValue}
+                  />
+                </Grid>
+                
                 {/* Marketplace Selection */}
                 <Grid item xs={12}>
                   <MarketplaceSelector 
