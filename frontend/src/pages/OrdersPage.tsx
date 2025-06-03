@@ -35,6 +35,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'date-fns';
 import orderService from '../services/order.service';
 import { Order, OrderStatus, OrderFilterParams, OrderStatusCount, ORDER_STATUS_COLORS, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
+import { OrderType, ORDER_TYPE_DISPLAY } from '../types/orderType';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
@@ -209,6 +210,15 @@ const OrdersPage: React.FC = () => {
         flex: 0.8,
         minWidth: 100
       },
+      {
+        field: 'orderType',
+        headerName: 'Type',
+        flex: 0.8,
+        minWidth: 100,
+        valueFormatter: (params: any) => {
+          return ORDER_TYPE_DISPLAY[params.value as OrderType] || params.value;
+        }
+      },
       { 
         field: 'marketplace', 
         headerName: 'Marketplace', 
@@ -336,7 +346,7 @@ const OrdersPage: React.FC = () => {
     
     if (isMdScreen) {
       return baseColumns.filter(column => 
-        ['orderNumber', 'marketplace', 'customer', 'status', 'actions'].includes(column.field)
+        ['orderNumber', 'orderType', 'marketplace', 'customer', 'status', 'actions'].includes(column.field)
       );
     }
     
