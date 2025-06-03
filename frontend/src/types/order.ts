@@ -1,11 +1,13 @@
 import { Marketplace } from './marketplace';
 import { Fabric } from './fabric';
 import { Customer } from './customer';
+import { OrderType } from './orderType';
 
 export interface Order {
   id: number;
   orderNumber: string;
-  marketplace: Marketplace;
+  orderType: OrderType;
+  marketplace?: Marketplace;
   customer: Customer;
   deliveryChannel: string;
   deliveryCharge: number;
@@ -64,7 +66,8 @@ export interface OrderStatusHistory {
 }
 
 export interface OrderFormData {
-  marketplaceId: number;
+  orderType: OrderType;
+  marketplaceId?: number;
   customerId?: number;
   customerData?: {
     name: string;
@@ -95,6 +98,7 @@ export interface OrderProductFormData {
 }
 
 export interface OrderFilterParams {
+  orderType?: OrderType;
   status?: string;
   startDate?: string;
   endDate?: string;
@@ -207,7 +211,8 @@ export const DELIVERY_CHANNELS = [
 // Product types are now managed in the database and accessed via API
 
 export interface OrderRequest {
-  marketplaceId: number;
+  orderType: OrderType;
+  marketplaceId?: number;
   customerId?: number;
   customerData?: {
     name: string;

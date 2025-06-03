@@ -1,5 +1,6 @@
 package com.tripzin.eleganttex.dto.request;
 
+import com.tripzin.eleganttex.entity.OrderType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
@@ -22,7 +23,10 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderRequest {
 
-    @NotNull(message = "Marketplace ID is required")
+    @NotNull(message = "Order type is required")
+    private OrderType orderType;
+    
+    // Marketplace ID is only required for marketplace orders
     private Long marketplaceId;
     
     // Either customerId or customerData must be provided
@@ -35,6 +39,17 @@ public class OrderRequest {
     @AssertTrue(message = "Either customerId or customerData must be provided")
     private boolean isCustomerInfoValid() {
         return customerId != null || customerData != null;
+    }
+    
+    // Custom validation to ensure marketplaceId is provided for marketplace orders
+    @AssertTrue(message = "Marketplace ID is required for marketplace orders")
+    private boolean isMarketplaceValid() {
+        // If it's a merchant order, no marketplace is needed
+        if (orderType == OrderType.MERCHANT) {
+            return true;
+        }
+        // If it's a marketplace order, marketplace ID is required
+        return marketplaceId != null;
     }
     
     @NotBlank(message = "Delivery channel is required")

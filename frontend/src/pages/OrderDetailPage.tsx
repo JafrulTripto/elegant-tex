@@ -47,6 +47,7 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { Order, OrderStatus, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
+import { ORDER_TYPE_DISPLAY } from '../types/orderType';
 import * as orderService from '../services/order.service';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
@@ -622,14 +623,29 @@ const OrderDetailPage: React.FC = () => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
-                    Marketplace
+                    Order Type
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
-                    {order.marketplace.name}
+                    {ORDER_TYPE_DISPLAY[order.orderType] || order.orderType}
                   </Typography>
                 </Grid>
+                
+                {order.marketplace && (
+                  <>
+                    <Grid size={{ xs: 4 }}>
+                      <Typography variant="body2" color="textSecondary">
+                        Marketplace
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 8 }}>
+                      <Typography variant="body1">
+                        {order.marketplace.name}
+                      </Typography>
+                    </Grid>
+                  </>
+                )}
                 
                 <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">

@@ -23,6 +23,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Close as CloseIcon, FilterList as FilterIcon } from '@mui/icons-material';
 import { OrderFilterParams, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../../types/order';
 import { Marketplace } from '../../types/marketplace';
+import { ORDER_TYPE_OPTIONS } from '../../types/orderType';
 import { format, parse } from 'date-fns';
 
 interface OrderFilterDialogProps {
@@ -43,6 +44,7 @@ const OrderFilterDialog: React.FC<OrderFilterDialogProps> = ({
   loading = false
 }) => {
   const [filters, setFilters] = useState<OrderFilterParams>({
+    orderType: undefined,
     status: '',
     startDate: '',
     endDate: '',
@@ -100,6 +102,7 @@ const OrderFilterDialog: React.FC<OrderFilterDialogProps> = ({
 
   const handleClearFilter = () => {
     const clearedFilters = {
+      orderType: undefined,
       status: '',
       startDate: '',
       endDate: '',
@@ -132,6 +135,28 @@ const OrderFilterDialog: React.FC<OrderFilterDialogProps> = ({
       <DialogContent>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="order-type-label">Order Type</InputLabel>
+                <Select
+                  labelId="order-type-label"
+                  id="orderType"
+                  name="orderType"
+                  value={filters.orderType || ''}
+                  onChange={handleSelectChange}
+                  label="Order Type"
+                  disabled={loading}
+                >
+                  <MenuItem value="">All Order Types</MenuItem>
+                  {ORDER_TYPE_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal">
                 <InputLabel id="status-label">Status</InputLabel>

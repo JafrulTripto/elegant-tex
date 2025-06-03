@@ -9,8 +9,10 @@ import {
   Typography,
   Divider
 } from '@mui/material';
-import { Field } from 'formik';
+import { Field, useFormikContext } from 'formik';
 import { Marketplace } from '../../../types/marketplace';
+import { OrderType } from '../../../types/orderType';
+import { OrderFormData } from '../../../types/order';
 
 interface MarketplaceSelectorProps {
   marketplaces: Marketplace[];
@@ -23,6 +25,13 @@ const MarketplaceSelector: React.FC<MarketplaceSelectorProps> = ({
   touched,
   errors
 }) => {
+  const { values } = useFormikContext<OrderFormData>();
+  const isMarketplaceOrder = values.orderType === OrderType.MARKETPLACE;
+  
+  if (!isMarketplaceOrder) {
+    return null; // Don't render marketplace selector for merchant orders
+  }
+  
   return (
     <Paper sx={{ p: 3 }}>
       <Typography variant="h6" gutterBottom>
