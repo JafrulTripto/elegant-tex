@@ -110,4 +110,12 @@ public interface OrderService {
      * @return List of maps containing date, count, and amount
      */
     List<Map<String, Object>> getMonthlyOrderCountAndAmount(Integer month, Integer year, boolean currentMonth);
+    
+    /**
+     * Reuse a cancelled or returned order to create a new order
+     * @param orderId the ID of the order to reuse
+     * @param userId the ID of the user creating the new order
+     * @return the newly created order
+     */
+    OrderResponse reuseOrder(Long orderId, Long userId);
 }

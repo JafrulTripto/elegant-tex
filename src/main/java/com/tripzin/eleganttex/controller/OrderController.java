@@ -274,4 +274,19 @@ public class OrderController {
         List<Map<String, Object>> data = orderService.getMonthlyOrderCountAndAmount(month, year, currentMonth);
         return ResponseEntity.ok(data);
     }
+    
+    /**
+     * Reuse a cancelled or returned order to create a new order
+     * @param id the order ID to reuse
+     * @return the newly created order
+     */
+    @PostMapping("/{id}/reuse")
+    @PreAuthorize("hasAuthority('ORDER_CREATE')")
+    public ResponseEntity<OrderResponse> reuseOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = userSecurity.getUserIdFromUserDetails(userDetails);
+        OrderResponse newOrder = orderService.reuseOrder(id, userId);
+        return ResponseEntity.ok(newOrder);
+    }
 }
