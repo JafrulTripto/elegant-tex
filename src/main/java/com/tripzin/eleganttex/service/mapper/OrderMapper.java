@@ -32,12 +32,15 @@ public class OrderMapper {
      * Maps an Order entity to an OrderResponse DTO
      */
     public OrderResponse mapOrderToResponse(Order order) {
-        // Map marketplace
-        OrderResponse.MarketplaceResponse marketplaceResponse = OrderResponse.MarketplaceResponse.builder()
-                .id(order.getMarketplace().getId())
-                .name(order.getMarketplace().getName())
-                .description(order.getMarketplace().getPageUrl())
-                .build();
+        // Map marketplace if it exists
+        OrderResponse.MarketplaceResponse marketplaceResponse = null;
+        if (order.getMarketplace() != null) {
+            marketplaceResponse = OrderResponse.MarketplaceResponse.builder()
+                    .id(order.getMarketplace().getId())
+                    .name(order.getMarketplace().getName())
+                    .description(order.getMarketplace().getPageUrl())
+                    .build();
+        }
         
         // Map customer
         CustomerResponse customerResponse = CustomerResponse.builder()
@@ -81,6 +84,7 @@ public class OrderMapper {
         return OrderResponse.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .orderType(order.getOrderType().getDisplayName())
                 .marketplace(marketplaceResponse)
                 .customer(customerResponse)
                 .deliveryChannel(order.getDeliveryChannel())

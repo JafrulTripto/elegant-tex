@@ -29,8 +29,12 @@ public class Order {
     @Column(name = "order_number", unique = true)
     private String orderNumber;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_type", nullable = false)
+    private OrderType orderType;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "marketplace_id", nullable = false)
+    @JoinColumn(name = "marketplace_id")
     private Marketplace marketplace;
 
     @ManyToOne(fetch = FetchType.LAZY)
