@@ -2,6 +2,8 @@ package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.security.services.UserDetailsImpl;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -61,9 +63,8 @@ public class OrderServiceImpl implements OrderService {
         
         // Otherwise, try to get it from the security context
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof com.tripzin.eleganttex.security.services.UserDetailsImpl) {
-            com.tripzin.eleganttex.security.services.UserDetailsImpl userDetails = 
-                (com.tripzin.eleganttex.security.services.UserDetailsImpl) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             return userDetails.getId();
         }
         
