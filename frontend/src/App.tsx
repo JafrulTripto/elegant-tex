@@ -34,32 +34,23 @@ import CustomersPage from './pages/CustomersPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 
-// Lazy loaded components
 const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage'));
 const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
 
-// Dashboard router component to conditionally render the appropriate dashboard
 const DashboardRouter: FC = () => {
   const { authState } = useAuth();
-
-  console.log(authState.user);
-  
-  // Check if user has the DASHBOARD_ADMIN_VIEW permission
   const hasAdminDashboardPermission = 
     authState.user?.permissions?.includes('DASHBOARD_ADMIN_VIEW') || 
     authState.user?.roles.includes('ROLE_ADMIN');
   
-  // Check if user has the DASHBOARD_USER_VIEW permission
   const hasUserDashboardPermission =
     authState.user?.permissions?.includes('DASHBOARD_USER_VIEW');
   
-  // Render the appropriate dashboard based on permissions
   if (hasAdminDashboardPermission) {
     return <AdminDashboard />;
   } else if (hasUserDashboardPermission) {
     return <UserDashboard />;
   } else {
-    // If user doesn't have permission to view any dashboard, redirect to unauthorized
     return <Navigate to="/unauthorized" replace />;
   }
 };
