@@ -4,11 +4,11 @@ import {
   Box,
   Button,
   Container,
-  Grid,
   Alert,
   CircularProgress,
   Typography
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Formik, Form, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
@@ -47,26 +47,20 @@ const OrderValidationSchema = Yup.object().shape({
   
   customerData: Yup.object().nullable(),
   
-  // Custom test to validate customer information
-  // Either customerId must be provided OR customerData must be complete
   customerValidation: Yup.mixed().test(
     'customer-validation',
     'Please select a customer or fill in all required customer fields',
     function() {
       const { customerId, customerData } = this.parent;
-      
-      // If customerId is provided, we're good
       if (customerId) return true;
-      
-      // If no customerId, then customerData must be complete
+
       if (customerData && 
           customerData.name && 
           customerData.phone && 
           customerData.address) {
         return true;
       }
-      
-      // Neither condition met, validation fails
+
       return false;
     }
   ),
@@ -406,7 +400,7 @@ const OrderFormPage: React.FC = () => {
             <Form noValidate>
               <Grid container spacing={3}>
                 {/* Order Type Selection */}
-                <Grid item xs={12}>
+                <Grid size={{xs:12}}>
                   <OrderTypeSelector
                     touched={touched}
                     errors={errors}
@@ -415,7 +409,7 @@ const OrderFormPage: React.FC = () => {
                 </Grid>
                 
                 {/* Marketplace Selection */}
-                <Grid item xs={12}>
+                <Grid size={{xs:12}}>
                   <MarketplaceSelector 
                     marketplaces={marketplaces}
                     touched={touched}
@@ -424,7 +418,7 @@ const OrderFormPage: React.FC = () => {
                 </Grid>
 
                 {/* Customer Selection */}
-                <Grid item xs={12}>
+                <Grid size={{xs:12}}>
                   <CustomerSelection
                     onCustomerSelected={(customer) => {
                       setFieldValue('customerId', customer?.id);
@@ -450,7 +444,7 @@ const OrderFormPage: React.FC = () => {
                 </Grid>
 
                 {/* Delivery Information */}
-                <Grid item xs={12}>
+                <Grid size={{xs:12}}>
                   <DeliveryInformationSection
                     values={values}
                     touched={touched}
@@ -460,7 +454,7 @@ const OrderFormPage: React.FC = () => {
                 </Grid>
 
                 {/* Products */}
-                <Grid item xs={12}>
+                <Grid size={{xs:12}}>
                   <ProductFormSection
                     products={values.products}
                     productTypes={productTypes}
@@ -481,7 +475,7 @@ const OrderFormPage: React.FC = () => {
                 </Grid>
 
                 {/* Submit Button */}
-                <Grid item xs={12}>
+                <Grid size={{xs:12}}>
                   <Box display="flex" justifyContent="flex-end">
                     <Button
                       variant="contained"

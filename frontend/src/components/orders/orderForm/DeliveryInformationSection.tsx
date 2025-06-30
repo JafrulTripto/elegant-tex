@@ -3,7 +3,6 @@ import {
   Divider,
   FormControl,
   FormHelperText,
-  Grid,
   InputAdornment,
   InputLabel,
   MenuItem,
@@ -12,6 +11,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -41,7 +41,7 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
       <Divider sx={{ mb: 2 }} />
 
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{xs:12, sm:6}}>
           <FormControl 
             fullWidth
             error={touched.deliveryChannel && Boolean(errors.deliveryChannel)}
@@ -66,7 +66,7 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
             )}
           </FormControl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{xs:12, sm:6}}>
           <Field name="deliveryCharge">
             {({ field, meta }: FieldProps) => (
               <TextField
@@ -74,9 +74,10 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
                 fullWidth
                 label="Delivery Charge"
                 type="number"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  inputProps: { step: 0.01 }
+                slotProps={{
+                  input: {
+                    startAdornment:(<InputAdornment position="start"> ৳</InputAdornment>),
+                  }
                 }}
                 error={meta.touched && Boolean(meta.error)}
                 helperText={meta.touched && meta.error}
@@ -85,7 +86,7 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
             )}
           </Field>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{xs:12, sm:6}}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Delivery Date"
