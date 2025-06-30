@@ -17,6 +17,7 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -33,7 +34,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
-import { Order, ORDER_STATUS_COLORS } from '../types/order';
+import { Order } from '../types/order';
+import { getStatusColor } from '../utils/statusConfig';
 import { Marketplace } from '../types/marketplace';
 import UserMarketplaceLineChart from '../components/orders/UserMarketplaceLineChart';
 import UserOrderStatusDistributionChart from '../components/orders/UserOrderStatusDistributionChart';
@@ -43,6 +45,7 @@ const UserDashboard: React.FC = () => {
   const { authState } = useAuth();
   const { user } = authState;
   const navigate = useNavigate();
+  const theme = useTheme();
   
   // State for loading and error handling
   const [loading, setLoading] = useState(false);
@@ -325,8 +328,8 @@ const UserDashboard: React.FC = () => {
                                 label={order.status}
                                 size="small"
                                 sx={{
-                                  bgcolor: ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS] || '#757575',
-                                  color: '#fff',
+                                bgcolor: getStatusColor(order.status, theme.palette.mode),
+                                color: '#fff',
                                   height: 24,
                                   fontSize: '0.7rem',
                                   '& .MuiChip-label': {

@@ -140,6 +140,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Page<OrderResponse> getOrdersByFilters(
+            String orderType,
             String status,
             LocalDate startDate,
             LocalDate endDate,
@@ -149,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
         Long currentUserId = getCurrentUserId(null);
         boolean hasReadAllPermission = hasReadAllOrdersPermission();
         
-        return orderSearchService.getOrdersByFilters(status, startDate, endDate, marketplaceId, customerName, 
+        return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, marketplaceId, customerName, 
                 currentUserId, hasReadAllPermission, pageable);
     }
 
