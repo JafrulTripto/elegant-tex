@@ -47,28 +47,20 @@ const OrderValidationSchema = Yup.object().shape({
   
   customerData: Yup.object().nullable(),
   
-  // Custom test to validate customer information
-  // Either customerId must be provided OR customerData must be complete
   customerValidation: Yup.mixed().test(
     'customer-validation',
     'Please select a customer or fill in all required customer fields',
     function() {
       const { customerId, customerData } = this.parent;
-      
-      // If customerId is provided, we're good
-      console.log('Validating customer:', { customerId, customerData });
-      
       if (customerId) return true;
-      
-      // If no customerId, then customerData must be complete
+
       if (customerData && 
           customerData.name && 
           customerData.phone && 
           customerData.address) {
         return true;
       }
-      
-      // Neither condition met, validation fails
+
       return false;
     }
   ),
