@@ -11,7 +11,6 @@ import {
   Divider,
   Paper,
   Typography,
-  Chip,
   Stepper,
   Step,
   StepLabel,
@@ -33,7 +32,9 @@ import {
   Menu,
   StepContent,
   Tooltip,
+  Chip,
 } from '@mui/material';
+import StatusChip from '../components/common/StatusChip';
 import Grid from '@mui/material/Grid2';
 import {
   ArrowBack as ArrowBackIcon,
@@ -47,7 +48,7 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { Order, OrderStatus, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
-import { ORDER_TYPE_DISPLAY } from '../types/orderType';
+import { ORDER_TYPE_DISPLAY, OrderType } from '../types/orderType';
 import * as orderService from '../services/order.service';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
@@ -145,31 +146,8 @@ const OrderDetailPage: React.FC = () => {
     return index >= 0 ? index : 0;
   };
   
-  // Get status chip color
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'Order Created':
-        return 'info';
-      case 'Approved':
-        return 'info';
-      case 'Booking':
-        return 'secondary';
-      case 'Production':
-        return 'warning';
-      case 'QA':
-        return 'secondary';
-      case 'Ready':
-        return 'info';
-      case 'Delivered':
-        return 'success';
-      case 'Returned':
-        return 'error';
-      case 'Cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  // This function is no longer needed as we're using the centralized status configuration
+  // through the StatusChip component
   
   // Convert backend status to display status
   const getDisplayStatus = (backendStatus: string): string => {
@@ -434,9 +412,9 @@ const OrderDetailPage: React.FC = () => {
             <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}>
               Order Status
             </Typography>
-            <Chip
-              label={getDisplayStatus(order.status)}
-              color={getStatusColor(getDisplayStatus(order.status)) as any}
+            <StatusChip
+              status={order.status}
+              isOrderStatus={true}
               sx={{ fontWeight: 'bold', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
             />
           </Box>
@@ -504,9 +482,9 @@ const OrderDetailPage: React.FC = () => {
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 4, sm: 2 }}>
-                      <Chip
-                        label={getDisplayStatus(history.status)}
-                        color={getStatusColor(getDisplayStatus(history.status)) as any}
+                      <StatusChip
+                        status={history.status}
+                        isOrderStatus={true}
                         size="small"
                       />
                   </Grid>
@@ -627,9 +605,16 @@ const OrderDetailPage: React.FC = () => {
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 8 }}>
-                  <Typography variant="body1">
-                    {ORDER_TYPE_DISPLAY[order.orderType] || order.orderType}
-                  </Typography>
+                  <Chip
+                    label={ORDER_TYPE_DISPLAY[order.orderType] || order.orderType}
+                    color={order.orderType === OrderType.MARKETPLACE ? "primary" : "secondary"}
+                    sx={{ 
+                      fontWeight: 'medium',
+                      fontSize: '0.85rem',
+                      height: 28,
+                      mt: -0.5
+                    }}
+                  />
                 </Grid>
                 
                 {order.marketplace && (

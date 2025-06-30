@@ -53,34 +53,59 @@ const customColors = {
 // Common typography settings
 const typography = {
   fontFamily: [
+    'Poppins',
+    '-apple-system',
+    'BlinkMacSystemFont',
+    '"Segoe UI"',
     'Roboto',
-    '"Helvetica Neue"',
     'Arial',
     'sans-serif',
   ].join(','),
   h1: {
     fontSize: '2.5rem',
-    fontWeight: 500,
+    fontWeight: 600,
+    letterSpacing: '-0.01em',
   },
   h2: {
     fontSize: '2rem',
-    fontWeight: 500,
+    fontWeight: 600,
+    letterSpacing: '-0.01em',
   },
   h3: {
     fontSize: '1.75rem',
-    fontWeight: 500,
+    fontWeight: 600,
+    letterSpacing: '-0.01em',
   },
   h4: {
     fontSize: '1.5rem',
     fontWeight: 500,
+    letterSpacing: '-0.01em',
   },
   h5: {
     fontSize: '1.25rem',
     fontWeight: 500,
+    letterSpacing: '-0.01em',
   },
   h6: {
     fontSize: '1rem',
     fontWeight: 500,
+    letterSpacing: '-0.01em',
+  },
+  button: {
+    fontWeight: 500,
+    letterSpacing: '0.02em',
+  },
+  subtitle1: {
+    letterSpacing: '0.01em',
+  },
+  subtitle2: {
+    letterSpacing: '0.01em',
+  },
+  body1: {
+    letterSpacing: '0.01em',
+  },
+  body2: {
+    letterSpacing: '0.01em',
   },
 };
 
@@ -99,6 +124,15 @@ const components = {
       root: {
         textTransform: 'none',
         borderRadius: 8,
+        fontWeight: 500,
+        letterSpacing: '0.02em',
+        padding: '6px 16px',
+      } as any,
+      contained: {
+        boxShadow: '0 2px 4px 0 rgba(0,0,0,0.1)',
+        '&:hover': {
+          boxShadow: '0 4px 8px 0 rgba(0,0,0,0.15)',
+        },
       } as any,
     },
   },
@@ -173,9 +207,35 @@ const components = {
       h6: {
         marginBottom: 6, // Reduced from 8px for more compact spacing
         fontSize: '1rem', // Slightly smaller for compact headers
+        fontWeight: 500,
       } as any,
       h5: {
         fontSize: '1.15rem', // Slightly smaller for compact headers
+        fontWeight: 500,
+      } as any,
+      h4: {
+        fontWeight: 500,
+      } as any,
+      h3: {
+        fontWeight: 600,
+      } as any,
+      h2: {
+        fontWeight: 600,
+      } as any,
+      h1: {
+        fontWeight: 600,
+      } as any,
+      subtitle1: {
+        fontWeight: 500,
+      } as any,
+      subtitle2: {
+        fontWeight: 500,
+      } as any,
+      body1: {
+        lineHeight: 1.6,
+      } as any,
+      body2: {
+        lineHeight: 1.6,
       } as any,
     },
   },

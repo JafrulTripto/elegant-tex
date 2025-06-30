@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import { LocalShipping as DeliveredIcon, AssignmentReturn as ReturnedIcon } from '@mui/icons-material';
 import orderService from '../../services/order.service';
-import { OrderStatusCount, ORDER_STATUS_COLORS } from '../../types/order';
+import { OrderStatusCount } from '../../types/order';
+import { getStatusColor } from '../../utils/statusConfig';
 
 interface MonthlyOrderStatusCardProps {
   userId?: number; // Optional - if provided, shows only user's orders
@@ -91,8 +92,8 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
   )?.count || 0;
 
   // Get status colors
-  const deliveredColor = ORDER_STATUS_COLORS['DELIVERED'] || '#52c41a';
-  const returnedColor = ORDER_STATUS_COLORS['RETURNED'] || '#fa8c16';
+  const deliveredColor = getStatusColor('DELIVERED', theme.palette.mode);
+  const returnedColor = getStatusColor('RETURNED', theme.palette.mode);
 
   // Handle toggle change
   const handleStatusToggle = (

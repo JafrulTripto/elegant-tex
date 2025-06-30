@@ -171,31 +171,7 @@ export const STATUS_DISPLAY_OPTIONS = [
   'Cancelled'
 ];
 
-export const ORDER_STATUS_COLORS = {
-  // Backend versions
-  ORDER_CREATED: '#1890ff',
-  APPROVED: '#13c2c2',
-  BOOKING: '#722ed1',
-  PRODUCTION: '#eb2f96',
-  QA: '#faad14',
-  READY: '#a0d911',
-  DELIVERED: '#52c41a',
-  RETURNED: '#fa8c16',
-  CANCELLED: '#f5222d'
-};
-
-// Frontend display version colors
-export const ORDER_STATUS_DISPLAY_COLORS = {
-  'Order Created': '#1890ff',
-  'Approved': '#13c2c2',
-  'Booking': '#722ed1',
-  'Production': '#eb2f96',
-  'QA': '#faad14',
-  'Ready': '#a0d911',
-  'Delivered': '#52c41a',
-  'Returned': '#fa8c16',
-  'Cancelled': '#f5222d'
-};
+// Status colors are now managed in the statusConfig.ts utility
 
 export const DELIVERY_CHANNELS = [
   'GCC Home Delivery',

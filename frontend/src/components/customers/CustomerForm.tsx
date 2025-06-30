@@ -24,25 +24,18 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   const [formData, setFormData] = useState<CustomerRequest>(initialData);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  // Update form data when initialData changes
   useEffect(() => {
     setFormData(initialData);
   }, [initialData]);
 
-  // Handle form field changes
   const handleChange = (field: keyof CustomerRequest, value: string) => {
-    // Update form data
     const updatedData = {
       ...formData,
       [field]: value
     };
     
     setFormData(updatedData);
-    
-    // Validate field
     validateField(field, value);
-    
-    // Notify parent component
     onDataChange(updatedData);
   };
 
@@ -76,9 +69,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
           delete errors.address;
         }
         break;
-        
       default:
-        // No validation for optional fields
         break;
     }
     

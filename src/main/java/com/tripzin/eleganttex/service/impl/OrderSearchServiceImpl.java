@@ -4,6 +4,7 @@ import com.tripzin.eleganttex.dto.response.OrderResponse;
 import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderProduct;
 import com.tripzin.eleganttex.entity.OrderStatus;
+import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.repository.OrderRepository;
 import com.tripzin.eleganttex.service.OrderSearchService;
@@ -128,6 +129,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
      */
     @Override
     public Page<OrderResponse> getOrdersByFilters(
+            String orderTypeStr,
             String statusStr,
             LocalDate startDate,
             LocalDate endDate,
@@ -136,14 +138,22 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             Long currentUserId,
             boolean hasReadAllPermission,
             Pageable pageable) {
-        log.info("Getting orders by filters: status={}, startDate={}, endDate={}, marketplaceId={}, customerName={}, userId={}, hasReadAllPermission={}",
-                statusStr, startDate, endDate, marketplaceId, customerName, currentUserId, hasReadAllPermission);
+        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, marketplaceId={}, customerName={}, userId={}, hasReadAllPermission={}",
+                orderTypeStr, statusStr, startDate, endDate, marketplaceId, customerName, currentUserId, hasReadAllPermission);
         
         OrderStatus status = statusStr != null ? OrderStatus.fromString(statusStr) : null;
+        OrderType orderType = orderTypeStr != null ? OrderType.valueOf(orderTypeStr) : null;
         
         if (hasReadAllPermission) {
-            return orderRepository.findByFilters(status, startDate, endDate, marketplaceId, customerName, pageable)
-                    .map(orderMapper::mapOrderToResponse);
+            if (orderType != null) {
+                // If order type is provided, use the repository method that filters by order type
+                return orderRepository.findByOrderTypeAndFilters(orderType, status, startDate, endDate, marketplaceId, customerName, pageable)
+                        .map(orderMapper::mapOrderToResponse);
+            } else {
+                // Otherwise, use the existing repository method
+                return orderRepository.findByFilters(status, startDate, endDate, marketplaceId, customerName, pageable)
+                        .map(orderMapper::mapOrderToResponse);
+            }
         } else {
             // If customerName is provided, we need a custom approach since we don't have a repository method
             // that combines customerName and createdById
@@ -154,6 +164,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
                 
                 // Create a custom query that includes both customer name and created by user ID
                 String customQuery = "SELECT o FROM Order o JOIN o.customer c WHERE " +
+                    "(:orderType IS NULL OR o.orderType = :orderType) AND " +
                     "(:status IS NULL OR o.status = :status) AND " +
                     "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
                     "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +

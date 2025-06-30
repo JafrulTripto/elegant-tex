@@ -61,6 +61,7 @@ public interface OrderSearchService {
     
     /**
      * Get orders by multiple filters
+     * @param orderType order type (MARKETPLACE or MERCHANT)
      * @param status order status
      * @param startDate start date (inclusive)
      * @param endDate end date (inclusive)
@@ -72,6 +73,7 @@ public interface OrderSearchService {
      * @return page of order responses
      */
     Page<OrderResponse> getOrdersByFilters(
+            String orderType,
             String status, 
             LocalDate startDate, 
             LocalDate endDate, 
