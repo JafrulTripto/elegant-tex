@@ -237,26 +237,17 @@ export const getMarketplaceOrderStatisticsByMonth = async (month: number, year: 
  * @returns Array of daily order counts for the last month
  */
 export const getLastMonthOrders = async (): Promise<MonthlyOrderData[]> => {
-  // Calculate date range for the last month
   const endDate = new Date();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 1);
-  
-  // Format dates for API
   const formattedStartDate = startDate.toISOString().split('T')[0];
   const formattedEndDate = endDate.toISOString().split('T')[0];
-
-  console.log("Fetching last month orders with:", { startDate: formattedStartDate, endDate: formattedEndDate });
-  
-  // Use the dedicated endpoint for monthly data
   const response = await api.get(`${BASE_URL}/monthly-data`, {
     params: {
       startDate: formattedStartDate,
       endDate: formattedEndDate
     }
   });
-  
-  // Map the response to the expected format
   return response.data.map((item: any) => ({
     date: item.date,
     count: item.count

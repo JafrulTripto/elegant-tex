@@ -5,7 +5,6 @@ import userService from '../services/user.service';
 import axios from 'axios';
 import { useToast } from './ToastContext';
 
-// Define the context type
 export interface AuthContextType {
   authState: AuthState;
   login: (username: string, password: string) => Promise<void>;
@@ -14,10 +13,8 @@ export interface AuthContextType {
   loadUser: () => Promise<void>;
 }
 
-// Create the context with a default value
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Initial auth state
 const initialAuthState: AuthState = {
   isAuthenticated: false,
   user: null,
@@ -29,12 +26,10 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
   const { showToast } = useToast();
 
-  // Load user on mount
   useEffect(() => {
     const checkAuth = async () => {
       if (authService.isAuthenticated()) {
@@ -62,14 +57,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Load user data
   const loadUser = async (): Promise<void> => {
     try {
       setAuthState(prev => ({ ...prev, loading: true }));
       const res = await userService.getCurrentUser();
-      const user = res.data;
-      console.log('User:', user);
-      
+      const user = res.data;      
       setAuthState({
         isAuthenticated: true,
         user,
@@ -87,7 +79,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Login user
   const login = async (username: string, password: string): Promise<void> => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
@@ -114,7 +105,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Register user
   const register = async (phone: string, email: string, password: string, firstName: string, lastName?: string): Promise<void> => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
