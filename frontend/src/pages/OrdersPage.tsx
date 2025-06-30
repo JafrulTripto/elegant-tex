@@ -169,12 +169,7 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  // This function is no longer needed as we're using the centralized status configuration
-  // through the StatusChip component
-
-  // Define columns based on screen size
   const getColumns = (): GridColDef[] => {
-    // Base columns definition
     const baseColumns: GridColDef[] = [
       { 
         field: 'orderNumber', 
@@ -207,9 +202,7 @@ const OrdersPage: React.FC = () => {
         headerName: 'Delivery', 
         flex: 1,
         minWidth: 110,
-        valueFormatter: (params: any) => {
-          console.log('Delivery Date:', params);
-          
+        valueFormatter: (params: any) => {          
           if (!params) return '';
           try {
             // Use shorter date format on medium screens
