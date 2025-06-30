@@ -15,7 +15,8 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
-import { OrderStatusCount, ORDER_STATUS_COLORS, ORDER_STATUS_DISPLAY } from '../../types/order';
+import { OrderStatusCount, ORDER_STATUS_DISPLAY } from '../../types/order';
+import { getStatusColor } from '../../utils/statusConfig';
 import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -133,7 +134,7 @@ const UserOrderStatusDistributionChart: React.FC = () => {
   // Prepare data for Chart.js
   const labels = statusCounts.map(item => ORDER_STATUS_DISPLAY[item.status as keyof typeof ORDER_STATUS_DISPLAY] || item.status);
   const counts = statusCounts.map(item => item.count);
-  const backgroundColor = statusCounts.map(item => ORDER_STATUS_COLORS[item.status as keyof typeof ORDER_STATUS_COLORS] || '#757575');
+  const backgroundColor = statusCounts.map(item => getStatusColor(item.status, theme.palette.mode));
   
   const chartData = {
     labels,
