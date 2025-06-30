@@ -6,14 +6,16 @@ import {
   IconButton,
   Paper,
   Typography,
-  Chip,
   Tooltip,
   Stack,
   Snackbar,
   Alert,
   useMediaQuery,
-  useTheme
+  useTheme,
+  ToggleButtonGroup,
+  ToggleButton
 } from '@mui/material';
+import StatusChip from '../components/common/StatusChip';
 import { spacing, layoutUtils } from '../theme/styleUtils';
 import Grid from '@mui/material/Grid2';
 import { 
@@ -34,8 +36,8 @@ import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'date-fns';
 import orderService from '../services/order.service';
-import { Order, OrderStatus, OrderFilterParams, OrderStatusCount, ORDER_STATUS_COLORS, STATUS_OPTIONS, STATUS_DISPLAY_OPTIONS } from '../types/order';
-import { OrderType, ORDER_TYPE_DISPLAY } from '../types/orderType';
+import { Order, OrderStatus, OrderFilterParams, OrderStatusCount} from '../types/order';
+import { OrderType } from '../types/orderType';
 import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
@@ -145,6 +147,14 @@ const OrdersPage: React.FC = () => {
     setError(null);
   };
 
+  const handleOrderTypeChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newOrderType: OrderType | null
+  ) => {
+    // Convert null to undefined for the filter
+    setFilters({ ...filters, orderType: newOrderType || undefined });
+  };
+
   const handleExportExcel = async () => {
     try {
       const blob = await orderService.generateOrdersExcel(
@@ -159,46 +169,8 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  // Convert backend status to display status
-  const getDisplayStatus = (backendStatus: string): string => {
-    const index = STATUS_OPTIONS.indexOf(backendStatus as any);
-    return index >= 0 ? STATUS_DISPLAY_OPTIONS[index] : backendStatus;
-  };
-  
-  // Get status chip color based on status
-  const getStatusChipColor = (status: string): string => {
-    // Check if it's a backend status (like ORDER_CREATED)
-    if (ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS]) {
-      return ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS];
-    }
-    
-    // If not found, try to convert to display status and get color
-    const displayStatus = getDisplayStatus(status);
-    
-    // Default colors for special cases
-    switch (displayStatus) {
-      case 'Order Created':
-        return '#1890ff'; // info blue
-      case 'Approved':
-        return '#13c2c2'; // cyan
-      case 'Booking':
-        return '#722ed1'; // purple
-      case 'Production':
-        return '#eb2f96'; // pink
-      case 'QA':
-        return '#faad14'; // warning yellow
-      case 'Ready':
-        return '#a0d911'; // lime
-      case 'Delivered':
-        return '#52c41a'; // success green
-      case 'Returned':
-        return '#fa8c16'; // orange
-      case 'Cancelled':
-        return '#f5222d'; // error red
-      default:
-        return '#d9d9d9'; // default gray
-    }
-  };
+  // This function is no longer needed as we're using the centralized status configuration
+  // through the StatusChip component
 
   // Define columns based on screen size
   const getColumns = (): GridColDef[] => {
@@ -209,15 +181,6 @@ const OrdersPage: React.FC = () => {
         headerName: 'Order #', 
         flex: 0.8,
         minWidth: 100
-      },
-      {
-        field: 'orderType',
-        headerName: 'Type',
-        flex: 0.8,
-        minWidth: 100,
-        valueFormatter: (params: any) => {
-          return ORDER_TYPE_DISPLAY[params.value as OrderType] || params.value;
-        }
       },
       { 
         field: 'marketplace', 
@@ -261,22 +224,14 @@ const OrdersPage: React.FC = () => {
         headerName: 'Status', 
         flex: 0.8,
         minWidth: 100,
-        renderCell: (params: GridRenderCellParams) => {
-          const displayStatus = getDisplayStatus(params.value as string);
-          return (
-            <Chip
-              label={displayStatus}
-              sx={{ 
-                backgroundColor: getStatusChipColor(params.value as string),
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '0.7rem',
-                height: 24
-              }}
-              size="small"
-            />
-          );
-        }
+        renderCell: (params: GridRenderCellParams) => (
+          <StatusChip
+            status={params.value as string}
+            isOrderStatus={true}
+            size="small"
+            sx={{ fontSize: '0.7rem', height: 24 }}
+          />
+        )
       },
       { 
         field: 'createdAt', 
@@ -346,7 +301,7 @@ const OrdersPage: React.FC = () => {
     
     if (isMdScreen) {
       return baseColumns.filter(column => 
-        ['orderNumber', 'orderType', 'marketplace', 'customer', 'status', 'actions'].includes(column.field)
+        ['orderNumber', 'marketplace', 'customer', 'status', 'actions'].includes(column.field)
       );
     }
     
@@ -394,6 +349,27 @@ const OrdersPage: React.FC = () => {
                 spacing={{ xs: 1, sm: 2 }}
                 width={{ xs: '100%', sm: 'auto' }}
               >
+                <ToggleButtonGroup
+                  value={filters.orderType || null}
+                  exclusive
+                  onChange={handleOrderTypeChange}
+                  aria-label="order type filter"
+                  size={isXsScreen ? "small" : "medium"}
+                  sx={{ 
+                    mb: { xs: 1, sm: 0 },
+                    '.MuiToggleButton-root': {
+                      textTransform: 'none',
+                      px: { xs: 1.5, sm: 2 }
+                    }
+                  }}
+                >
+                  <ToggleButton value={OrderType.MARKETPLACE}>
+                    Marketplace
+                  </ToggleButton>
+                  <ToggleButton value={OrderType.MERCHANT}>
+                    Merchant
+                  </ToggleButton>
+                </ToggleButtonGroup>
                 <Button
                   variant="outlined"
                   startIcon={isXsScreen ? null : <FileDownloadIcon />}
@@ -470,7 +446,9 @@ const OrdersPage: React.FC = () => {
                 sx={{
                   '& .MuiDataGrid-cell': {
                     fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
-                    py: { xs: 0.75, sm: 1, md: 1.5 }
+                    py: { xs: 0.75, sm: 1, md: 1.5 },
+                    display: 'flex',
+                    alignItems: 'center'
                   },
                   '& .MuiDataGrid-columnHeader': {
                     fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' }

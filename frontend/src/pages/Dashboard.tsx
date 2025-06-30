@@ -17,6 +17,7 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -41,13 +42,15 @@ import OrderCountAmountChart from '../components/orders/OrderCountAmountChart';
 import MonthlyOrderStatusCard from '../components/orders/MonthlyOrderStatusCard';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
-import { OrderStatusCount, Order, ORDER_STATUS_COLORS } from '../types/order';
+import { OrderStatusCount, Order } from '../types/order';
+import { getStatusColor } from '../utils/statusConfig';
 import { Marketplace } from '../types/marketplace';
 
 const Dashboard: React.FC = () => {
   const { authState } = useAuth();
   const { user } = authState;
   const navigate = useNavigate();
+  const theme = useTheme();
   
   // State for loading and error handling
   const [loading, setLoading] = useState(false);
@@ -407,7 +410,7 @@ const Dashboard: React.FC = () => {
                                 label={order.status}
                                 size="small"
                                 sx={{
-                                  bgcolor: ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS] || '#757575',
+                                  bgcolor: getStatusColor(order.status, theme.palette.mode),
                                   color: '#fff',
                                   height: 24,
                                   fontSize: '0.7rem',

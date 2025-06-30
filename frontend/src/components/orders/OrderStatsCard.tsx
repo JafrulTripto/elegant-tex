@@ -1,6 +1,7 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip, useTheme, useMediaQuery } from '@mui/material';
-import { ORDER_STATUS_COLORS } from '../../types/order';
+import { Card, CardContent, Typography, Box, useTheme, useMediaQuery } from '@mui/material';
+import StatusChip from '../common/StatusChip';
+import { getDisplayStatus } from '../../utils/statusConfig';
 
 interface OrderStatsCardProps {
   status: string;
@@ -12,28 +13,16 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ status, count, onClick 
   const theme = useTheme();
   const isXsScreen = useMediaQuery(theme.breakpoints.down('sm'));
   
-  const getStatusColor = (status: string): string => {
-    return ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS] || '#757575';
-  };
-
+  // Get a shortened display label for small screens if needed
   const getStatusLabel = (status: string): string => {
-    // Map backend status to display name
-    switch (status) {
-      case 'ORDER_CREATED': return isXsScreen ? 'Created' : 'Order Created';
-      case 'APPROVED': return 'Approved';
-      case 'BOOKING': return 'Booking';
-      case 'PRODUCTION': return 'Production';
-      case 'QA': return 'QA';
-      case 'READY': return 'Ready';
-      case 'DELIVERED': return 'Delivered';
-      case 'RETURNED': return 'Returned';
-      case 'CANCELLED': return 'Cancelled';
-      // Legacy status mapping
-      case 'CREATED': return isXsScreen ? 'Created' : 'Order Created';
-      case 'IN_PROGRESS': return 'Production';
-      case 'IN_QA': return 'QA';
-      default: return status;
+    const displayStatus = getDisplayStatus(status);
+    
+    // For small screens, shorten "Order Created" to just "Created"
+    if (isXsScreen && displayStatus === 'Order Created') {
+      return 'Created';
     }
+    
+    return displayStatus;
   };
 
   return (
@@ -84,12 +73,12 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ status, count, onClick 
               Orders
             </Typography>
           </Box>
-          <Chip 
-            label={getStatusLabel(status)}
+          <StatusChip 
+            status={status}
+            customLabel={getStatusLabel(status)}
+            isOrderStatus={true}
             size="small"
             sx={{ 
-              backgroundColor: getStatusColor(status),
-              color: '#fff',
               fontWeight: 'medium',
               fontSize: { xs: '0.6rem', sm: '0.65rem' },
               height: { xs: 18, sm: 20 },

@@ -30,7 +30,7 @@ public interface OrderService {
     
     Page<OrderResponse> getOrdersByCreatedById(Long userId, Pageable pageable);
     
-    Page<OrderResponse> getOrdersByFilters(String status, LocalDate startDate, LocalDate endDate, Long marketplaceId, String customerName, Pageable pageable);
+    Page<OrderResponse> getOrdersByFilters(String orderType, String status, LocalDate startDate, LocalDate endDate, Long marketplaceId, String customerName, Pageable pageable);
     
     OrderResponse updateOrderStatus(Long id, String status, String notes, Long userId);
     

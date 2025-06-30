@@ -19,11 +19,11 @@ const OrderSummarySection: React.FC<OrderSummarySectionProps> = ({
   // Calculate total price
   const calculateTotal = (products: OrderProductFormData[], deliveryCharge: number) => {
     const productsTotal = products.reduce(
-      (sum, product) => sum + product.price * product.quantity,
+      (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
       0
     );
     
-    return productsTotal + deliveryCharge;
+    return productsTotal + (deliveryCharge || 0);
   };
 
   return (
@@ -36,17 +36,17 @@ const OrderSummarySection: React.FC<OrderSummarySectionProps> = ({
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <Typography variant="body1">
-            Products Subtotal: ${products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
+            Products Subtotal: ${products.reduce((sum, p) => sum + (p.price || 0) * (p.quantity || 0), 0).toFixed(2)}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={6}>
           <Typography variant="body1">
-            Delivery Charge: ${deliveryCharge.toFixed(2)}
+            Delivery Charge: ${(deliveryCharge || 0).toFixed(2)}
           </Typography>
         </Grid>
         <Grid item xs={12}>
           <Typography variant="h6">
-            Total: ${calculateTotal(products, deliveryCharge).toFixed(2)}
+            Total: ${calculateTotal(products, deliveryCharge || 0).toFixed(2)}
           </Typography>
         </Grid>
       </Grid>

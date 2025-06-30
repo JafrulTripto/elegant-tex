@@ -181,6 +181,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         Order newOrder = Order.builder()
                 .marketplace(sourceOrder.getMarketplace())
                 .customer(sourceOrder.getCustomer())
+                .orderType(sourceOrder.getOrderType())
                 .deliveryChannel(sourceOrder.getDeliveryChannel())
                 .deliveryCharge(sourceOrder.getDeliveryCharge())
                 .deliveryDate(sourceOrder.getDeliveryDate())
@@ -280,6 +281,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         Order order = Order.builder()
                 .marketplace(marketplace)
                 .customer(customer)
+                .orderType(orderRequest.getOrderType())
                 .deliveryChannel(orderRequest.getDeliveryChannel())
                 .deliveryCharge(orderRequest.getDeliveryCharge())
                 .deliveryDate(orderRequest.getDeliveryDate())
@@ -329,6 +331,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     private void updateOrderFields(Order order, Marketplace marketplace, Customer customer, OrderRequest orderRequest, BigDecimal totalAmount) {
         order.setMarketplace(marketplace);
         order.setCustomer(customer);
+        order.setOrderType(orderRequest.getOrderType());
         order.setDeliveryChannel(orderRequest.getDeliveryChannel());
         order.setDeliveryCharge(orderRequest.getDeliveryCharge());
         order.setDeliveryDate(orderRequest.getDeliveryDate());

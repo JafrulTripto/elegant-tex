@@ -112,6 +112,7 @@ public class OrderController {
     @GetMapping("/filter")
     @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getOrdersByFilters(
+            @RequestParam(required = false) String orderType,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -120,7 +121,7 @@ public class OrderController {
             @PageableDefault(size = 10) Pageable pageable,
             @AuthenticationPrincipal UserDetails userDetails) {
         // The user ID will be extracted in the service layer from the security context
-        Page<OrderResponse> orders = orderService.getOrdersByFilters(status, startDate, endDate, marketplaceId, customerName, pageable);
+        Page<OrderResponse> orders = orderService.getOrdersByFilters(orderType, status, startDate, endDate, marketplaceId, customerName, pageable);
         return ResponseEntity.ok(orders);
     }
 
