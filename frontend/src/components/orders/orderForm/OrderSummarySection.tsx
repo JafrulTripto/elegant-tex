@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Divider,
-  Grid,
   Typography
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { OrderProductFormData } from '../../../types/order';
 
 interface OrderSummarySectionProps {
@@ -34,17 +34,17 @@ const OrderSummarySection: React.FC<OrderSummarySectionProps> = ({
       <Divider sx={{ mb: 2 }} />
 
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{xs:12, sm:6}}>
           <Typography variant="body1">
             Products Subtotal: ${products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
           </Typography>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{xs:12, sm:6}}>
           <Typography variant="body1">
             Delivery Charge: ${deliveryCharge.toFixed(2)}
           </Typography>
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={{xs:12}}>
           <Typography variant="h6">
             Total: ${calculateTotal(products, deliveryCharge).toFixed(2)}
           </Typography>
