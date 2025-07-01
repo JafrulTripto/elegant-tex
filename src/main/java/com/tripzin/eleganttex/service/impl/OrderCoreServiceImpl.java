@@ -10,6 +10,7 @@ import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderProduct;
 import com.tripzin.eleganttex.entity.OrderStatus;
 import com.tripzin.eleganttex.entity.OrderStatusHistory;
+import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.repository.MarketplaceRepository;
@@ -60,13 +61,26 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     @Override
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
-        log.info("Creating new order for marketplace ID: {}", orderRequest.getMarketplaceId());
+        log.info("Creating new order - Type: {}, MarketplaceId: {}, CustomerId: {}", 
+                orderRequest.getOrderType(), 
+                orderRequest.getMarketplaceId(), 
+                orderRequest.getCustomerId());
         
         // Get current user
         User currentUser = getUserById(userId);
         
-        // Find marketplace
-        Marketplace marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
+        // Handle marketplace based on order type
+        Marketplace marketplace = null;
+        if (orderRequest.getOrderType() == OrderType.MARKETPLACE) {
+            // For marketplace orders, marketplace is required
+            if (orderRequest.getMarketplaceId() == null) {
+                throw new IllegalArgumentException("Marketplace ID is required for marketplace orders");
+            }
+            marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
+        } else if (orderRequest.getMarketplaceId() != null) {
+            // For merchant orders, marketplace is optional but use it if provided
+            marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
+        }
         
         // Find or create customer
         Customer customer = getOrCreateCustomer(orderRequest);
@@ -114,7 +128,8 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     @Transactional
     public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files,
                                     Long currentUserId, boolean hasReadAllPermission) {
-        log.info("Updating order with ID: {} for user ID: {}, hasReadAllPermission: {}", id, currentUserId, hasReadAllPermission);
+        log.info("Updating order with ID: {} - Type: {}, MarketplaceId: {}, CustomerId: {}", 
+                id, orderRequest.getOrderType(), orderRequest.getMarketplaceId(), orderRequest.getCustomerId());
         
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + id));
@@ -126,7 +141,19 @@ public class OrderCoreServiceImpl implements OrderCoreService {
                 "You do not have permission to update this order");
         }
         
-        Marketplace marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
+        // Handle marketplace based on order type
+        Marketplace marketplace = null;
+        if (orderRequest.getOrderType() == OrderType.MARKETPLACE) {
+            // For marketplace orders, marketplace is required
+            if (orderRequest.getMarketplaceId() == null) {
+                throw new IllegalArgumentException("Marketplace ID is required for marketplace orders");
+            }
+            marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
+        } else if (orderRequest.getMarketplaceId() != null) {
+            // For merchant orders, marketplace is optional but use it if provided
+            marketplace = getMarketplaceById(orderRequest.getMarketplaceId());
+        }
+        
         Customer customer = getOrCreateCustomer(orderRequest);
         BigDecimal totalAmount = calculationService.calculateTotalFromRequests(orderRequest.getProducts())
                 .add(orderRequest.getDeliveryCharge());
@@ -245,8 +272,13 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     
     /**
      * Get marketplace by ID
+     * @param marketplaceId the marketplace ID, can be null for merchant orders
+     * @return the marketplace, or null if marketplaceId is null
      */
     private Marketplace getMarketplaceById(Long marketplaceId) {
+        if (marketplaceId == null) {
+            return null;
+        }
         return marketplaceRepository.findById(marketplaceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Marketplace not found with ID: " + marketplaceId));
     }
