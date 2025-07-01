@@ -42,6 +42,9 @@ import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
 
+// Constant for the "All" filter option
+const ALL_FILTER = 'ALL';
+
 const OrdersPage: React.FC = () => {
   const theme = useTheme();
   const isXsScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -65,29 +68,38 @@ const OrdersPage: React.FC = () => {
   ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [filters, setFilters] = useState<OrderFilterParams>({});
+  const [filters, setFilters] = useState<OrderFilterParams>({ orderType: undefined });
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const sort = sortModel.length > 0 
+      const sort = sortModel && sortModel.length > 0 && sortModel[0]
         ? `${sortModel[0].field},${sortModel[0].sort}` 
         : 'createdAt,desc';
       
       const response = await orderService.getOrdersByFilters({
         ...filters,
-        page: paginationModel.page,
-        size: paginationModel.pageSize,
+        page: paginationModel?.page || 0,
+        size: paginationModel?.pageSize || 10,
         sort
       });
-      setOrders(response.content);
-      setTotalItems(response.totalElements);
-      setError(null);
+      
+      if (response && response.content) {
+        setOrders(response.content);
+        setTotalItems(response.totalElements || 0);
+        setError(null);
+      } else {
+        setOrders([]);
+        setTotalItems(0);
+        setError('No data received from server.');
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       setError('Failed to load orders. Please try again.');
+      setOrders([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -96,17 +108,27 @@ const OrdersPage: React.FC = () => {
   const fetchStatusCounts = async () => {
     try {
       const counts = await orderService.getOrderStatusCounts();
-      setStatusCounts(counts);
+      if (counts) {
+        setStatusCounts(counts);
+      } else {
+        setStatusCounts([]);
+      }
     } catch (error) {
       console.error('Error fetching status counts:', error);
       setError('Failed to load status counts. Please try again.');
+      setStatusCounts([]);
     }
   };
 
   useEffect(() => {
     fetchOrders();
     fetchStatusCounts();
-  }, [paginationModel.page, paginationModel.pageSize, sortModel, filters]);
+  }, [
+    paginationModel?.page, 
+    paginationModel?.pageSize, 
+    sortModel, 
+    filters
+  ]);
 
   // Update pagination model when screen size changes
   useEffect(() => {
@@ -125,6 +147,7 @@ const OrdersPage: React.FC = () => {
   };
 
   const handleDeleteClick = (order: Order) => {
+    if (!order) return;
     setSelectedOrder(order);
     setDeleteDialogOpen(true);
   };
@@ -149,23 +172,32 @@ const OrdersPage: React.FC = () => {
 
   const handleOrderTypeChange = (
     _: React.MouseEvent<HTMLElement>,
-    newOrderType: OrderType | null
+    newOrderType: OrderType | string | null
   ) => {
-    // Convert null to undefined for the filter
-    setFilters({ ...filters, orderType: newOrderType || undefined });
+    // If ALL_FILTER is selected or null, set orderType to undefined (show all)
+    const orderTypeFilter = newOrderType === ALL_FILTER ? undefined : newOrderType as OrderType | undefined;
+    
+    if (filters) {
+      setFilters({ ...filters, orderType: orderTypeFilter });
+    } else {
+      setFilters({ orderType: orderTypeFilter });
+    }
   };
 
   const handleExportExcel = async () => {
     try {
       const blob = await orderService.generateOrdersExcel(
-        filters.status as OrderStatus | undefined,
-        filters.startDate,
-        filters.endDate
+        filters?.status as OrderStatus | undefined,
+        filters?.startDate,
+        filters?.endDate
       );
       
-      orderService.downloadBlob(blob, 'orders.xlsx');
+      if (blob) {
+        orderService.downloadBlob(blob, 'orders.xlsx');
+      }
     } catch (error) {
       console.error('Error exporting orders to Excel:', error);
+      setError('Failed to export orders. Please try again.');
     }
   };
 
@@ -183,8 +215,10 @@ const OrdersPage: React.FC = () => {
         flex: 1,
         minWidth: 120,
         valueGetter: (params: any) => {
-          const marketplace = params.name;
-          return marketplace ?? '';
+          if (!params) {
+            return 'Direct Merchant';
+          }
+          return params.name;
         }
       },
       { 
@@ -193,8 +227,11 @@ const OrdersPage: React.FC = () => {
         flex: 1,
         minWidth: 120,
         valueGetter: (params: any) => {
-          const customer = params.name;
-          return customer ?? '';
+          // Check if params and params.row exist first
+          if (!params) {
+            return '';
+          }
+          return params.name;
         }
       },
       { 
@@ -217,14 +254,19 @@ const OrdersPage: React.FC = () => {
         headerName: 'Status', 
         flex: 0.8,
         minWidth: 100,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip
-            status={params.value as string}
-            isOrderStatus={true}
-            size="small"
-            sx={{ fontSize: '0.7rem', height: 24 }}
-          />
-        )
+        renderCell: (params: GridRenderCellParams) => {
+          if (!params || params.value === undefined || params.value === null) {
+            return null;
+          }
+          return (
+            <StatusChip
+              status={params.value as string}
+              isOrderStatus={true}
+              size="small"
+              sx={{ fontSize: '0.7rem', height: 24 }}
+            />
+          );
+        }
       },
       { 
         field: 'createdAt', 
@@ -247,41 +289,48 @@ const OrdersPage: React.FC = () => {
         flex: 0.7,
         minWidth: 100,
         sortable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Tooltip title="View">
-              <IconButton
-                component={RouterLink}
-                to={`/orders/${params.row.id}`}
-                size="small"
-              >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            {authState.user?.roles?.includes('ORDER_UPDATE') && !isXsScreen && (
-              <Tooltip title="Edit">
+        renderCell: (params: GridRenderCellParams) => {
+          // Check if params and params.row exist first
+          if (!params || !params.row) {
+            return null;
+          }
+          
+          return (
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <Tooltip title="View">
                 <IconButton
                   component={RouterLink}
-                  to={`/orders/${params.row.id}/edit`}
+                  to={`/orders/${params.row.id}`}
                   size="small"
                 >
-                  <EditIcon fontSize="small" />
+                  <VisibilityIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-            )}
-            {authState.user?.roles?.includes('ORDER_DELETE') && !isXsScreen && (
-              <Tooltip title="Delete">
-                <IconButton
-                  onClick={() => handleDeleteClick(params.row)}
-                  size="small"
-                  color="error"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        )
+              {authState.user?.roles?.includes('ORDER_UPDATE') && !isXsScreen && (
+                <Tooltip title="Edit">
+                  <IconButton
+                    component={RouterLink}
+                    to={`/orders/${params.row.id}/edit`}
+                    size="small"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {authState.user?.roles?.includes('ORDER_DELETE') && !isXsScreen && (
+                <Tooltip title="Delete">
+                  <IconButton
+                    onClick={() => handleDeleteClick(params.row)}
+                    size="small"
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+          );
+        }
       }
     ];
     
@@ -343,7 +392,7 @@ const OrdersPage: React.FC = () => {
                 width={{ xs: '100%', sm: 'auto' }}
               >
                 <ToggleButtonGroup
-                  value={filters.orderType || null}
+                  value={filters.orderType || ALL_FILTER}
                   exclusive
                   onChange={handleOrderTypeChange}
                   aria-label="order type filter"
@@ -356,6 +405,9 @@ const OrdersPage: React.FC = () => {
                     }
                   }}
                 >
+                  <ToggleButton value={ALL_FILTER}>
+                    All
+                  </ToggleButton>
                   <ToggleButton value={OrderType.MARKETPLACE}>
                     Marketplace
                   </ToggleButton>
@@ -391,11 +443,11 @@ const OrdersPage: React.FC = () => {
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={theme.customSpacing.item}>
               {statusCounts.map((statusCount) => (
-                <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={statusCount.status}>
+                <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={statusCount?.status || 'unknown'}>
                   <OrderStatsCard
-                    status={statusCount.status}
-                    count={statusCount.count}
-                    onClick={() => setFilters({ ...filters, status: statusCount.status as OrderStatus })}
+                    status={statusCount?.status || ''}
+                    count={statusCount?.count || 0}
+                    onClick={() => setFilters({ ...filters, status: statusCount?.status as OrderStatus })}
                   />
                 </Grid>
               ))}
@@ -435,7 +487,7 @@ const OrdersPage: React.FC = () => {
                 }}
                 disableRowSelectionOnClick
                 loading={loading}
-                getRowId={(row) => row.id}
+                getRowId={(row) => row?.id || ''}
                 sx={{
                   '& .MuiDataGrid-cell': {
                     fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
@@ -474,8 +526,8 @@ const OrdersPage: React.FC = () => {
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
           onConfirm={handleDeleteConfirm}
-          orderNumber={selectedOrder.orderNumber}
-          orderCustomerName={selectedOrder.customer?.name}
+          orderNumber={selectedOrder.orderNumber || ''}
+          orderCustomerName={selectedOrder.customer?.name || ''}
           loading={loading}
         />
       )}
