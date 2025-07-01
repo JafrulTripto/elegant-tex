@@ -44,7 +44,7 @@ public class OrderResponse {
     public static class MarketplaceResponse {
         private Long id;
         private String name;
-        private String description;
+        private String pageUrl;  // Changed from description to match frontend expectations
     }
     
     @Data

@@ -607,7 +607,7 @@ const OrderDetailPage: React.FC = () => {
                 <Grid size={{ xs: 8 }}>
                   <Chip
                     label={ORDER_TYPE_DISPLAY[order.orderType] || order.orderType}
-                    color={order.orderType === OrderType.MARKETPLACE ? "primary" : "secondary"}
+                    color={order.orderType.toUpperCase() === OrderType.MARKETPLACE ? "primary" : "secondary"}
                     sx={{ 
                       fontWeight: 'medium',
                       fontSize: '0.85rem',
@@ -616,21 +616,6 @@ const OrderDetailPage: React.FC = () => {
                     }}
                   />
                 </Grid>
-                
-                {order.marketplace && (
-                  <>
-                    <Grid size={{ xs: 4 }}>
-                      <Typography variant="body2" color="textSecondary">
-                        Marketplace
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 8 }}>
-                      <Typography variant="body1">
-                        {order.marketplace.name}
-                      </Typography>
-                    </Grid>
-                  </>
-                )}
                 
                 <Grid size={{ xs: 4 }}>
                   <Typography variant="body2" color="textSecondary">
@@ -667,6 +652,7 @@ const OrderDetailPage: React.FC = () => {
               </Grid>
             </Paper>
             
+
             {/* Order Summary */}
             <Paper sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography 
@@ -729,6 +715,60 @@ const OrderDetailPage: React.FC = () => {
           
           {/* Right Column - Products */}
           <Grid size={{ xs: 12, md: 6 }}>
+            {/* Marketplace Details - Only shown for marketplace orders */}
+            {order.orderType.toUpperCase() === OrderType.MARKETPLACE && (
+              <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}>
+                <Typography 
+                  variant="h6" 
+                  gutterBottom
+                  sx={{ fontSize: { xs: '1rem', sm: '1.15rem', md: '1.25rem' } }}
+                >
+                  Marketplace Details
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                
+                {order.marketplace ? (
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 4 }}>
+                      <Typography variant="body2" color="textSecondary">
+                        Name
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 8 }}>
+                      <Typography variant="body1">
+                        {order.marketplace.name}
+                      </Typography>
+                    </Grid>
+                    
+                    <Grid size={{ xs: 4 }}>
+                      <Typography variant="body2" color="textSecondary">
+                        Page URL
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 8 }}>
+                      <Typography variant="body1">
+                        <a 
+                          href={order.marketplace.pageUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ 
+                            color: theme.palette.primary.main,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          {order.marketplace.pageUrl}
+                        </a>
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                ) : (
+                  <Typography variant="body1" color="text.secondary">
+                    No marketplace information available for this order.
+                  </Typography>
+                )}
+              </Paper>
+            )}
+            
             <Paper sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography 
                 variant="h6" 
