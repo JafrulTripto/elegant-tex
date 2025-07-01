@@ -38,7 +38,7 @@ public class OrderMapper {
             marketplaceResponse = OrderResponse.MarketplaceResponse.builder()
                     .id(order.getMarketplace().getId())
                     .name(order.getMarketplace().getName())
-                    .description(order.getMarketplace().getPageUrl())
+                    .pageUrl(order.getMarketplace().getPageUrl())
                     .build();
         }
         

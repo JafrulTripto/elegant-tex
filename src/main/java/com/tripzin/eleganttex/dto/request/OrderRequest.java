@@ -42,7 +42,7 @@ public class OrderRequest {
     }
     
     // Custom validation to ensure marketplaceId is provided for marketplace orders
-    @AssertTrue(message = "Marketplace ID is required for marketplace orders")
+    @AssertTrue(message = "Marketplace ID is required for marketplace orders but optional for merchant orders")
     private boolean isMarketplaceValid() {
         // If it's a merchant order, no marketplace is needed
         if (orderType == OrderType.MERCHANT) {

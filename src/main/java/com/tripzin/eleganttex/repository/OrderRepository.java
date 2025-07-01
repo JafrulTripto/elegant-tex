@@ -55,7 +55,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "(:status IS NULL OR o.status = :status) AND " +
            "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
            "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +
-           "(:marketplaceId IS NULL OR (:orderType = com.tripzin.eleganttex.entity.OrderType.MARKETPLACE AND o.marketplace.id = :marketplaceId)) AND " +
+           "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
            "(:customerName IS NULL OR LOWER(CAST(c.name as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%')))")
     Page<Order> findByOrderTypeAndFilters(
             @Param("orderType") OrderType orderType,

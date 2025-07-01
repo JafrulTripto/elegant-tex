@@ -223,8 +223,20 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
     private List<Map<String, Object>> calculateMarketplaceOrderStatistics(List<Order> orders) {
         // Group orders by marketplace and calculate statistics
         Map<Long, Map<String, Object>> marketplaceStatsMap = new HashMap<>();
+        Map<String, Object> merchantOrderStats = new HashMap<>();
+        merchantOrderStats.put("marketplaceId", null);
+        merchantOrderStats.put("name", "Direct Merchant");
+        merchantOrderStats.put("totalAmount", BigDecimal.ZERO);
         
         for (Order order : orders) {
+            // Skip orders without a marketplace (merchant orders)
+            if (order.getMarketplace() == null) {
+                // Add to merchant orders category
+                BigDecimal totalAmount = (BigDecimal) merchantOrderStats.get("totalAmount");
+                merchantOrderStats.put("totalAmount", totalAmount.add(order.getTotalAmount()));
+                continue;
+            }
+            
             Long marketplaceId = order.getMarketplace().getId();
             
             // Initialize marketplace stats if not exists
@@ -242,6 +254,11 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
             BigDecimal totalAmount = (BigDecimal) marketplaceStats.get("totalAmount");
             
             marketplaceStats.put("totalAmount", totalAmount.add(order.getTotalAmount()));
+        }
+        
+        // Add merchant orders to the result if there are any
+        if (!((BigDecimal) merchantOrderStats.get("totalAmount")).equals(BigDecimal.ZERO)) {
+            marketplaceStatsMap.put(-1L, merchantOrderStats);
         }
         
         // Convert map to list and sort by total amount (descending)
