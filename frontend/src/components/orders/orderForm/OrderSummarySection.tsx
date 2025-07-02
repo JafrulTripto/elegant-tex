@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { OrderProductFormData } from '../../../types/order';
+import TakaSymble from '@/components/common/TakaSymble';
 
 interface OrderSummarySectionProps {
   products: OrderProductFormData[];
@@ -36,17 +37,17 @@ const OrderSummarySection: React.FC<OrderSummarySectionProps> = ({
       <Grid container spacing={2}>
         <Grid size={{xs:12, sm:6}}>
           <Typography variant="body1">
-            Products Subtotal: ${products.reduce((sum, p) => sum + (p.price || 0) * (p.quantity || 0), 0).toFixed(2)}
+            Products Subtotal: <TakaSymble/>  {products.reduce((sum, p) => sum + (p.price || 0) * (p.quantity || 0), 0).toFixed(2)}
           </Typography>
         </Grid>
         <Grid size={{xs:12, sm:6}}>
           <Typography variant="body1">
-            Delivery Charge: ${(deliveryCharge || 0).toFixed(2)}
+            Delivery Charge: <TakaSymble/>  {(deliveryCharge || 0).toFixed(2)}
           </Typography>
         </Grid>
         <Grid size={{xs:12}}>
           <Typography variant="h6">
-            Total: ${calculateTotal(products, deliveryCharge || 0).toFixed(2)}
+            Total: <TakaSymble/>  {calculateTotal(products, deliveryCharge || 0).toFixed(2)}
           </Typography>
         </Grid>
       </Grid>

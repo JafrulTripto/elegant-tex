@@ -17,6 +17,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { Field, FieldProps } from 'formik';
 import { DELIVERY_CHANNELS } from '../../../types/order';
+import TakaSymble from '@/components/common/TakaSymble';
 
 interface DeliveryInformationSectionProps {
   values: {
@@ -76,7 +77,7 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
                 type="number"
                 slotProps={{
                   input: {
-                    startAdornment:(<InputAdornment position="start"> ৳</InputAdornment>),
+                    startAdornment:(<InputAdornment position="start"> <TakaSymble/>  </InputAdornment>),
                   }
                 }}
                 error={meta.touched && Boolean(meta.error)}
