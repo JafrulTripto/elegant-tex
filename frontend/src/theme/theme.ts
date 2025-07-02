@@ -286,7 +286,7 @@ const lightPalette = {
     dark: '#EC407A', // Dark pink
   },
   error: {
-    main: '#d32f2f',
+    main: '#F7374F',
   },
   warning: {
     main: '#ed6c02',
@@ -295,7 +295,7 @@ const lightPalette = {
     main: '#E1BEE7', // Light lavender for info
   },
   success: {
-    main: '#2e7d32',
+    main: '#36AE7C',
   },
   background: {
     default: '#F5F5F5',
@@ -321,7 +321,7 @@ const darkPalette = {
     dark: '#9A2D63', // Dark magenta
   },
   error: {
-    main: '#f44336',
+    main: '#F7374F',
   },
   warning: {
     main: '#ffa726',
@@ -330,7 +330,7 @@ const darkPalette = {
     main: '#F8BBD0', // Light pink for info
   },
   success: {
-    main: '#66bb6a',
+    main: '#36AE7C',
   },
   background: {
     default: '#1B1E2B', // Very dark blue-purple background (Palenight-inspired)
