@@ -1,5 +1,5 @@
 import React from 'react';
-import { TableHead, TableRow, TableCell, Box } from '@mui/material';
+import { TableHead, TableRow, TableCell, Box, SxProps, Theme } from '@mui/material';
 import { ArrowUpward as ArrowUpIcon, ArrowDownward as ArrowDownIcon } from '@mui/icons-material';
 
 export interface Column {
@@ -15,13 +15,15 @@ interface SortableTableHeadProps {
   sortBy: string;
   sortDir: 'asc' | 'desc';
   onSort: (column: string) => void;
+  headerRowSx?: SxProps<Theme>;
 }
 
 const SortableTableHead: React.FC<SortableTableHeadProps> = ({
   columns,
   sortBy,
   sortDir,
-  onSort
+  onSort,
+  headerRowSx
 }) => {
   // Render sort icon
   const renderSortIcon = (column: string) => {
@@ -36,7 +38,7 @@ const SortableTableHead: React.FC<SortableTableHeadProps> = ({
 
   return (
     <TableHead>
-      <TableRow>
+      <TableRow sx={headerRowSx}>
         {columns.map((column) => (
           <TableCell
             key={column.id}

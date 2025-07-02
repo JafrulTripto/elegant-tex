@@ -7,7 +7,6 @@ import {
   Paper,
   Typography,
   Tooltip,
-  Stack,
   Snackbar,
   Alert,
   useMediaQuery,
@@ -30,7 +29,8 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FileDownload as FileDownloadIcon
+  FileDownload as FileDownloadIcon,
+  ShoppingCart as OrdersIcon
 } from '@mui/icons-material';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
@@ -353,6 +353,64 @@ const OrdersPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
       <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
+        {/* Header Section - Similar to Settings Page */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            mb: 2,
+            pb: 1,
+            borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <OrdersIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography 
+                variant="h5" 
+                component="h1"
+                sx={{ fontWeight: 500 }}
+              >
+                Orders
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={isXsScreen ? null : <AddIcon />}
+              component={RouterLink}
+              to="/orders/new"
+              sx={{ 
+                height: { xs: 36, sm: 40 },
+                px: { xs: 1.5, sm: 2 }
+              }}
+            >
+              {isXsScreen ? 'New' : 'New Order'}
+            </Button>
+          </Box>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ ml: { sm: 4 } }}
+          >
+            Manage your orders and track their status
+            {!hasViewAllOrdersPermission && (
+              <Typography 
+                component="span" 
+                variant="body2" 
+                color="warning.main"
+                sx={{ ml: 1, fontStyle: 'italic' }}
+              >
+                (viewing only your orders)
+              </Typography>
+            )}
+          </Typography>
+        </Box>
+
         <Grid container spacing={{ xs: 2, sm: 3 }}>
           <Grid size={{ xs: 12 }}>
             <Box 
@@ -365,32 +423,7 @@ const OrdersPage: React.FC = () => {
               }}
             >
               <Box>
-                <Typography 
-                  variant="h4" 
-                  component="h1" 
-                  gutterBottom
-                  sx={{ 
-                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-                    mb: { xs: 0.5, sm: 1 }
-                  }}
-                >
-                  Orders
-                </Typography>
-                {!hasViewAllOrdersPermission && (
-                  <Typography 
-                    variant="subtitle2" 
-                    color="text.secondary"
-                    sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
-                  >
-                    You are viewing only orders created by you. Contact an administrator for access to all orders.
-                  </Typography>
-                )}
-              </Box>
-              <Stack 
-                direction={{ xs: 'column', sm: 'row' }} 
-                spacing={{ xs: 1, sm: 2 }}
-                width={{ xs: '100%', sm: 'auto' }}
-              >
+                {/* Order type filter */}
                 <ToggleButtonGroup
                   value={filters.orderType || ALL_FILTER}
                   exclusive
@@ -415,27 +448,15 @@ const OrdersPage: React.FC = () => {
                     Merchant
                   </ToggleButton>
                 </ToggleButtonGroup>
-                <Button
-                  variant="outlined"
-                  startIcon={isXsScreen ? null : <FileDownloadIcon />}
-                  onClick={handleExportExcel}
-                  fullWidth
-                  sx={{ width: { sm: 'auto' } }}
-                >
-                  {isXsScreen ? 'Export' : 'Export to Excel'}
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={isXsScreen ? null : <AddIcon />}
-                  component={RouterLink}
-                  to="/orders/new"
-                  fullWidth
-                  sx={{ width: { sm: 'auto' } }}
-                >
-                  {isXsScreen ? 'New' : 'New Order'}
-                </Button>
-              </Stack>
+              </Box>
+              <Button
+                variant="outlined"
+                startIcon={isXsScreen ? null : <FileDownloadIcon />}
+                onClick={handleExportExcel}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
+                {isXsScreen ? 'Export' : 'Export to Excel'}
+              </Button>
             </Box>
           </Grid>
 

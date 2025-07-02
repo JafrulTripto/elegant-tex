@@ -56,14 +56,14 @@ export const styleUtils = {
     flexDirection: 'column',
     alignItems: 'center',
     borderRadius: 2,
-    borderTop: (theme: Theme) => `4px solid ${theme.customColors.navyBlue}`,
+    borderTop: (theme: Theme) => `4px solid ${theme.customColors.lightMagenta}`,
     borderBottom: (theme: Theme) => `4px solid ${theme.customColors.pink}`,
   } as SxProps<Theme>,
   
   // Logo avatar styling
   logoAvatar: {
     m: 1,
-    bgcolor: (theme: Theme) => theme.customColors.teal,
+    bgcolor: (theme: Theme) => theme.customColors.darkPink,
     width: 56,
     height: 56,
   } as SxProps<Theme>,
@@ -79,10 +79,10 @@ export const styleUtils = {
     mt: 3,
     mb: 2,
     background: (theme: Theme) => 
-      `linear-gradient(45deg, ${theme.customColors.navyBlue} 30%, ${theme.customColors.pink} 90%)`,
+      `linear-gradient(45deg, ${theme.customColors.darkMagenta} 30%, ${theme.customColors.darkMagenta} 90%)`,
     '&:hover': {
       background: (theme: Theme) => 
-        `linear-gradient(45deg, ${theme.customColors.navyBlueDark} 30%, ${theme.customColors.pinkDark} 90%)`,
+        `linear-gradient(45deg, ${theme.customColors.darkMagenta} 30%, ${theme.customColors.darkPink} 90%)`,
     },
   } as SxProps<Theme>,
   
@@ -104,14 +104,14 @@ export const styleUtils = {
         ? theme.customColors.lightGray
         : '#253547',
     borderTop: (theme: Theme) => 
-      `2px solid ${theme.customColors.teal}`,
+      `2px solid ${theme.customColors.darkMagenta}`,
   } as SxProps<Theme>,
   
   // Footer text styling
   footerText: {
     color: (theme: Theme) => 
       theme.palette.mode === 'light'
-        ? theme.customColors.navyBlue
+        ? theme.customColors.darkMagenta
         : theme.customColors.lightGray,
   } as SxProps<Theme>,
   
@@ -119,14 +119,14 @@ export const styleUtils = {
   appBar: (drawerWidth: number): SxProps<Theme> => ({
     width: { sm: `calc(100% - ${drawerWidth}px)` },
     ml: { sm: `${drawerWidth}px` },
-    bgcolor: (theme: Theme) => theme.customColors.navyBlue,
+    bgcolor: (theme: Theme) => theme.customColors.darkMagenta,
   }),
   
   // Accent button styling (teal)
   accentButton: {
-    bgcolor: (theme: Theme) => theme.customColors.teal,
+    bgcolor: (theme: Theme) => theme.customColors.darkMagenta,
     '&:hover': {
-      bgcolor: (theme: Theme) => theme.customColors.tealDark,
+      bgcolor: (theme: Theme) => theme.customColors.darkMagenta,
     },
   } as SxProps<Theme>,
 };
@@ -174,11 +174,11 @@ export const useAuthStyles = (theme: Theme) => {
       mb: 2,
       background: isDisabled
         ? theme.palette.action.disabledBackground
-        : `linear-gradient(45deg, ${theme.customColors.navyBlue} 30%, ${theme.customColors.pink} 90%)`,
+        : `linear-gradient(45deg, ${theme.customColors.darkMagenta} 30%, ${theme.customColors.pink} 90%)`,
       '&:hover': {
         background: isDisabled
           ? theme.palette.action.disabledBackground
-          : `linear-gradient(45deg, ${theme.customColors.navyBlueDark} 30%, ${theme.customColors.pinkDark} 90%)`,
+          : `linear-gradient(45deg, ${theme.customColors.darkMagenta} 30%, ${theme.customColors.darkPink} 90%)`,
       },
     }),
   };

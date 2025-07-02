@@ -635,7 +635,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
-                    ৳{order.deliveryCharge.toFixed(2)}
+                    ${order.deliveryCharge.toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -672,7 +672,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="body1" align="right">
-                    ৳{order.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
+                    ${order.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -683,7 +683,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="body1" align="right">
-                    ৳{order.deliveryCharge.toFixed(2)}
+                    ${order.deliveryCharge.toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -698,7 +698,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle1" fontWeight="bold" align="right">
-                    ৳{calculateTotal().toFixed(2)}
+                    ${calculateTotal().toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -799,7 +799,7 @@ const OrderDetailPage: React.FC = () => {
                         Product #{index + 1}: {product.productType}
                       </Typography>
                       <Chip 
-                        label={`Tk ${(product.price * product.quantity).toFixed(2)}`}
+                        label={`$${(product.price * product.quantity).toFixed(2)}`}
                         color="primary"
                         size="small"
                         sx={{ fontWeight: 'bold' }}

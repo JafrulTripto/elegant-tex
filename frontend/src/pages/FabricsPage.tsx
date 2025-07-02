@@ -17,7 +17,8 @@ import { layoutUtils } from '../theme/styleUtils';
 import { 
   Add as AddIcon, 
   Close as CloseIcon, 
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Layers as FabricIcon
 } from '@mui/icons-material';
 import FabricList from '../components/fabrics/FabricList';
 import FabricForm from '../components/fabrics/FabricForm';
@@ -233,32 +234,51 @@ const FabricsPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
       <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
-        {/* Header */}
-        <Box sx={{ 
-          ...layoutUtils.spaceBetweenFlex, 
-          mb: theme.customSpacing.section,
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: { xs: 1, sm: 0 }
-        }}>
+        {/* Header Section - Similar to Settings Page */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            mb: 2,
+            pb: 1,
+            borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <FabricIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography 
+                variant="h5" 
+                component="h1"
+                sx={{ fontWeight: 500 }}
+              >
+                Fabrics
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleCreateClick}
+              sx={{ 
+                height: { xs: 36, sm: 40 },
+                px: { xs: 1.5, sm: 2 }
+              }}
+            >
+              Add Fabric
+            </Button>
+          </Box>
           <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{ 
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-              mb: { xs: 0.5, sm: 0 }
-            }}
+            variant="body2" 
+            color="text.secondary"
+            sx={{ ml: { sm: 4 } }}
           >
-            Fabrics
+            Manage your fabric inventory and materials
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleCreateClick}
-          >
-            Add Fabric
-          </Button>
         </Box>
         
         {/* Error Alert */}
@@ -341,6 +361,8 @@ const FabricsPage: React.FC = () => {
                 onPageChange={handlePageChange}
                 onPageSizeChange={(e) => handlePageSizeChange(e as any)}
                 pageSizeOptions={[4, 8, 12, 20]}
+                variant="enhanced"
+                elevation={1}
               />
             </Box>
           </>
@@ -356,7 +378,7 @@ const FabricsPage: React.FC = () => {
           <DialogTitle
           sx={{
             background: (theme) => 
-              `linear-gradient(45deg, ${theme.customColors.navyBlue} 30%, ${theme.customColors.teal} 90%)`,
+              `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
             color: 'white',
             borderRadius: '4px 4px 0 0',
             position: 'relative',
