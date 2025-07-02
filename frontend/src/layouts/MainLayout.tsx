@@ -81,8 +81,11 @@ const MainLayout: React.FC = () => {
     }
   };
 
-  const navStyle = (path: string) =>{
-    return {color : isActive(path) ? theme.customColors.pinkDark : 'inherit' }
+  const navStyle = (path: string) => {
+    return {
+      color: isActive(path) ? theme.palette.primary.main : 'inherit',
+      fontWeight: isActive(path) ? 600 : 400,
+    }
   }
   
   const hasAdminDashboardPermission = 
@@ -99,78 +102,150 @@ const MainLayout: React.FC = () => {
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton onClick={() => handleNavigate('/dashboard')}>
+          <ListItemButton 
+            onClick={() => handleNavigate('/dashboard')}
+            sx={isActive('/dashboard') ? {
+              backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              paddingLeft: 2, // Ensure consistent padding
+            } : {
+              paddingLeft: 2, // Ensure consistent padding
+            }}
+          >
             <ListItemIcon color="secondary">
               <DashboardIcon style={navStyle('/dashboard')}/>
             </ListItemIcon>
-            <ListItemText primary="Dashboard" />
+            <ListItemText primary="Dashboard" sx={navStyle('/dashboard')} />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton onClick={() => handleNavigate('/profile')}>
+          <ListItemButton 
+            onClick={() => handleNavigate('/profile')}
+            sx={isActive('/profile') ? {
+              backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              paddingLeft: 2, // Ensure consistent padding
+            } : {
+              paddingLeft: 2, // Ensure consistent padding
+            }}
+          >
             <ListItemIcon color="secondary">
               <PersonIcon style={navStyle('/profile')}/>
             </ListItemIcon>
-            <ListItemText primary="Profile" />
+            <ListItemText primary="Profile" sx={navStyle('/profile')} />
           </ListItemButton>
         </ListItem>
         {(authState.user?.permissions?.includes('MARKETPLACE_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigate('/marketplaces')}>
+            <ListItemButton 
+              onClick={() => handleNavigate('/marketplaces')}
+              sx={isActive('/marketplaces') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
               <ListItemIcon color="secondary">
                 <StorefrontIcon style={navStyle('/marketplaces')}/>
               </ListItemIcon>
-              <ListItemText primary="Marketplaces" />
+              <ListItemText primary="Marketplaces" sx={navStyle('/marketplaces')} />
             </ListItemButton>
           </ListItem>
         )}
         {(authState.user?.permissions?.includes('FABRIC_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigate('/fabrics')}>
+            <ListItemButton 
+              onClick={() => handleNavigate('/fabrics')}
+              sx={isActive('/fabrics') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
               <ListItemIcon color="secondary">
                 <CategoryIcon style={navStyle('/fabrics')}/>
               </ListItemIcon>
-              <ListItemText primary="Fabrics" />
+              <ListItemText primary="Fabrics" sx={navStyle('/fabrics')} />
             </ListItemButton>
           </ListItem>
         )}
         {(authState.user?.permissions?.includes('ORDER_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigate('/orders')}>
+            <ListItemButton 
+              onClick={() => handleNavigate('/orders')}
+              sx={isActive('/orders') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
               <ListItemIcon color="secondary">
                 <ShoppingCartIcon style={navStyle('/orders')}/>
               </ListItemIcon>
-              <ListItemText primary="Orders" />
+              <ListItemText primary="Orders" sx={navStyle('/orders')} />
             </ListItemButton>
           </ListItem>
         )}
         {(authState.user?.permissions?.includes('CUSTOMER_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigate('/customers')}>
+            <ListItemButton 
+              onClick={() => handleNavigate('/customers')}
+              sx={isActive('/customers') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
               <ListItemIcon color="secondary">
                 <ContactPhoneIcon style={navStyle('/customers')}/>
               </ListItemIcon>
-              <ListItemText primary="Customers" />
+              <ListItemText primary="Customers" sx={navStyle('/customers')} />
             </ListItemButton>
           </ListItem>
         )}
         {authState.user?.roles.includes('ROLE_ADMIN') && (
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigate('/admin/users')}>
+            <ListItemButton 
+              onClick={() => handleNavigate('/admin/users')}
+              sx={isActive('/admin/users') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
               <ListItemIcon color="secondary">
                 <PeopleIcon style={navStyle('/admin/users')}/>
               </ListItemIcon>
-              <ListItemText primary="User Management" />
+              <ListItemText primary="User Management" sx={navStyle('/admin/users')} />
             </ListItemButton>
           </ListItem>
         )}
         {hasAdminDashboardPermission && (
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigate('/admin/settings')}>
+            <ListItemButton 
+              onClick={() => handleNavigate('/admin/settings')}
+              sx={isActive('/admin/settings') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
               <ListItemIcon color="secondary">
                 <SettingsIcon style={navStyle('/admin/settings')}/>
               </ListItemIcon>
-              <ListItemText primary="Settings" />
+              <ListItemText primary="Settings" sx={navStyle('/admin/settings')} />
             </ListItemButton>
           </ListItem>
         )}

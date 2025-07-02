@@ -38,15 +38,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('themeMode', mode);
     
-    // Set CSS variables for scrollbar colors based on theme
+    // Set CSS variables for scrollbar colors based on theme - frosted glass effect
     if (mode === 'dark') {
-      document.documentElement.style.setProperty('--scrollbar-track', '#1A2533');
-      document.documentElement.style.setProperty('--scrollbar-thumb', '#3FC1C9');
-      document.documentElement.style.setProperty('--scrollbar-thumb-hover', '#2D9BA2');
+      document.documentElement.style.setProperty('--scrollbar-track', 'rgba(255, 255, 255, 0.03)'); // Very subtle track
+      document.documentElement.style.setProperty('--scrollbar-thumb', 'rgba(255, 255, 255, 0.15)'); // Frosted glass effect
+      document.documentElement.style.setProperty('--scrollbar-thumb-hover', 'rgba(255, 255, 255, 0.25)'); // More visible on hover
     } else {
-      document.documentElement.style.setProperty('--scrollbar-track', '#f1f1f1');
-      document.documentElement.style.setProperty('--scrollbar-thumb', '#888');
-      document.documentElement.style.setProperty('--scrollbar-thumb-hover', '#555');
+      document.documentElement.style.setProperty('--scrollbar-track', 'rgba(0, 0, 0, 0.03)'); // Very subtle track
+      document.documentElement.style.setProperty('--scrollbar-thumb', 'rgba(0, 0, 0, 0.15)'); // Frosted glass effect
+      document.documentElement.style.setProperty('--scrollbar-thumb-hover', 'rgba(0, 0, 0, 0.25)'); // More visible on hover
     }
   }, [mode]);
 

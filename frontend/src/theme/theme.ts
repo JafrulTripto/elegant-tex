@@ -5,13 +5,15 @@ import { PaletteMode } from '@mui/material';
 declare module '@mui/material/styles' {
   interface Theme {
     customColors: {
-      navyBlue: string;
-      teal: string;
-      lightGray: string;
+      magenta: string;
+      lightMagenta: string;
+      darkMagenta: string;
       pink: string;
-      navyBlueDark: string;
-      tealDark: string;
-      pinkDark: string;
+      lightPink: string;
+      darkPink: string;
+      lavender: string;
+      cream: string;
+      lightGray: string;
     };
     customSpacing: {
       container: number;
@@ -22,13 +24,15 @@ declare module '@mui/material/styles' {
   }
   interface ThemeOptions {
     customColors?: {
-      navyBlue?: string;
-      teal?: string;
-      lightGray?: string;
+      magenta?: string;
+      lightMagenta?: string;
+      darkMagenta?: string;
       pink?: string;
-      navyBlueDark?: string;
-      tealDark?: string;
-      pinkDark?: string;
+      lightPink?: string;
+      darkPink?: string;
+      lavender?: string;
+      cream?: string;
+      lightGray?: string;
     };
     customSpacing?: {
       container?: number;
@@ -41,13 +45,15 @@ declare module '@mui/material/styles' {
 
 // Define custom colors
 const customColors = {
-  navyBlue: '#364F6B',
-  teal: '#3FC1C9',
+  magenta: '#B9467E', // Main magenta color
+  lightMagenta: '#D76A9E', // Lighter magenta
+  darkMagenta: '#9A2D63', // Darker magenta
+  pink: '#F48FB1', // Complementary pink
+  lightPink: '#F8BBD0', // Lighter pink
+  darkPink: '#EC407A', // Darker pink
+  lavender: '#E1BEE7', // Light lavender accent
+  cream: '#FFF9C4', // Light cream accent
   lightGray: '#F5F5F5',
-  pink: '#FC5185',
-  navyBlueDark: '#283A50',
-  tealDark: '#2D9BA2',
-  pinkDark: '#E03A6C',
 };
 
 // Common typography settings
@@ -270,14 +276,14 @@ const components = {
 const lightPalette = {
   mode: 'light' as PaletteMode,
   primary: {
-    main: '#364F6B',
-    light: '#4A6583',
-    dark: '#283A50',
+    main: '#B9467E', // Magenta
+    light: '#D76A9E', // Light magenta
+    dark: '#9A2D63', // Dark magenta
   },
   secondary: {
-    main: '#FC5185',
-    light: '#FD739D',
-    dark: '#E03A6C',
+    main: '#F48FB1', // Pink
+    light: '#F8BBD0', // Light pink
+    dark: '#EC407A', // Dark pink
   },
   error: {
     main: '#d32f2f',
@@ -286,7 +292,7 @@ const lightPalette = {
     main: '#ed6c02',
   },
   info: {
-    main: '#3FC1C9',
+    main: '#E1BEE7', // Light lavender for info
   },
   success: {
     main: '#2e7d32',
@@ -305,14 +311,14 @@ const lightPalette = {
 const darkPalette = {
   mode: 'dark' as PaletteMode,
   primary: {
-    main: '#3FC1C9',
-    light: '#65CDD3',
-    dark: '#2D9BA2',
+    main: '#D76A9E', // Light magenta
+    light: '#F48FB1', // Pink
+    dark: '#B9467E', // Magenta
   },
   secondary: {
-    main: '#FC5185',
-    light: '#FD739D',
-    dark: '#E03A6C',
+    main: '#B9467E', // Magenta
+    light: '#D76A9E', // Light magenta
+    dark: '#9A2D63', // Dark magenta
   },
   error: {
     main: '#f44336',
@@ -321,14 +327,14 @@ const darkPalette = {
     main: '#ffa726',
   },
   info: {
-    main: '#64B5F6',
+    main: '#F8BBD0', // Light pink for info
   },
   success: {
     main: '#66bb6a',
   },
   background: {
-    default: '#1A2533', // Darker version of #364F6B
-    paper: '#253547',   // Slightly lighter than background
+    default: '#1B1E2B', // Very dark blue-purple background (Palenight-inspired)
+    paper: '#292D3E',   // Slightly lighter blue-purple surface (Palenight-inspired)
   },
   text: {
     primary: '#F5F5F5',

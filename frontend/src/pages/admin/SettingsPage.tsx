@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
-import { Box, Typography, Tabs, Tab, Paper, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import { 
+  Box, 
+  Typography, 
+  Tabs, 
+  Tab, 
+  Container,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
 import RoleManagement from '../../components/admin/RoleManagement';
 import PermissionManagement from '../../components/admin/PermissionManagement';
 import ProductTypeManagement from '../../components/admin/ProductTypeManagement';
 import { 
   Security as SecurityIcon, 
-  Category as CategoryIcon, 
+  Category as CategoryIcon,
+  Settings as SettingsIcon,
+  VpnKey as PermissionIcon
 } from '@mui/icons-material';
 
 interface TabPanelProps {
@@ -27,7 +36,7 @@ const TabPanel = (props: TabPanelProps) => {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ pt: 3 }}>
           {children}
         </Box>
       )}
@@ -35,98 +44,99 @@ const TabPanel = (props: TabPanelProps) => {
   );
 };
 
-const a11yProps = (index: number) => {
-  return {
-    id: `settings-tab-${index}`,
-    'aria-controls': `settings-tabpanel-${index}`,
-  };
-};
-
 const SettingsPage: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<string>('roles-permissions');
-  const [tabValue, setTabValue] = useState(0);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const [activeTab, setActiveTab] = useState<number>(0);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+    setActiveTab(newValue);
   };
 
-  const handleSectionChange = (section: string) => {
-    setActiveSection(section);
-    // Reset tab value when changing sections
-    if (section === 'roles-permissions') {
-      setTabValue(0);
-    }
-  };
+  // Define the tabs with their icons and labels
+  const tabs = [
+    { label: "Roles", icon: <SecurityIcon fontSize="small" /> },
+    { label: "Permissions", icon: <PermissionIcon fontSize="small" /> },
+    { label: "Product Types", icon: <CategoryIcon fontSize="small" /> }
+  ];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
-        Settings
-      </Typography>
-      
-      <Grid container spacing={3}>
-        {/* Navigation Menu */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Paper sx={{ p: 2 }}>
-            <List>
-              <ListItem 
-                onClick={() => handleSectionChange('roles-permissions')}
-                sx={{ 
-                  cursor: 'pointer',
-                  bgcolor: activeSection === 'roles-permissions' ? 'rgba(0, 0, 0, 0.08)' : 'transparent'
-                }}
-              >
-                <ListItemIcon><SecurityIcon /></ListItemIcon>
-                <ListItemText primary="Roles & Permissions" />
-              </ListItem>
-              
-              <ListItem 
-                onClick={() => handleSectionChange('product-types')}
-                sx={{ 
-                  cursor: 'pointer',
-                  bgcolor: activeSection === 'product-types' ? 'rgba(0, 0, 0, 0.08)' : 'transparent'
-                }}
-              >
-                <ListItemIcon><CategoryIcon /></ListItemIcon>
-                <ListItemText primary="Product Types" />
-              </ListItem>
-            </List>
-          </Paper>
-        </Grid>
+    <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ my: { xs: 2, sm: 3 } }}>
+        {/* Header Section */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            mb: 2,
+            pb: 1,
+            borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+            <SettingsIcon sx={{ mr: 1, color: 'primary.main' }} />
+            <Typography 
+              variant="h5" 
+              component="h1"
+              sx={{ fontWeight: 500 }}
+            >
+              Settings
+            </Typography>
+          </Box>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ ml: { sm: 4 } }}
+          >
+            Manage system configuration, roles, and permissions
+          </Typography>
+        </Box>
         
-        {/* Content Area */}
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Paper sx={{ p: 3 }}>
-            {activeSection === 'roles-permissions' && (
-              <Box>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-                  <Tabs 
-                    value={tabValue} 
-                    onChange={handleTabChange} 
-                    aria-label="roles and permissions tabs"
-                  >
-                    <Tab label="Roles" {...a11yProps(0)} />
-                    <Tab label="Permissions" {...a11yProps(1)} />
-                  </Tabs>
-                </Box>
-                
-                <TabPanel value={tabValue} index={0}>
-                  <RoleManagement />
-                </TabPanel>
-                
-                <TabPanel value={tabValue} index={1}>
-                  <PermissionManagement />
-                </TabPanel>
-              </Box>
-            )}
-            
-            {activeSection === 'product-types' && (
-              <ProductTypeManagement />
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+        {/* Navigation Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={handleTabChange} 
+            aria-label="settings tabs"
+            variant={isSmallScreen ? "fullWidth" : "standard"}
+            sx={{
+              '& .MuiTab-root': {
+                minHeight: { xs: 48, sm: 56 },
+                py: { xs: 0.5, sm: 1 },
+                textTransform: 'none',
+                fontSize: { xs: '0.8rem', sm: '0.9rem' }
+              }
+            }}
+          >
+            {tabs.map((tab, index) => (
+              <Tab 
+                key={index}
+                icon={tab.icon} 
+                label={tab.label} 
+                iconPosition="start"
+                sx={{ 
+                  minWidth: { xs: 0, sm: 120 },
+                  px: { xs: 1, sm: 2 }
+                }}
+              />
+            ))}
+          </Tabs>
+        </Box>
+        
+        {/* Content Panels */}
+        <TabPanel value={activeTab} index={0}>
+          <RoleManagement />
+        </TabPanel>
+        
+        <TabPanel value={activeTab} index={1}>
+          <PermissionManagement />
+        </TabPanel>
+        
+        <TabPanel value={activeTab} index={2}>
+          <ProductTypeManagement />
+        </TabPanel>
+      </Box>
+    </Container>
   );
 };
 

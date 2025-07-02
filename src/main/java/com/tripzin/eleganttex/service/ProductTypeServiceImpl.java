@@ -6,6 +6,7 @@ import com.tripzin.eleganttex.exception.AppException;
 import com.tripzin.eleganttex.repository.ProductTypeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +24,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
 
     @Override
     public List<ProductType> getAllProductTypes() {
-        return productTypeRepository.findAll();
+        return productTypeRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
     }
 
     @Override

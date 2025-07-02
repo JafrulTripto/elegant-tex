@@ -12,13 +12,17 @@ import {
   Chip,
   Tooltip,
   Typography,
-  TablePagination
+  useTheme,
+  useMediaQuery,
+  SelectChangeEvent
 } from '@mui/material';
+import { Pagination } from '../common';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   ToggleOn as ToggleOnIcon,
-  ToggleOff as ToggleOffIcon
+  ToggleOff as ToggleOffIcon,
+  Category as CategoryIcon
 } from '@mui/icons-material';
 import { ProductType } from '../../types/productType';
 import { format } from 'date-fns';
@@ -32,7 +36,8 @@ interface ProductTypeListProps {
   totalCount: number;
   rowsPerPage: number;
   onPageChange: (event: unknown, newPage: number) => void;
-  onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRowsPerPageChange: (event: SelectChangeEvent<number>) => void;
+  loading?: boolean;
 }
 
 const ProductTypeList: React.FC<ProductTypeListProps> = ({
@@ -44,8 +49,12 @@ const ProductTypeList: React.FC<ProductTypeListProps> = ({
   totalCount,
   rowsPerPage,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
+  loading = false
 }) => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM d, yyyy h:mm a');
@@ -56,50 +65,131 @@ const ProductTypeList: React.FC<ProductTypeListProps> = ({
 
   return (
     <Box>
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          boxShadow: 2,
+          borderRadius: 2,
+          overflow: 'hidden',
+          position: 'relative',
+          mb: 2
+        }}
+      >
+        <Table sx={{ minWidth: isSmallScreen ? 400 : 650 }}>
           <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Created At</TableCell>
-              <TableCell>Updated At</TableCell>
-              <TableCell align="right">Actions</TableCell>
+            <TableRow sx={{ 
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+              '& th': { fontWeight: 600 }
+            }}>
+              <TableCell sx={{ py: 1.5 }}>Name</TableCell>
+              <TableCell sx={{ py: 1.5 }}>Status</TableCell>
+              {!isSmallScreen && <TableCell sx={{ py: 1.5 }}>Created</TableCell>}
+              {!isMediumScreen && <TableCell sx={{ py: 1.5 }}>Updated</TableCell>}
+              <TableCell align="right" sx={{ py: 1.5, pr: 2 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {productTypes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <Typography variant="body1" color="textSecondary" sx={{ py: 2 }}>
-                    No product types found
-                  </Typography>
+                <TableCell 
+                  colSpan={isSmallScreen ? 3 : (isMediumScreen ? 4 : 6)} 
+                  align="center"
+                  sx={{ py: 4 }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                    <CategoryIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.5 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      No product types found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Create your first product type to get started
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             ) : (
               productTypes.map((productType) => (
-                <TableRow key={productType.id}>
-                  <TableCell>{productType.id}</TableCell>
-                  <TableCell>{productType.name}</TableCell>
+                <TableRow 
+                  key={productType.id}
+                  sx={{ 
+                    '&:hover': { 
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                    },
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  <TableCell>
+                    <Box>
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          fontWeight: 500,
+                          fontSize: isSmallScreen ? '0.875rem' : '0.95rem'
+                        }}
+                      >
+                        {productType.name}
+                      </Typography>
+                      {isSmallScreen && (
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          Created: {formatDate(productType.createdAt).split(' at')[0]}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={productType.active ? 'Active' : 'Inactive'}
                       color={productType.active ? 'success' : 'default'}
                       size="small"
+                      sx={{ 
+                        fontWeight: 500,
+                        fontSize: '0.75rem'
+                      }}
                     />
                   </TableCell>
-                  <TableCell>{formatDate(productType.createdAt)}</TableCell>
-                  <TableCell>{formatDate(productType.updatedAt)}</TableCell>
+                  {!isSmallScreen && (
+                    <TableCell>
+                      <Typography 
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        {formatDate(productType.createdAt)}
+                      </Typography>
+                    </TableCell>
+                  )}
+                  {!isMediumScreen && (
+                    <TableCell>
+                      <Typography 
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        {formatDate(productType.updatedAt)}
+                      </Typography>
+                    </TableCell>
+                  )}
                   <TableCell align="right">
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
                       <Tooltip title={productType.active ? 'Set Inactive' : 'Set Active'}>
                         <IconButton
                           onClick={() => onToggleActive(productType.id)}
                           color={productType.active ? 'success' : 'default'}
                           size="small"
+                          sx={{ 
+                            border: '1px solid',
+                            borderColor: 'divider'
+                          }}
                         >
-                          {productType.active ? <ToggleOnIcon /> : <ToggleOffIcon />}
+                          {productType.active ? <ToggleOnIcon fontSize="small" /> : <ToggleOffIcon fontSize="small" />}
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Edit">
@@ -107,8 +197,12 @@ const ProductTypeList: React.FC<ProductTypeListProps> = ({
                           onClick={() => onEdit(productType.id)}
                           color="primary"
                           size="small"
+                          sx={{ 
+                            border: '1px solid',
+                            borderColor: 'divider'
+                          }}
                         >
-                          <EditIcon />
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
@@ -116,8 +210,12 @@ const ProductTypeList: React.FC<ProductTypeListProps> = ({
                           onClick={() => onDelete(productType.id)}
                           color="error"
                           size="small"
+                          sx={{ 
+                            border: '1px solid',
+                            borderColor: 'divider'
+                          }}
                         >
-                          <DeleteIcon />
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -128,14 +226,20 @@ const ProductTypeList: React.FC<ProductTypeListProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePagination
-        component="div"
-        count={totalCount}
+      
+      {/* Enhanced Pagination */}
+      <Pagination
         page={page}
-        onPageChange={onPageChange}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={onRowsPerPageChange}
-        rowsPerPageOptions={[5, 10, 25]}
+        size={rowsPerPage}
+        totalPages={Math.ceil(totalCount / rowsPerPage)}
+        totalElements={totalCount}
+        itemsCount={productTypes.length}
+        loading={loading}
+        onPageChange={(_, newPage) => onPageChange(null, newPage - 1)}
+        onPageSizeChange={(e) => onRowsPerPageChange(e as SelectChangeEvent<number>)}
+        pageSizeOptions={[5, 10, 25]}
+        variant="enhanced"
+        elevation={1}
       />
     </Box>
   );
