@@ -15,8 +15,11 @@ import {
   useTheme,
   alpha
 } from '@mui/material';
-import { layoutUtils } from '../theme/styleUtils';
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { 
+  Add as AddIcon, 
+  Close as CloseIcon,
+  People as PeopleIcon 
+} from '@mui/icons-material';
 import { Customer, CustomerRequest } from '../types/customer';
 import * as customerService from '../services/customer.service';
 import { useCustomerFilters } from '../hooks/useCustomerFilters';
@@ -215,32 +218,51 @@ const CustomersPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
       <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
-        {/* Header */}
-        <Box sx={{ 
-          ...layoutUtils.spaceBetweenFlex, 
-          mb: theme.customSpacing.section,
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: { xs: 1, sm: 0 }
-        }}>
+        {/* Header Section - Similar to Settings Page */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            mb: 2,
+            pb: 1,
+            borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography 
+                variant="h5" 
+                component="h1"
+                sx={{ fontWeight: 500 }}
+              >
+                Customers
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreateDialog}
+              sx={{ 
+                height: { xs: 36, sm: 40 },
+                px: { xs: 1.5, sm: 2 }
+              }}
+            >
+              Add Customer
+            </Button>
+          </Box>
           <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{ 
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-              mb: { xs: 0.5, sm: 0 }
-            }}
+            variant="body2" 
+            color="text.secondary"
+            sx={{ ml: { sm: 4 } }}
           >
-            Customers
+            Manage your customer database and information
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreateDialog}
-          >
-            Add Customer
-          </Button>
         </Box>
 
         {/* Error Alert */}
@@ -296,6 +318,8 @@ const CustomersPage: React.FC = () => {
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChangeAdapter}
             pageSizeOptions={[5, 10, 25, 50]}
+            variant="enhanced"
+            elevation={1}
           />
         </Box>
 
