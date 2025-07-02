@@ -226,7 +226,7 @@ const MainLayout: React.FC = () => {
               <ListItemIcon color="secondary">
                 <PeopleIcon style={navStyle('/admin/users')}/>
               </ListItemIcon>
-              <ListItemText primary="User Management" sx={navStyle('/admin/users')} />
+              <ListItemText primary="Users" sx={navStyle('/admin/users')} />
             </ListItemButton>
           </ListItem>
         )}

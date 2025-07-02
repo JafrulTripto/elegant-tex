@@ -147,7 +147,7 @@ const UserTable: React.FC<UserTableProps> = ({
                           fontWeight: 500,
                           backgroundColor: role === 'ROLE_ADMIN' 
                             ? theme.palette.primary.main + '20'
-                            : theme.palette.grey[200],
+                            : theme.palette.success.main + '20',
                           color: role === 'ROLE_ADMIN'
                             ? theme.palette.primary.main
                             : theme.palette.text.secondary,
