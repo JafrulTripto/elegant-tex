@@ -143,16 +143,10 @@ export const deleteOrder = async (id: number): Promise<void> => {
 };
 
 export const getOrdersByFilters = async (
-  filters: OrderFilterParams,
-  page = 0,
-  size = 10
+  params: OrderFilterParams
 ): Promise<{ content: Order[], totalElements: number }> => {
   const response = await api.get(`${BASE_URL}/filter`, {
-    params: {
-      ...filters,
-      page,
-      size
-    }
+    params
   });
   return response.data;
 };

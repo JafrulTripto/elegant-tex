@@ -24,7 +24,13 @@ import {
   useTheme
 } from '@mui/material';
 import { spacing } from '../theme/styleUtils';
-import { Edit as EditIcon, Save as SaveIcon, Lock as LockIcon, PhotoCamera } from '@mui/icons-material';
+import { 
+  Edit as EditIcon, 
+  Save as SaveIcon, 
+  Lock as LockIcon, 
+  PhotoCamera,
+  Person as PersonIcon 
+} from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../contexts/ToastContext';
 import userService from '../services/user.service';
@@ -196,16 +202,34 @@ const Profile: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
       <Box sx={{ my: { xs: 2, sm: 3, md: 4 } }}>
-        <Typography 
-          variant="h4" 
-          component="h1"
+        {/* Header Section - Similar to Settings Page */}
+        <Box 
           sx={{ 
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-            mb: theme.customSpacing.element
+            display: 'flex', 
+            flexDirection: 'column',
+            mb: 2,
+            pb: 1,
+            borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
           }}
         >
-          Profile
-        </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+            <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
+            <Typography 
+              variant="h5" 
+              component="h1"
+              sx={{ fontWeight: 500 }}
+            >
+              Profile
+            </Typography>
+          </Box>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ ml: { sm: 4 } }}
+          >
+            Manage your personal information and account settings
+          </Typography>
+        </Box>
         
         {error && (
           <Alert severity="error" sx={{ mb: theme.customSpacing.section }}>

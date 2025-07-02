@@ -11,8 +11,11 @@ import {
   FormHelperText,
   Switch,
   TextField,
-  CircularProgress
+  CircularProgress,
+  Typography,
+  Avatar
 } from '@mui/material';
+import { Category as CategoryIcon } from '@mui/icons-material';
 import { Formik, Form, Field, FieldProps } from 'formik';
 import * as Yup from 'yup';
 import { ProductType, ProductTypeFormData } from '../../types/productType';
@@ -59,8 +62,28 @@ const ProductTypeForm: React.FC<ProductTypeFormProps> = ({
   }, [initialValues, open]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow: 24
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar sx={{ bgcolor: 'primary.main' }}>
+            <CategoryIcon />
+          </Avatar>
+          <Typography variant="h6">
+            {title}
+          </Typography>
+        </Box>
+      </DialogTitle>
       <Formik
         initialValues={formValues}
         validationSchema={validationSchema}
@@ -78,8 +101,8 @@ const ProductTypeForm: React.FC<ProductTypeFormProps> = ({
       >
         {({ isSubmitting, errors, touched }) => (
           <Form>
-            <DialogContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <DialogContent dividers>
+              <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                 <Field name="name">
                   {({ field }: FieldProps) => (
                     <FormControl error={touched.name && Boolean(errors.name)}>
@@ -91,6 +114,12 @@ const ProductTypeForm: React.FC<ProductTypeFormProps> = ({
                         error={touched.name && Boolean(errors.name)}
                         helperText={touched.name && errors.name}
                         required
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 1,
+                            transition: 'all 0.3s ease'
+                          }
+                        }}
                       />
                     </FormControl>
                   )}
@@ -118,8 +147,12 @@ const ProductTypeForm: React.FC<ProductTypeFormProps> = ({
                 </Field>
               </Box>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={onClose} color="inherit">
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button 
+                onClick={onClose} 
+                color="inherit"
+                variant="outlined"
+              >
                 Cancel
               </Button>
               <Button

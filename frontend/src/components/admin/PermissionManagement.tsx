@@ -2,38 +2,22 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  Button,
   CircularProgress,
   Alert,
   Snackbar
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
 import axios from 'axios';
 import api from '../../services/api';
+import PermissionCardLayout from './PermissionCardLayout';
+import { Permission } from '../../types';
 
-// Define types
-interface Permission {
-  id: number;
-  name: string;
-  description: string;
-}
+// Define form data type
 
 interface PermissionFormData {
   name: string;
@@ -173,63 +157,20 @@ const PermissionManagement: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5">Permission Management</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenCreateDialog}
-        >
-          Add Permission
-        </Button>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ mb: 1 }}>Permission Management</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Manage system permissions and their descriptions
+        </Typography>
       </Box>
       
-      {loading && permissions.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {permissions.map((permission) => (
-                <TableRow key={permission.id}>
-                  <TableCell>{permission.name}</TableCell>
-                  <TableCell>{permission.description}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleOpenEditDialog(permission)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeletePermission(permission.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {permissions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} align="center">
-                    No permissions found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <PermissionCardLayout
+        permissions={permissions}
+        loading={loading}
+        onEditPermission={handleOpenEditDialog}
+        onDeletePermission={handleDeletePermission}
+        onAddPermission={handleOpenCreateDialog}
+      />
       
       {/* Permission Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

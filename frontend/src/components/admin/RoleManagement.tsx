@@ -20,13 +20,15 @@ import {
   Alert,
   Snackbar,
   InputAdornment,
-  Pagination,
-  Stack,
-  FormControl,
-  Select,
-  MenuItem,
-  Grid
+  Grid,
+  Chip,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+  Avatar,
+  SelectChangeEvent
 } from '@mui/material';
+import { Pagination } from '../common';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -34,7 +36,9 @@ import {
   Search as SearchIcon,
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
-  FilterList as FilterIcon
+  FilterList as FilterIcon,
+  Refresh as RefreshIcon,
+  Security as SecurityIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { Role, Permission, RoleFilterParams } from '../../types';
@@ -42,8 +46,9 @@ import roleService from '../../services/role.service';
 import api from '../../services/api';
 import RoleFilterDialog from './RoleFilterDialog';
 import PermissionSelector from './PermissionSelector';
-import PermissionDisplay from './PermissionDisplay';
 import ConfirmationDialog from '../common/ConfirmationDialog';
+import RoleIcon from './RoleIcon';
+import PermissionIndicator from './PermissionIndicator';
 
 interface RoleFormData {
   name: string;
@@ -52,6 +57,10 @@ interface RoleFormData {
 }
 
 const RoleManagement: React.FC = () => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
+  
   // State
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -336,19 +345,35 @@ const RoleManagement: React.FC = () => {
     <Box>
       {/* Header and Action Buttons */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h5">Role Management</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreateDialog}
-            sx={{ 
-              height: 40,
-              px: 2
-            }}
+        <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            mb: 0.5 
+          }}>
+            <Typography variant="h5" sx={{ fontWeight: 500 }}>Roles</Typography>
+            <Button
+              variant="contained"
+              startIcon={!isSmallScreen && <AddIcon />}
+              onClick={handleOpenCreateDialog}
+              size={isSmallScreen ? "small" : "medium"}
+              sx={{ 
+                height: isSmallScreen ? 36 : 40,
+                px: isSmallScreen ? 1.5 : 2,
+                boxShadow: 2
+              }}
+            >
+              {isSmallScreen ? <AddIcon fontSize="small" /> : "Add Role"}
+            </Button>
+          </Box>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ mb: 2 }}
           >
-            Add Role
-          </Button>
+            Manage user roles and their associated permissions
+          </Typography>
         </Box>
         
         {/* Search and filter UI */}
@@ -361,10 +386,22 @@ const RoleManagement: React.FC = () => {
                 value={searchTerm}
                 onChange={handleSearchChange}
                 size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.1)'
+                    },
+                    '&.Mui-focused': {
+                      boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)'
+                    }
+                  }
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon />
+                      <SearchIcon color="action" />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -375,7 +412,9 @@ const RoleManagement: React.FC = () => {
                         size="small"
                         sx={{ 
                           height: 32,
-                          minWidth: 'auto'
+                          minWidth: 'auto',
+                          px: 1.5,
+                          boxShadow: 1
                         }}
                       >
                         Search
@@ -386,119 +425,231 @@ const RoleManagement: React.FC = () => {
               />
             </form>
           </Grid>
-          <Grid item xs={12} md={3} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+          <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <Tooltip title="Refresh roles">
+              <IconButton 
+                color="primary" 
+                onClick={fetchRoles}
+                size={isSmallScreen ? "small" : "medium"}
+                sx={{ border: '1px solid', borderColor: 'divider' }}
+              >
+                <RefreshIcon fontSize={isSmallScreen ? "small" : "medium"} />
+              </IconButton>
+            </Tooltip>
             <Button
               variant="outlined"
-              startIcon={<FilterIcon />}
+              startIcon={!isSmallScreen && <FilterIcon />}
               onClick={() => setOpenFilterDialog(true)}
+              size={isSmallScreen ? "small" : "medium"}
               sx={{ 
-                height: 40,
-                px: 2
+                height: isSmallScreen ? 36 : 40,
+                px: isSmallScreen ? 1.5 : 2
               }}
             >
-              Filters
+              {isSmallScreen ? <FilterIcon fontSize="small" /> : "Filters"}
               {filterParams.permissions && filterParams.permissions.length > 0 && (
-                <Box
-                  component="span"
+                <Chip
+                  label={filterParams.permissions.length}
+                  color="primary"
+                  size="small"
                   sx={{
-                    width: 20,
+                    ml: 1,
                     height: 20,
-                    borderRadius: '50%',
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    minWidth: 20,
                     fontSize: '0.75rem',
-                    ml: 1
+                    '& .MuiChip-label': {
+                      px: 1
+                    }
                   }}
-                >
-                  {filterParams.permissions.length}
-                </Box>
+                />
               )}
             </Button>
           </Grid>
         </Grid>
       </Box>
       
-      <TableContainer component={Paper}>
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          boxShadow: 2,
+          borderRadius: 2,
+          overflow: 'hidden',
+          position: 'relative',
+          mb: 2
+        }}
+      >
         {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2, position: 'relative' }}>
-            <CircularProgress size={40} sx={{ position: 'absolute', top: '50%', left: '50%', marginTop: '-20px', marginLeft: '-20px', zIndex: 1 }} />
-            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.7)', zIndex: 0 }} />
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            p: 2, 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10,
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            alignItems: 'center'
+          }}>
+            <CircularProgress size={40} />
           </Box>
         )}
-        <Table>
+        <Table sx={{ minWidth: isSmallScreen ? 400 : 650 }}>
           <TableHead>
-            <TableRow>
+            <TableRow sx={{ 
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+              '& th': { fontWeight: 600 }
+            }}>
               <TableCell 
                 onClick={() => handleSortChange('name')}
-                sx={{ cursor: 'pointer', userSelect: 'none' }}
+                sx={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none',
+                  transition: 'background-color 0.2s',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
+                  py: 1.5
+                }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  Name {renderSortIcon('name')}
+                  Role {renderSortIcon('name')}
                 </Box>
               </TableCell>
-              <TableCell 
-                onClick={() => handleSortChange('description')}
-                sx={{ cursor: 'pointer', userSelect: 'none' }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  Description {renderSortIcon('description')}
-                </Box>
-              </TableCell>
-              <TableCell>Permissions</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              {!isSmallScreen && (
+                <TableCell 
+                  onClick={() => handleSortChange('description')}
+                  sx={{ 
+                    cursor: 'pointer', 
+                    userSelect: 'none',
+                    transition: 'background-color 0.2s',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                    },
+                    py: 1.5
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    Description {renderSortIcon('description')}
+                  </Box>
+                </TableCell>
+              )}
+              <TableCell sx={{ py: 1.5 }}>Permissions</TableCell>
+              <TableCell align="right" sx={{ py: 1.5, pr: 2 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {roles.map((role) => (
-              <TableRow key={role.id}>
+              <TableRow 
+                key={role.id}
+                sx={{ 
+                  '&:hover': { 
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                  },
+                  transition: 'background-color 0.2s'
+                }}
+              >
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {role.name}
-                    <Alert
-                      icon={false}
-                      severity="info"
-                      sx={{ 
-                        py: 0, 
-                        px: 1, 
-                        display: 'inline-flex', 
-                        alignItems: 'center',
-                        '& .MuiAlert-message': { p: 0 }
-                      }}
-                    >
-                      {role.name.replace('ROLE_', '')}
-                    </Alert>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <RoleIcon roleName={role.name} size={isSmallScreen ? "small" : "medium"} />
+                    <Box>
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          fontWeight: 500,
+                          fontSize: isSmallScreen ? '0.875rem' : '0.95rem'
+                        }}
+                      >
+                        {role.name.replace('ROLE_', '')}
+                      </Typography>
+                      {isSmallScreen && role.description && (
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: '0.75rem',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
+                          {role.description}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                 </TableCell>
-                <TableCell>{role.description}</TableCell>
+                {!isSmallScreen && (
+                  <TableCell>
+                    <Typography 
+                      variant="body2"
+                      sx={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: isMediumScreen ? 150 : 250
+                      }}
+                    >
+                      {role.description || 'No description provided'}
+                    </Typography>
+                  </TableCell>
+                )}
                 <TableCell>
-                  <PermissionDisplay permissions={role.permissions || []} />
+                  <PermissionIndicator permissions={role.permissions || []} />
                 </TableCell>
                 <TableCell align="right">
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleOpenEditDialog(role)}
-                    size="small"
-                    sx={{ mr: 1 }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleOpenDeleteDialog(role.id)}
-                    size="small"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                    <Tooltip title="Edit role">
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleOpenEditDialog(role)}
+                        size="small"
+                        sx={{ 
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete role">
+                      <IconButton
+                        color="error"
+                        onClick={() => handleOpenDeleteDialog(role.id)}
+                        size="small"
+                        sx={{ 
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
             {roles.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} align="center">
-                  No roles found
+                <TableCell 
+                  colSpan={isSmallScreen ? 3 : 4} 
+                  align="center"
+                  sx={{ py: 4 }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                    <SecurityIcon sx={{ fontSize: 40, color: 'text.secondary', opacity: 0.5 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      No roles found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {searchTerm ? 'Try adjusting your search or filters' : 'Create your first role to get started'}
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             )}
@@ -507,51 +658,19 @@ const RoleManagement: React.FC = () => {
       </TableContainer>
       
       {/* Enhanced Pagination */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, flexWrap: 'wrap' }}>
-        {/* Pagination Info */}
-        <Box sx={{ mb: { xs: 2, md: 0 } }}>
-          {roles.length > 0 && (
-            <Typography variant="body2" color="text.secondary">
-              Showing {(filterParams.page || 0) * (filterParams.size || 10) + 1} to {Math.min(((filterParams.page || 0) + 1) * (filterParams.size || 10), ((filterParams.page || 0) * (filterParams.size || 10)) + roles.length)} of {totalElements} entries
-            </Typography>
-          )}
-        </Box>
-        
-        {/* Page Size Selection */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: { xs: 2, md: 0 } }}>
-          <Typography variant="body2" color="text.secondary">
-            Rows per page:
-          </Typography>
-          <FormControl size="small" variant="outlined" sx={{ minWidth: 80 }}>
-            <Select
-              value={(filterParams.size || 10).toString()}
-              onChange={(e) => handlePageSizeChange(e as React.ChangeEvent<HTMLInputElement>)}
-              disabled={loading}
-            >
-              <MenuItem value="5">5</MenuItem>
-              <MenuItem value="10">10</MenuItem>
-              <MenuItem value="25">25</MenuItem>
-              <MenuItem value="50">50</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-        
-        {/* Pagination Controls */}
-        {totalPages > 0 && (
-          <Stack spacing={2}>
-            <Pagination
-              count={totalPages}
-              page={filterParams.page !== undefined ? filterParams.page + 1 : 1}
-              onChange={handlePageChange}
-              color="primary"
-              disabled={loading}
-              showFirstButton
-              showLastButton
-              siblingCount={1}
-            />
-          </Stack>
-        )}
-      </Box>
+      <Pagination
+        page={filterParams.page !== undefined ? filterParams.page : 0}
+        size={filterParams.size || 10}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        itemsCount={roles.length}
+        loading={loading}
+        onPageChange={handlePageChange}
+        onPageSizeChange={(e: SelectChangeEvent) => handlePageSizeChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
+        pageSizeOptions={[5, 10, 25, 50]}
+        variant="enhanced"
+        elevation={1}
+      />
       
       {/* Filter Dialog */}
       <RoleFilterDialog
@@ -570,12 +689,34 @@ const RoleManagement: React.FC = () => {
       />
       
       {/* Role Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingRole ? 'Edit Role' : 'Create Role'}
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: 24
+          }
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {editingRole ? (
+              <RoleIcon roleName={editingRole.name} size="medium" />
+            ) : (
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <SecurityIcon />
+              </Avatar>
+            )}
+            <Typography variant="h6">
+              {editingRole ? `Edit ${editingRole.name.replace('ROLE_', '')}` : 'Create New Role'}
+            </Typography>
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent dividers>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <TextField
               name="name"
               label="Role Name"
@@ -584,6 +725,12 @@ const RoleManagement: React.FC = () => {
               onChange={handleInputChange}
               required
               helperText="Role names are typically prefixed with 'ROLE_' (e.g., ROLE_ADMIN)"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  transition: 'all 0.3s ease'
+                }
+              }}
             />
             
             <TextField
@@ -594,6 +741,11 @@ const RoleManagement: React.FC = () => {
               onChange={handleInputChange}
               multiline
               rows={2}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1
+                }
+              }}
             />
             
             <Typography variant="subtitle1" gutterBottom>
@@ -608,15 +760,21 @@ const RoleManagement: React.FC = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button 
+            onClick={handleCloseDialog}
+            variant="outlined"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSaveRole}
             variant="contained"
             color="primary"
             disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : null}
           >
-            {loading ? <CircularProgress size={24} /> : 'Save'}
+            {loading ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
