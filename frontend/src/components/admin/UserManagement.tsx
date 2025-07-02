@@ -337,7 +337,7 @@ const UserManagement: React.FC = () => {
                 component="h1"
                 sx={{ fontWeight: 500 }}
               >
-                User Management
+                Users
               </Typography>
             </Box>
             <Button
