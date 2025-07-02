@@ -53,6 +53,7 @@ import * as orderService from '../services/order.service';
 import OrderImagePreview from '../components/orders/OrderImagePreview';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import SimilarOrdersSection from '../components/orders/SimilarOrdersSection';
+import TakaSymble from '@/components/common/TakaSymble';
 
 const ORDER_STATUS_STEPS: string[] = [
   'Order Created',
@@ -635,7 +636,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 8 }}>
                   <Typography variant="body1">
-                    ${order.deliveryCharge.toFixed(2)}
+                    <TakaSymble/> {order.deliveryCharge.toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -672,7 +673,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="body1" align="right">
-                    ${order.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
+                    <TakaSymble/>  {order.products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -683,7 +684,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="body1" align="right">
-                    ${order.deliveryCharge.toFixed(2)}
+                    <TakaSymble/>  {order.deliveryCharge.toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -698,7 +699,7 @@ const OrderDetailPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle1" fontWeight="bold" align="right">
-                    ${calculateTotal().toFixed(2)}
+                    <TakaSymble/>  {calculateTotal().toFixed(2)}
                   </Typography>
                 </Grid>
                 
@@ -799,7 +800,11 @@ const OrderDetailPage: React.FC = () => {
                         Product #{index + 1}: {product.productType}
                       </Typography>
                       <Chip 
-                        label={`$${(product.price * product.quantity).toFixed(2)}`}
+                       label={
+                                <>
+                                  <TakaSymble /> {(product.price * product.quantity).toFixed(2)}
+                                </>
+                              }
                         color="primary"
                         size="small"
                         sx={{ fontWeight: 'bold' }}
@@ -843,7 +848,7 @@ const OrderDetailPage: React.FC = () => {
                             Fabric
                           </Typography>
                           <Typography variant="body2" color="textSecondary">
-                            Qty: {product.quantity} × ${product.price.toFixed(2)}
+                            Qty: {product.quantity} × <TakaSymble/>  {product.price.toFixed(2)}
                           </Typography>
                         </Box>
                         <Typography variant="body1" fontWeight="medium">
