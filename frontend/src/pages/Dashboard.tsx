@@ -336,7 +336,7 @@ const Dashboard: React.FC = () => {
           
           {/* User Order Statistics */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ height: '100%', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+            <Card sx={{ height: 450, display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 1.5 }}> {/* Reduced padding */}
                 <UserOrdersTable />
               </CardContent>
