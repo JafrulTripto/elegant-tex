@@ -35,6 +35,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByDeliveryDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
     
     Page<Order> findByCreatedById(Long userId, Pageable pageable);
+
+    boolean existsByMarketplaceId(Long marketplaceId);
     
     @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
            "(:status IS NULL OR o.status = :status) AND " +

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, ErrorResponse } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -145,11 +145,11 @@ const MarketplaceDetailPage: React.FC = () => {
       navigate('/marketplaces');
       
       setIsSubmitting(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting marketplace:', err);
       setSnackbar({
         open: true,
-        message: 'Failed to delete marketplace. Please try again.',
+        message: err.message,
         severity: 'error',
       });
       setIsSubmitting(false);

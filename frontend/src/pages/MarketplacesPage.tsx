@@ -209,7 +209,7 @@ const MarketplacesPage: React.FC = () => {
       if (err.response?.data?.message?.includes('referenced by one or more orders')) {
         setError('This marketplace cannot be deleted because it is being used in one or more orders. Please remove the marketplace from all orders before deleting.');
       } else {
-        setError('Failed to delete marketplace. Please try again.');
+        setError(err.message || 'Failed to delete marketplace. Please try again.');
       }
 
       setDeleteDialogOpen(false);
