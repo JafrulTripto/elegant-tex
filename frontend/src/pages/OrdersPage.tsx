@@ -14,6 +14,7 @@ import {
   ToggleButtonGroup,
   ToggleButton
 } from '@mui/material';
+import OrderExcelExportDialog from '../components/orders/OrderExcelExportDialog';
 import StatusChip from '../components/common/StatusChip';
 import { spacing, layoutUtils } from '../theme/styleUtils';
 import Grid from '@mui/material/Grid2';
@@ -71,6 +72,8 @@ const OrdersPage: React.FC = () => {
   const [filters, setFilters] = useState<OrderFilterParams>({ orderType: undefined });
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState<boolean>(false);
+  const [exportLoading, setExportLoading] = useState<boolean>(false);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -184,20 +187,49 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = () => {
+    setExportDialogOpen(true);
+  };
+  
+  const handleExportConfirm = async (
+    status: OrderStatus | null, 
+    orderType: OrderType | null, 
+    startDate: Date | null, 
+    endDate: Date | null
+  ) => {
+    setExportLoading(true);
     try {
+      // Format dates to ISO strings if they exist
+      const formattedStartDate = startDate ? startDate.toISOString().split('T')[0] : undefined;
+      const formattedEndDate = endDate ? endDate.toISOString().split('T')[0] : undefined;
+      
       const blob = await orderService.generateOrdersExcel(
-        filters?.status as OrderStatus | undefined,
-        filters?.startDate,
-        filters?.endDate
+        status || undefined,
+        orderType || undefined,
+        formattedStartDate,
+        formattedEndDate
       );
       
-      if (blob) {
-        orderService.downloadBlob(blob, 'orders.xlsx');
+      if (blob && blob.size > 0) {
+        // Generate a more descriptive filename
+        let filename = 'orders';
+        if (orderType) filename += `_${orderType.toLowerCase()}`;
+        if (status) filename += `_${status.toLowerCase()}`;
+        if (startDate) filename += `_from_${formattedStartDate}`;
+        if (endDate) filename += `_to_${formattedEndDate}`;
+        filename += '.xlsx';
+        
+        orderService.downloadBlob(blob, filename);
+        setExportDialogOpen(false);
+        setError(null);
+      } else {
+        throw new Error('Generated Excel file is empty or invalid');
       }
     } catch (error) {
       console.error('Error exporting orders to Excel:', error);
       setError('Failed to export orders. Please try again.');
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -574,6 +606,14 @@ const OrdersPage: React.FC = () => {
           {error}
         </Alert>
       </Snackbar>
+      
+      {/* Excel Export Dialog */}
+      <OrderExcelExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        onExport={handleExportConfirm}
+        loading={exportLoading}
+      />
     </Container>
   );
 };

@@ -160,14 +160,26 @@ export const generateOrderPdf = async (id: number): Promise<Blob> => {
 
 export const generateOrdersExcel = async (
   status?: OrderStatus | string,
+  orderType?: string,
   startDate?: string,
   endDate?: string
 ): Promise<Blob> => {
-  const response = await api.get(`${BASE_URL}/excel`, {
-    params: { status, startDate, endDate },
-    responseType: 'blob'
-  });
-  return response.data;
+  try {
+    const response = await api.get(`${BASE_URL}/excel`, {
+      params: { status, orderType, startDate, endDate },
+      responseType: 'blob'
+    });
+    
+    // Check if the response is valid
+    if (response.data.size === 0) {
+      throw new Error('Received empty Excel file');
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error generating Excel:', error);
+    throw error;
+  }
 };
 
 export const getOrderStatusCounts = async (currentMonth = true): Promise<OrderStatusCount[]> => {

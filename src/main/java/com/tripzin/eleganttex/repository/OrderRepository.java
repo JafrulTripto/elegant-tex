@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.customer WHERE o.id = :id")
     Optional<Order> findByIdWithMarketplace(@Param("id") Long id);
@@ -79,6 +80,38 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("marketplaceId") Long marketplaceId,
             @Param("createdById") Long createdById,
             Pageable pageable);
+            
+    /**
+     * Find orders with filters including order type for Excel export
+     * @param status optional status filter
+     * @param startDate optional start date filter
+     * @param endDate optional end date filter
+     * @param orderType optional order type filter (MARKETPLACE or MERCHANT)
+     * @return list of orders matching the filters
+     */
+    default List<Order> findByFiltersForExcel(OrderStatus status, OrderType orderType, LocalDate startDate, LocalDate endDate) {
+        return findAll((root, query, cb) -> {
+            var predicates = cb.conjunction();
+
+            if (status != null) {
+                predicates = cb.and(predicates, cb.equal(root.get("status"), status));
+            }
+
+            if (orderType != null) {
+                predicates = cb.and(predicates, cb.equal(root.get("orderType"), orderType));
+            }
+
+            if (startDate != null) {
+                predicates = cb.and(predicates, cb.greaterThanOrEqualTo(root.get("createdAt"), startDate.atStartOfDay()));
+            }
+
+            if (endDate != null) {
+                predicates = cb.and(predicates, cb.lessThanOrEqualTo(root.get("createdAt"), endDate.atTime(23, 59, 59)));
+            }
+
+            return predicates;
+        });
+    }
     
     @Query(value = "SELECT o.status as status, COUNT(o.id) as count FROM orders o GROUP BY o.status", nativeQuery = true)
     List<Map<String, Object>> getOrderStatusCounts();
