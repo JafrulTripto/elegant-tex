@@ -117,6 +117,16 @@ public class GlobalExceptionHandler {
         );
     }
     
+    @ExceptionHandler(ReportGenerationException.class)
+    public ResponseEntity<ErrorResponse> handleReportGenerationException(ReportGenerationException ex, WebRequest request) {
+        log.error("Report generation error: {}", ex.getMessage(), ex);
+        return buildErrorResponse(
+                ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                request
+        );
+    }
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("Global exception: {}", ex.getMessage(), ex);

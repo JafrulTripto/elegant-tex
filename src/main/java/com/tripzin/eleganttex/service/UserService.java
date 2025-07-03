@@ -70,7 +70,6 @@ public class UserService {
             }
             user.setEmail(userDTO.getEmail());
             user.setEmailVerified(false);
-            // TODO: Send verification email for new email
         }
         
         // Check if phone is being changed

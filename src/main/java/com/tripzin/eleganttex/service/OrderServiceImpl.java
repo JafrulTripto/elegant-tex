@@ -2,6 +2,8 @@ package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.entity.OrderStatus;
+import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.security.services.UserDetailsImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -165,8 +167,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public ResponseEntity<Resource> generateOrdersExcel(String status, LocalDate startDate, LocalDate endDate) {
-        return orderReportService.generateOrdersExcel(status, startDate, endDate);
+    public ResponseEntity<Resource> generateOrdersExcel(OrderStatus status, OrderType orderType, LocalDate startDate, LocalDate endDate) {
+        return orderReportService.generateOrdersExcel(status, orderType, startDate, endDate);
     }
 
     @Override
