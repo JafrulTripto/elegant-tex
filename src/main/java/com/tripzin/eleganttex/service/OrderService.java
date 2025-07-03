@@ -2,6 +2,9 @@ package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.entity.OrderStatus;
+import com.tripzin.eleganttex.entity.OrderType;
+
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +41,7 @@ public interface OrderService {
     
     ResponseEntity<Resource> generateOrderPdf(Long id);
     
-    ResponseEntity<Resource> generateOrdersExcel(String status, LocalDate startDate, LocalDate endDate);
+    ResponseEntity<Resource> generateOrdersExcel(OrderStatus status, OrderType orderType, LocalDate startDate, LocalDate endDate);
     
     /**
      * Get order counts by status for the current month or year

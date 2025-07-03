@@ -2,6 +2,8 @@ package com.tripzin.eleganttex.controller;
 
 import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.entity.OrderStatus;
+import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.security.UserSecurity;
 import com.tripzin.eleganttex.service.OrderService;
 import jakarta.validation.Valid;
@@ -158,12 +160,15 @@ public class OrderController {
     }
 
     @GetMapping("/excel")
-    @PreAuthorize("hasAuthority('ORDER_READ')")
+    @PreAuthorize("hasAuthority('ORDER_DOWNLOAD')")
     public ResponseEntity<Resource> generateOrdersExcel(
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String orderType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        ResponseEntity<Resource> resource = orderService.generateOrdersExcel(status, startDate, endDate);
+        OrderType type = OrderType.fromString(orderType);
+
+        ResponseEntity<Resource> resource = orderService.generateOrdersExcel(OrderStatus.fromString(status),type , startDate, endDate);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"orders.xlsx\"")

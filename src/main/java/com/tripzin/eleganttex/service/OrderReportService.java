@@ -3,6 +3,9 @@ package com.tripzin.eleganttex.service;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 
+import com.tripzin.eleganttex.entity.OrderStatus;
+import com.tripzin.eleganttex.entity.OrderType;
+
 import java.time.LocalDate;
 
 /**
@@ -19,9 +22,10 @@ public interface OrderReportService {
     /**
      * Generate Excel for orders
      * @param status Optional status filter
+     * @param orderType Optional order type filter (MARKETPLACE or MERCHANT)
      * @param startDate Optional start date filter
      * @param endDate Optional end date filter
      * @return ResponseEntity containing the Excel file as a resource
      */
-    ResponseEntity<Resource> generateOrdersExcel(String status, LocalDate startDate, LocalDate endDate);
+    ResponseEntity<Resource> generateOrdersExcel(OrderStatus status, OrderType orderType, LocalDate startDate, LocalDate endDate);
 }

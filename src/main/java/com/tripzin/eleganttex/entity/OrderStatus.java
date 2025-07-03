@@ -63,7 +63,7 @@ public enum OrderStatus {
             }
             
             // Default to ORDER_CREATED if no match
-            return ORDER_CREATED;
+            return null;
         }
     }
 }
