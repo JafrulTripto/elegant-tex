@@ -155,32 +155,10 @@ public class OrderSearchServiceImpl implements OrderSearchService {
                         .map(orderMapper::mapOrderToResponse);
             }
         } else {
-            // If customerName is provided, we need a custom approach since we don't have a repository method
-            // that combines customerName and createdById
             if (customerName != null && !customerName.isEmpty()) {
-                // We'll use a custom query to filter by both customer name and created by user ID
-                // For simplicity, we'll just add the createdById filter to the existing query
-                // This is not the most efficient approach, but it works for this case
-                
-                // Create a custom query that includes both customer name and created by user ID
-                String customQuery = "SELECT o FROM Order o JOIN o.customer c WHERE " +
-                    "(:orderType IS NULL OR o.orderType = :orderType) AND " +
-                    "(:status IS NULL OR o.status = :status) AND " +
-                    "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
-                    "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +
-                    "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
-                    "(:customerName IS NULL OR LOWER(CAST(c.name as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%'))) AND " +
-                    "o.createdBy.id = :createdById";
-                
-                // Use the entityManager to execute the custom query
-                // But for now, we'll just use the existing repository method and filter the results in memory
-                // This is not ideal for large datasets, but it's a simple solution for now
-                
-                // Use the repository method that filters by both the specified filters and created by user ID
                 return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
                         .map(orderMapper::mapOrderToResponse);
             } else {
-                // Use the repository method that filters by both the specified filters and created by user ID
                 return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
                         .map(orderMapper::mapOrderToResponse);
             }
