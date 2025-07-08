@@ -20,6 +20,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
      */
     Optional<Customer> findByPhone(String phone);
     
+    Optional<Customer> findByFacebookId(String facebookId);
+    
     /**
      * Find customers by name containing the given string (case insensitive)
      * @param name The name to search for

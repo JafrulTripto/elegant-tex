@@ -36,6 +36,7 @@ import {
   Category as CategoryIcon,
   ShoppingCart as ShoppingCartIcon,
   ContactPhone as ContactPhoneIcon,
+  Chat as ChatIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -211,6 +212,23 @@ const MainLayout: React.FC = () => {
             </ListItemButton>
           </ListItem>
         )}
+        <ListItem disablePadding>
+          <ListItemButton 
+            onClick={() => handleNavigate('/messaging')}
+            sx={isActive('/messaging') ? {
+              backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              paddingLeft: 2, // Ensure consistent padding
+            } : {
+              paddingLeft: 2, // Ensure consistent padding
+            }}
+          >
+            <ListItemIcon color="secondary">
+              <ChatIcon style={navStyle('/messaging')}/>
+            </ListItemIcon>
+            <ListItemText primary="Messaging" sx={navStyle('/messaging')} />
+          </ListItemButton>
+        </ListItem>
         {authState.user?.roles.includes('ROLE_ADMIN') && (
           <ListItem disablePadding>
             <ListItemButton 

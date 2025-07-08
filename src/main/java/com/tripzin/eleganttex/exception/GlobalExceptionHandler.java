@@ -127,6 +127,38 @@ public class GlobalExceptionHandler {
         );
     }
     
+    @ExceptionHandler(MessagingApiException.class)
+    public ResponseEntity<ErrorResponse> handleMessagingApiException(MessagingApiException ex, WebRequest request) {
+        log.error("Messaging API error: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex.getMessage(), ex.getStatus(), request);
+    }
+    
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex, WebRequest request) {
+        log.error("Invalid messaging token: {}", ex.getMessage());
+        return buildErrorResponse(
+                "Invalid or expired access token. Please reconnect your messaging account.",
+                HttpStatus.UNAUTHORIZED,
+                request
+        );
+    }
+    
+    @ExceptionHandler(WebhookVerificationException.class)
+    public ResponseEntity<ErrorResponse> handleWebhookVerificationException(WebhookVerificationException ex, WebRequest request) {
+        log.error("Webhook verification failed: {}", ex.getMessage());
+        return buildErrorResponse(
+                "Webhook verification failed. Please check your webhook configuration.",
+                HttpStatus.BAD_REQUEST,
+                request
+        );
+    }
+    
+    @ExceptionHandler(AccountConfigurationException.class)
+    public ResponseEntity<ErrorResponse> handleAccountConfigurationException(AccountConfigurationException ex, WebRequest request) {
+        log.error("Account configuration error: {}", ex.getMessage());
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
+    }
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("Global exception: {}", ex.getMessage(), ex);

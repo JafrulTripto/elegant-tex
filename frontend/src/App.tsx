@@ -31,6 +31,7 @@ import OrdersPage from './pages/OrdersPage';
 import OrderFormPage from './pages/OrderFormPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import CustomersPage from './pages/CustomersPage';
+import MessagingPage from './pages/MessagingPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 
@@ -119,6 +120,11 @@ const App: React.FC = () => {
               {/* Customer routes */}
               <Route element={<ProtectedRoute requiredPermissions={['CUSTOMER_READ']} />}>
                 <Route path="/customers" element={<CustomersPage />} />
+              </Route>
+              
+              {/* Messaging routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/messaging" element={<MessagingPage />} />
               </Route>
               
               {/* Admin routes */}
