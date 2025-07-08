@@ -71,3 +71,27 @@ app:
     s3-public-access: ${S3_PUBLIC_ACCESS:false}
     aws-access-key-id: ${AWS_ACCESS_KEY_ID:}
     aws-secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+
+  # Messaging Configuration
+  messaging:
+    webhook:
+      base-url: ${MESSAGING_WEBHOOK_BASE_URL}
+      verify-signatures: ${MESSAGING_WEBHOOK_VERIFY_SIGNATURES:true}
+    rate-limiting:
+      requests-per-minute: ${MESSAGING_RATE_LIMIT_REQUESTS_PER_MINUTE:60}
+      max-retry-attempts: ${MESSAGING_MAX_RETRY_ATTEMPTS:3}
+      retry-delay-seconds: ${MESSAGING_RETRY_DELAY_SECONDS:5}
+    facebook:
+      app-id: ${FACEBOOK_APP_ID:}
+      app-secret: ${FACEBOOK_APP_SECRET:}
+      graph-api-url: ${FACEBOOK_GRAPH_API_URL:https://graph.facebook.com}
+      api-version: ${FACEBOOK_API_VERSION:v18.0}
+      webhook-verify-token: ${FACEBOOK_WEBHOOK_VERIFY_TOKEN:}
+    whatsapp:
+      api-url: ${WHATSAPP_API_URL:https://graph.facebook.com}
+      api-version: ${WHATSAPP_API_VERSION:v18.0}
+      webhook-verify-token: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN:}
+    processing:
+      async-enabled: ${MESSAGING_ASYNC_PROCESSING:true}
+      thread-pool-size: ${MESSAGING_THREAD_POOL_SIZE:10}
+      queue-capacity: ${MESSAGING_QUEUE_CAPACITY:100}

@@ -6,6 +6,8 @@ import com.tripzin.eleganttex.entity.*;
 import com.tripzin.eleganttex.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +29,22 @@ public class FacebookWebhookService {
     private final WebhookEventRepository webhookEventRepository;
     private final CustomerRepository customerRepository;
     private final ObjectMapper objectMapper;
+    @Value("${FACEBOOK_WEBHOOK_VERIFY_TOKEN}")
+    private String fallbackVerifyToken;
     
     /**
      * Verify webhook token against stored accounts
      */
     public boolean verifyWebhookToken(String verifyToken) {
-        return messagingAccountRepository.existsByPlatformAndWebhookVerifyToken(
-                MessagingAccount.MessagingPlatform.FACEBOOK, verifyToken);
+        boolean existsInDb = messagingAccountRepository.existsByPlatformAndWebhookVerifyToken(
+            MessagingAccount.MessagingPlatform.FACEBOOK, verifyToken
+        );
+
+        if (existsInDb) {
+            return true;
+        }
+
+        return fallbackVerifyToken.equals(verifyToken);
     }
     
     /**

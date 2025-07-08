@@ -65,9 +65,14 @@ public class FacebookApiService {
      * Get user profile information
      */
     public Map<String, Object> getUserProfile(MessagingAccount account, String userId) {
-        String url = UriComponentsBuilder.fromHttpUrl(GRAPH_API_BASE_URL + "/" + userId)
-                .queryParam("fields", "first_name,last_name,profile_pic")
+        String url = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("graph.facebook.com")
+                .port(443)
+                .path("/v18.0/" + userId)
                 .queryParam("access_token", account.getAccessToken())
+                .queryParam("fields", "first_name,last_name,profile_pic")
+                .build()
                 .toUriString();
         
         try {
@@ -98,11 +103,15 @@ public class FacebookApiService {
      * Get page access token info
      */
     public void validatePageAccessToken(String pageId, String accessToken) {
-        String url = UriComponentsBuilder.fromHttpUrl(GRAPH_API_BASE_URL + "/" + pageId)
+        String url = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("graph.facebook.com")
+                .port(443)
+                .path("/v18.0/" + pageId)
                 .queryParam("fields", "name,access_token")
                 .queryParam("access_token", accessToken)
+                .build()
                 .toUriString();
-        
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             
@@ -160,10 +169,15 @@ public class FacebookApiService {
      * Get conversation history
      */
     public JsonNode getConversationHistory(MessagingAccount account, String userId, int limit) {
-        String url = UriComponentsBuilder.fromHttpUrl(GRAPH_API_BASE_URL + "/" + userId + "/conversations")
-                .queryParam("fields", "messages{message,created_time,from}")
+        String url = UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host("graph.facebook.com")
+                .port(443)
+                .path("/v18.0/" + userId + "/conversations")
+                .queryParam("fields", "id,participants,snippet,updated_time")
                 .queryParam("limit", limit)
                 .queryParam("access_token", account.getAccessToken())
+                .build()
                 .toUriString();
         
         try {
