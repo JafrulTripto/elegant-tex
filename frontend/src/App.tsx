@@ -33,6 +33,7 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import CustomersPage from './pages/CustomersPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
+import PrivacyPolicy from './pages/Privacy';
 
 const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage'));
 const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
@@ -73,6 +74,8 @@ const App: React.FC = () => {
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+
             
             {/* Auth routes - accessible only when not authenticated */}
             <Route element={<ProtectedRoute requireAuth={false} />}>
