@@ -1,5 +1,6 @@
 package com.tripzin.eleganttex.controller;
 
+import com.tripzin.eleganttex.security.jwt.JwtUtils;
 import com.tripzin.eleganttex.security.services.UserDetailsImpl;
 import com.tripzin.eleganttex.service.MessagingSSEService;
 import lombok.RequiredArgsConstructor;
@@ -7,28 +8,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/messaging/sse")
+@RequestMapping("/messaging/sse")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class MessagingSSEController {
     
     private final MessagingSSEService messagingSSEService;
+    private final JwtUtils jwtUtils;
     
     /**
      * Establish SSE connection for real-time messaging events
      */
     @GetMapping(value = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamEvents(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        Long userId = userDetails.getId();
-        log.info("Establishing SSE connection for user: {}", userId);
-        
+    public SseEmitter streamEvents(@RequestParam("token") String token) {
+        // Manually authenticate token
+        UserDetailsImpl user = jwtUtils.parseToken(token); // your custom method
+        Long userId = user.getId();
         return messagingSSEService.createConnection(userId);
     }
     

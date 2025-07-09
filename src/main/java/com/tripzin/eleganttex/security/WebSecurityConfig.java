@@ -79,7 +79,8 @@ public class WebSecurityConfig {
                     .requestMatchers("/uploads/**").permitAll()
                     .requestMatchers("/tags/search").permitAll()
                     .requestMatchers("/actuator/prometheus").permitAll()
-                    .requestMatchers("/webhooks/facebook").permitAll() // ✅ allow Prometheus scraping
+                    .requestMatchers("/webhooks/facebook").permitAll()
+                    .requestMatchers("/messaging/sse/**").permitAll()
                     .anyRequest().authenticated()
             );
         

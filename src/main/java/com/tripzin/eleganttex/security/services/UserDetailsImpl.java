@@ -75,6 +75,11 @@ public class UserDetailsImpl implements UserDetails {
         return email;
     }
 
+
+    public Long getId() {
+        return id;
+    }
+
     @Override
     public boolean isEnabled() {
         return accountVerified;

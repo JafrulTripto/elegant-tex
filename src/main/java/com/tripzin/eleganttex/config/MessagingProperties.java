@@ -110,7 +110,7 @@ public class MessagingProperties {
         private String appId;
         private String appSecret;
         private String graphApiUrl = "https://graph.facebook.com";
-        private String apiVersion = "v18.0";
+        private String apiVersion = "v23.0";
         private String webhookVerifyToken;
 
         public String getAppId() {
@@ -160,7 +160,7 @@ public class MessagingProperties {
 
     public static class WhatsApp {
         private String apiUrl = "https://graph.facebook.com";
-        private String apiVersion = "v18.0";
+        private String apiVersion = "v23.0";
         private String webhookVerifyToken;
 
         public String getApiUrl() {

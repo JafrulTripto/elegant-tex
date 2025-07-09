@@ -43,6 +43,7 @@ const ConversationPanel: React.FC = () => {
     error,
     refreshConversations,
   } = useMessaging();
+  
 
   const getPlatformIcon = (platform: 'FACEBOOK' | 'WHATSAPP') => {
     if (platform === 'FACEBOOK') {

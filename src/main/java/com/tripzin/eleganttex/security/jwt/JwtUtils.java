@@ -1,20 +1,25 @@
 package com.tripzin.eleganttex.security.jwt;
 
 import com.tripzin.eleganttex.security.services.UserDetailsImpl;
+import com.tripzin.eleganttex.security.services.UserDetailsServiceImpl;
+
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
 import java.security.Key;
 import java.util.Date;
-
 @Component
 @Slf4j
 public class JwtUtils {
@@ -27,6 +32,9 @@ public class JwtUtils {
 
     @Value("${jwt.refresh-token-expiration}")
     private int jwtRefreshExpirationMs;
+
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
 
     public String generateAccessToken(UserDetailsImpl userPrincipal) {
         return generateTokenFromUsername(userPrincipal.getUsername(), jwtAccessExpirationMs);
@@ -43,6 +51,18 @@ public class JwtUtils {
                 .setExpiration(new Date((new Date()).getTime() + expirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public UserDetailsImpl parseToken(String token) {
+
+        Claims claims = Jwts.parserBuilder()
+            .setSigningKey(key())
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+        String subject = claims.getSubject();
+        // Assuming subject is user ID
+        return userDetailsService.loadUserByUsername(subject);
     }
 
     private Key key() {

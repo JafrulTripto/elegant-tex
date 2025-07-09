@@ -55,7 +55,7 @@ class MessagingService {
     const url = `${this.baseUrl}/accounts/${accountId}/conversations${queryString ? `?${queryString}` : ''}`;
     
     const response = await api.get(url);
-    return response.data;
+    return response.data.content;
   }
 
   async getConversation(id: number): Promise<ConversationDTO> {

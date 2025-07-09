@@ -21,7 +21,7 @@ import java.util.Map;
 @Slf4j
 public class FacebookApiService {
     
-    private static final String GRAPH_API_BASE_URL = "https://graph.facebook.com/v18.0";
+    private static final String GRAPH_API_BASE_URL = "https://graph.facebook.com/v23.0";
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     
@@ -69,7 +69,7 @@ public class FacebookApiService {
                 .scheme("https")
                 .host("graph.facebook.com")
                 .port(443)
-                .path("/v18.0/" + userId)
+                .path("/v23.0/" + userId)
                 .queryParam("access_token", account.getAccessToken())
                 .queryParam("fields", "first_name,last_name,profile_pic")
                 .build()
@@ -107,7 +107,7 @@ public class FacebookApiService {
                 .scheme("https")
                 .host("graph.facebook.com")
                 .port(443)
-                .path("/v18.0/" + pageId)
+                .path("/v23.0/" + pageId)
                 .queryParam("fields", "name,access_token")
                 .queryParam("access_token", accessToken)
                 .build()
@@ -173,7 +173,7 @@ public class FacebookApiService {
                 .scheme("https")
                 .host("graph.facebook.com")
                 .port(443)
-                .path("/v18.0/" + userId + "/conversations")
+                .path("/v23.0/" + userId + "/conversations")
                 .queryParam("fields", "id,participants,snippet,updated_time")
                 .queryParam("limit", limit)
                 .queryParam("access_token", account.getAccessToken())
@@ -243,7 +243,7 @@ public class FacebookApiService {
                     .scheme("https")
                     .host("graph.facebook.com")
                     .port(443)
-                    .path("/v18.0/" + pageId)
+                    .path("/v23.0/" + pageId)
                     .queryParam("fields", "name,id")
                     .queryParam("access_token", accessToken)
                     .build()
@@ -267,7 +267,7 @@ public class FacebookApiService {
                     .scheme("https")
                     .host("graph.facebook.com")
                     .port(443)
-                    .path("/v18.0/" + pageId)
+                    .path("/v23.0/" + pageId)
                     .build()
                     .toUriString();
             

@@ -34,7 +34,7 @@ class SSEService {
 
     try {
       // Get auth token
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth-token');
       if (!token) {
         throw new Error('No authentication token found');
       }

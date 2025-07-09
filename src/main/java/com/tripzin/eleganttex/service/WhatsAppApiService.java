@@ -21,7 +21,7 @@ import java.util.Map;
 @Slf4j
 public class WhatsAppApiService {
     
-    private static final String WHATSAPP_API_BASE_URL = "https://graph.facebook.com/v18.0";
+    private static final String WHATSAPP_API_BASE_URL = "https://graph.facebook.com/v23.0";
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     
@@ -177,7 +177,7 @@ public class WhatsAppApiService {
                     .scheme("https")
                     .host("graph.facebook.com")
                     .port(443)
-                    .path("/v18.0/" + account.getPhoneNumberId() + "/business_profile")
+                    .path("/v23.0/" + account.getPhoneNumberId() + "/business_profile")
                     .queryParam("access_token", account.getAccessToken())
                     .build()
                     .toUriString();
@@ -209,7 +209,7 @@ public class WhatsAppApiService {
                     .scheme("https")
                     .host("graph.facebook.com")
                     .port(443)
-                    .path("/v18.0/" + phoneNumberId)
+                    .path("/v23.0/" + phoneNumberId)
                     .build()
                     .toUriString();
             
@@ -231,7 +231,7 @@ public class WhatsAppApiService {
                     .scheme("https")
                     .host("graph.facebook.com")
                     .port(443)
-                    .path("/v18.0/" + account.getPhoneNumberId() + "/message_templates")
+                    .path("/v23.0/" + account.getPhoneNumberId() + "/message_templates")
                     .queryParam("access_token", account.getAccessToken())
                     .build()
                     .toUriString();
