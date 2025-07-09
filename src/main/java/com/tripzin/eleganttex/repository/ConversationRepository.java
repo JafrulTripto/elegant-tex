@@ -17,6 +17,11 @@ import java.util.Optional;
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
     
+    @Query("SELECT c FROM Conversation c " +
+       "JOIN FETCH c.messagingAccount " +
+       "WHERE c.id = :conversationId")
+    Optional<Conversation> findByIdWithMessagingAccount(@Param("conversationId") Long conversationId);
+    
     List<Conversation> findByMessagingAccountAndIsActiveTrueOrderByLastMessageAtDesc(MessagingAccount messagingAccount);
     
     List<Conversation> findByCustomerOrderByLastMessageAtDesc(Customer customer);

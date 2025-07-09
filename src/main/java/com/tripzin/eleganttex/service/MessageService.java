@@ -296,7 +296,7 @@ public class MessageService {
     }
     
     private Conversation getConversationByUserAndId(User user, Long conversationId) {
-        return conversationRepository.findById(conversationId)
+        return  conversationRepository.findByIdWithMessagingAccount(conversationId)
                 .filter(conv -> conv.getMessagingAccount().getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found with id: " + conversationId));
     }
