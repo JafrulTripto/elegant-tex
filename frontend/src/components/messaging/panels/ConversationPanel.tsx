@@ -25,7 +25,6 @@ import {
   Person as PersonIcon,
   Facebook as FacebookIcon,
   WhatsApp as WhatsAppIcon,
-  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { useMessaging } from '../layout/MessagingContext';
 import { ConversationDTO } from '../../../types/messaging';

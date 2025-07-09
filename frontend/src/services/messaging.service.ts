@@ -163,21 +163,17 @@ class MessagingService {
     }
   }
 
-  // Real-time updates (WebSocket connection would be handled separately)
-  async subscribeToUpdates(accountId: number, callback: (message: MessageDTO) => void): Promise<() => void> {
-    // This would typically set up a WebSocket connection
-    // For now, we'll use polling as a fallback
-    const interval = setInterval(async () => {
-      try {
-        // Poll for new messages
-        const conversations = await this.getAccountConversations(accountId);
-        // Process new messages and call callback
-      } catch (error) {
-        console.error('Error polling for updates:', error);
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
+  // Note: Real-time updates are handled by SSE service (sse.service.ts)
+  // This method is kept for backward compatibility but delegates to SSE
+  async subscribeToUpdates(accountId: number, _callback: (message: MessageDTO) => void): Promise<() => void> {
+    // Real-time updates are now handled by the SSE service
+    // This method is deprecated in favor of useMessagingSSE hook
+    console.warn('subscribeToUpdates is deprecated. Use useMessagingSSE hook for real-time updates.');
+    
+    // Return a no-op unsubscribe function
+    return () => {
+      console.log(`Unsubscribed from updates for account ${accountId}`);
+    };
   }
 }
 

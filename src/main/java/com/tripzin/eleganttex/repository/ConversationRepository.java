@@ -47,4 +47,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     List<Conversation> findByMessagingAccountInAndLastMessageAtAfter(List<MessagingAccount> accounts, LocalDateTime since);
     
     long countByMessagingAccountAndUnreadCountGreaterThan(MessagingAccount messagingAccount, Integer count);
+    
+    long countByMessagingAccount(MessagingAccount messagingAccount);
 }

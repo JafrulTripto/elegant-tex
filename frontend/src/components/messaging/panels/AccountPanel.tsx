@@ -22,7 +22,6 @@ import {
   Facebook as FacebookIcon,
   WhatsApp as WhatsAppIcon,
   Refresh as RefreshIcon,
-  Settings as SettingsIcon,
   Circle as OnlineIcon,
 } from '@mui/icons-material';
 import { useMessaging } from '../layout/MessagingContext';

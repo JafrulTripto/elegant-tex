@@ -28,8 +28,9 @@ public class FacebookWebhookService {
     private final MessageRepository messageRepository;
     private final WebhookEventRepository webhookEventRepository;
     private final CustomerRepository customerRepository;
+    private final MessagingEventService messagingEventService;
     private final ObjectMapper objectMapper;
-    @Value("${FACEBOOK_WEBHOOK_VERIFY_TOKEN}")
+    @Value("${app.messaging.facebook.webhook-verify-token}")
     private String fallbackVerifyToken;
     
     /**
@@ -170,6 +171,28 @@ public class FacebookWebhookService {
         }
         conversationRepository.save(conversation);
         
+        // Broadcast real-time events
+        try {
+            // Convert to DTO for broadcasting
+            com.tripzin.eleganttex.dto.MessageDTO messageDTO = convertToMessageDTO(message);
+            messagingEventService.broadcastNewMessage(message, messageDTO);
+            
+            // Broadcast conversation update
+            com.tripzin.eleganttex.dto.ConversationDTO conversationDTO = convertToConversationDTO(conversation);
+            messagingEventService.broadcastConversationUpdate(conversation, conversationDTO);
+            
+            // Broadcast unread count update if inbound
+            if (isInbound) {
+                messagingEventService.broadcastUnreadCountUpdate(
+                    account.getId(), 
+                    conversation.getId(), 
+                    conversation.getUnreadCount()
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to broadcast real-time events for message: {}", messageId, e);
+        }
+        
         log.info("Processed Facebook message: {} from conversation: {}", messageId, conversation.getId());
     }
     
@@ -253,5 +276,19 @@ public class FacebookWebhookService {
                 .build();
         
         return customerRepository.save(customer);
+    }
+    
+    /**
+     * Convert Message entity to MessageDTO
+     */
+    private com.tripzin.eleganttex.dto.MessageDTO convertToMessageDTO(Message message) {
+        return com.tripzin.eleganttex.dto.MessageDTO.fromEntity(message);
+    }
+    
+    /**
+     * Convert Conversation entity to ConversationDTO
+     */
+    private com.tripzin.eleganttex.dto.ConversationDTO convertToConversationDTO(Conversation conversation) {
+        return com.tripzin.eleganttex.dto.ConversationDTO.fromEntity(conversation);
     }
 }

@@ -31,6 +31,8 @@ public class MessagingAccountService {
     private final MessagingAccountRepository messagingAccountRepository;
     private final UserRepository userRepository;
     private final CustomerRepository customerRepository;
+    private final FacebookApiService facebookApiService;
+    private final WhatsAppApiService whatsAppApiService;
     
     public List<MessagingAccountDTO> getUserAccounts(Long userId) {
         User user = userRepository.findById(userId)
@@ -58,6 +60,9 @@ public class MessagingAccountService {
         
         // Validate platform-specific requirements
         validatePlatformRequirements(requestDTO);
+        
+        // Validate access tokens
+        validateAccessToken(requestDTO);
         
         // Check for duplicate accounts
         checkForDuplicateAccount(requestDTO);
@@ -234,6 +239,42 @@ public class MessagingAccountService {
                             }
                         });
                 break;
+        }
+    }
+    
+    private void validateAccessToken(MessagingAccountRequestDTO requestDTO) {
+        if (requestDTO.getAccessToken() == null || requestDTO.getAccessToken().trim().isEmpty()) {
+            throw new BadRequestException("Access token is required");
+        }
+        
+        try {
+            switch (requestDTO.getPlatform()) {
+                case FACEBOOK:
+                    boolean facebookValid = facebookApiService.validatePageAccess(
+                            requestDTO.getPageId(), requestDTO.getAccessToken());
+                    if (!facebookValid) {
+                        throw new BadRequestException("Invalid Facebook page access token or page ID");
+                    }
+                    log.info("Facebook token validation successful for page: {}", requestDTO.getPageId());
+                    break;
+                    
+                case WHATSAPP:
+                    boolean whatsappValid = whatsAppApiService.validatePhoneNumberAccess(
+                            requestDTO.getPhoneNumberId(), requestDTO.getAccessToken());
+                    if (!whatsappValid) {
+                        throw new BadRequestException("Invalid WhatsApp phone number access token or phone number ID");
+                    }
+                    log.info("WhatsApp token validation successful for phone: {}", requestDTO.getPhoneNumberId());
+                    break;
+                    
+                default:
+                    throw new BadRequestException("Unsupported platform: " + requestDTO.getPlatform());
+            }
+        } catch (BadRequestException e) {
+            throw e; // Re-throw validation errors
+        } catch (Exception e) {
+            log.error("Error validating access token for platform {}: {}", requestDTO.getPlatform(), e.getMessage());
+            throw new BadRequestException("Failed to validate access token: " + e.getMessage());
         }
     }
 }

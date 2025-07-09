@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { MessagingAccountDTO, ConversationDTO, MessageDTO, MessageType } from '../../../types/messaging';
 import { messagingService } from '../../../services/messaging.service';
+import { useMessagingSSE } from '../../../hooks/useMessagingSSE';
+import { MessagingEvent } from '../../../services/sse.service';
 
 interface MessagingContextType {
   // Account management
@@ -30,6 +32,9 @@ interface MessagingContextType {
   refreshConversations: () => Promise<void>;
   refreshMessages: () => Promise<void>;
   sendMessage: (content: string, attachments?: File[]) => Promise<void>;
+  
+  // Real-time connection
+  isConnected: boolean;
   
   // UI state
   isMobile: boolean;
@@ -148,7 +153,7 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
   }, [selectedConversation]);
   
   // Send message
-  const sendMessage = useCallback(async (content: string, attachments?: File[]) => {
+  const sendMessage = useCallback(async (content: string, _attachments?: File[]) => {
     if (!selectedConversation || !selectedAccount) {
       throw new Error('No conversation or account selected');
     }
@@ -170,6 +175,32 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
       throw err;
     }
   }, [selectedConversation, selectedAccount, refreshConversations]);
+
+  // SSE connection for real-time updates
+  const { isConnected } = useMessagingSSE({
+    onNewMessage: useCallback((event: MessagingEvent) => {
+      console.log('New message received:', event);
+      if (event.data && selectedConversation && event.conversationId === selectedConversation.id) {
+        setMessages(prev => [...prev, event.data]);
+      }
+      // Update conversation list to show new message
+      refreshConversations();
+    }, [selectedConversation, refreshConversations]),
+    
+    onConversationUpdate: useCallback((event: MessagingEvent) => {
+      console.log('Conversation updated:', event);
+      refreshConversations();
+    }, [refreshConversations]),
+    
+    onUnreadCountUpdate: useCallback((event: MessagingEvent) => {
+      console.log('Unread count updated:', event);
+      refreshConversations();
+    }, [refreshConversations]),
+    
+    onConnectionStatusChange: useCallback((event: MessagingEvent) => {
+      console.log('Connection status:', event.message);
+    }, [])
+  });
   
   // Auto-refresh data when selections change
   useEffect(() => {
@@ -232,6 +263,9 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     refreshConversations,
     refreshMessages,
     sendMessage,
+    
+    // Real-time connection
+    isConnected,
     
     // UI state
     isMobile,

@@ -173,11 +173,15 @@ public class WhatsAppApiService {
      */
     public Map<String, Object> getBusinessProfile(MessagingAccount account) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(WHATSAPP_API_BASE_URL + "/" + account.getPhoneNumberId())
-                    .queryParam("fields", "display_phone_number,verified_name,quality_rating")
+            String url = UriComponentsBuilder.newInstance()
+                    .scheme("https")
+                    .host("graph.facebook.com")
+                    .port(443)
+                    .path("/v18.0/" + account.getPhoneNumberId() + "/business_profile")
                     .queryParam("access_token", account.getAccessToken())
+                    .build()
                     .toUriString();
-            
+
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             
             if (response.getStatusCode() == HttpStatus.OK) {
@@ -201,9 +205,12 @@ public class WhatsAppApiService {
      */
     public boolean validatePhoneNumberAccess(String phoneNumberId, String accessToken) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(WHATSAPP_API_BASE_URL + "/" + phoneNumberId)
-                    .queryParam("fields", "display_phone_number")
-                    .queryParam("access_token", accessToken)
+            String url = UriComponentsBuilder.newInstance()
+                    .scheme("https")
+                    .host("graph.facebook.com")
+                    .port(443)
+                    .path("/v18.0/" + phoneNumberId)
+                    .build()
                     .toUriString();
             
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -220,8 +227,13 @@ public class WhatsAppApiService {
      */
     public JsonNode getMessageTemplates(MessagingAccount account) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(WHATSAPP_API_BASE_URL + "/" + account.getBusinessAccountId() + "/message_templates")
+            String url = UriComponentsBuilder.newInstance()
+                    .scheme("https")
+                    .host("graph.facebook.com")
+                    .port(443)
+                    .path("/v18.0/" + account.getPhoneNumberId() + "/message_templates")
                     .queryParam("access_token", account.getAccessToken())
+                    .build()
                     .toUriString();
             
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);

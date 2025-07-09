@@ -51,4 +51,18 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
         @Param("endDate") LocalDateTime endDate);
     
     long countByMessagingAccountAndIsInboundAndTimestampAfter(MessagingAccount account, Boolean isInbound, LocalDateTime since);
+    
+    long countByMessagingAccount(MessagingAccount messagingAccount);
+    
+    long countByMessagingAccountAndIsInboundTrueAndStatus(MessagingAccount messagingAccount, Message.MessageStatus status);
+    
+    long countByMessagingAccountAndTimestampAfter(MessagingAccount messagingAccount, LocalDateTime timestamp);
+    
+    long countByMessagingAccountAndIsInboundTrueAndTimestampAfter(MessagingAccount messagingAccount, LocalDateTime timestamp);
+    
+    long countByMessagingAccountAndIsInboundFalseAndTimestampAfter(MessagingAccount messagingAccount, LocalDateTime timestamp);
+    
+    long countByConversation(Conversation conversation);
+    
+    long countByConversationAndTimestampAfter(Conversation conversation, LocalDateTime timestamp);
 }

@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,6 +25,7 @@ public class WhatsAppWebhookService {
     private final MessageRepository messageRepository;
     private final WebhookEventRepository webhookEventRepository;
     private final CustomerRepository customerRepository;
+    private final MessagingEventService messagingEventService;
     private final ObjectMapper objectMapper;
     
     /**
@@ -155,6 +155,28 @@ public class WhatsAppWebhookService {
             }
             conversationRepository.save(conversation);
             
+            // Broadcast real-time events
+            try {
+                // Convert to DTO for broadcasting
+                com.tripzin.eleganttex.dto.MessageDTO messageDTO = convertToMessageDTO(message);
+                messagingEventService.broadcastNewMessage(message, messageDTO);
+                
+                // Broadcast conversation update
+                com.tripzin.eleganttex.dto.ConversationDTO conversationDTO = convertToConversationDTO(conversation);
+                messagingEventService.broadcastConversationUpdate(conversation, conversationDTO);
+                
+                // Broadcast unread count update if inbound
+                if (isInbound) {
+                    messagingEventService.broadcastUnreadCountUpdate(
+                        account.getId(), 
+                        conversation.getId(), 
+                        conversation.getUnreadCount()
+                    );
+                }
+            } catch (Exception e) {
+                log.error("Failed to broadcast real-time events for WhatsApp message: {}", messageId, e);
+            }
+            
             log.info("Processed WhatsApp message: {} from conversation: {}", messageId, conversation.getId());
             
         } catch (Exception e) {
@@ -281,5 +303,19 @@ public class WhatsAppWebhookService {
                 .build();
         
         return customerRepository.save(customer);
+    }
+    
+    /**
+     * Convert Message entity to MessageDTO
+     */
+    private com.tripzin.eleganttex.dto.MessageDTO convertToMessageDTO(Message message) {
+        return com.tripzin.eleganttex.dto.MessageDTO.fromEntity(message);
+    }
+    
+    /**
+     * Convert Conversation entity to ConversationDTO
+     */
+    private com.tripzin.eleganttex.dto.ConversationDTO convertToConversationDTO(Conversation conversation) {
+        return com.tripzin.eleganttex.dto.ConversationDTO.fromEntity(conversation);
     }
 }

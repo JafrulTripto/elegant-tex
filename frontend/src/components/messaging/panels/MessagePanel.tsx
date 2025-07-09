@@ -10,7 +10,6 @@ import {
   CircularProgress,
   Alert,
   useTheme,
-  Divider,
   Tooltip,
   InputAdornment,
 } from '@mui/material';
@@ -43,7 +42,6 @@ const MessagePanel: React.FC = () => {
     messagesLoading,
     error,
     sendMessage,
-    refreshMessages,
   } = useMessaging();
 
   // Auto-scroll to bottom when new messages arrive

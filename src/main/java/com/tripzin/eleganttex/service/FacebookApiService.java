@@ -233,4 +233,62 @@ public class FacebookApiService {
             throw new MessagingApiException("Failed to mark Facebook message as read: " + e.getMessage());
         }
     }
+    
+    /**
+     * Validate page access token
+     */
+    public boolean validatePageAccess(String pageId, String accessToken) {
+        try {
+            String url = UriComponentsBuilder.newInstance()
+                    .scheme("https")
+                    .host("graph.facebook.com")
+                    .port(443)
+                    .path("/v18.0/" + pageId)
+                    .queryParam("fields", "name,id")
+                    .queryParam("access_token", accessToken)
+                    .build()
+                    .toUriString();
+            
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            return response.getStatusCode() == HttpStatus.OK;
+            
+        } catch (Exception e) {
+            log.error("Error validating Facebook page access: {}", pageId, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Get page information
+     */
+    public Map<String, Object> getPageInfo(String pageId, String accessToken) {
+        try {
+            String url = UriComponentsBuilder.newInstance()
+                    .scheme("https")
+                    .host("graph.facebook.com")
+                    .port(443)
+                    .path("/v18.0/" + pageId)
+                    .build()
+                    .toUriString();
+            
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                Map<String, Object> pageInfo = new HashMap<>();
+                pageInfo.put("name", jsonNode.get("name").asText());
+                pageInfo.put("id", jsonNode.get("id").asText());
+                pageInfo.put("category", jsonNode.get("category").asText());
+                if (jsonNode.has("picture")) {
+                    pageInfo.put("picture", jsonNode.get("picture").get("data").get("url").asText());
+                }
+                return pageInfo;
+            }
+            
+        } catch (Exception e) {
+            log.error("Error fetching Facebook page info: {}", pageId, e);
+        }
+        
+        return new HashMap<>();
+    }
 }
