@@ -27,8 +27,9 @@ public class FacebookWebhookService {
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final WebhookEventRepository webhookEventRepository;
-    private final CustomerRepository customerRepository;
+    private final MessagingCustomerRepository messagingCustomerRepository;
     private final MessagingEventService messagingEventService;
+    private final FacebookApiService facebookApiService;
     private final ObjectMapper objectMapper;
     @Value("${app.messaging.facebook.webhook-verify-token}")
     private String fallbackVerifyToken;
@@ -151,7 +152,7 @@ public class FacebookWebhookService {
         Message message = Message.builder()
                 .conversation(conversation)
                 .messagingAccount(account)
-                .customer(conversation.getCustomer())
+                .messagingCustomer(conversation.getMessagingCustomer())
                 .platformMessageId(messageId)
                 .senderId(senderId)
                 .recipientId(recipientId)
@@ -233,22 +234,22 @@ public class FacebookWebhookService {
     }
     
     private Conversation findOrCreateConversation(MessagingAccount account, String platformCustomerId) {
+        // Try to find existing messaging customer first
+        MessagingCustomer messagingCustomer = findOrCreateMessagingCustomer(platformCustomerId, account);
+        
+        // Look for existing conversation by account and customer
         Optional<Conversation> existingConversation = conversationRepository
-                .findByMessagingAccountAndPlatformCustomerId(account, platformCustomerId);
+                .findByMessagingAccountAndMessagingCustomer(account, messagingCustomer);
         
         if (existingConversation.isPresent()) {
             return existingConversation.get();
         }
         
-        // Try to find existing customer or create new one
-        Customer customer = findOrCreateCustomer(platformCustomerId, account);
-        
         // Create new conversation
         Conversation conversation = Conversation.builder()
                 .messagingAccount(account)
-                .customer(customer)
-                .platformCustomerId(platformCustomerId)
-                .conversationName(customer.getName())
+                .messagingCustomer(messagingCustomer)
+                .conversationName(messagingCustomer.getBestDisplayName())
                 .unreadCount(0)
                 .isActive(true)
                 .build();
@@ -256,26 +257,63 @@ public class FacebookWebhookService {
         return conversationRepository.save(conversation);
     }
     
-    private Customer findOrCreateCustomer(String platformCustomerId, MessagingAccount account) {
-        // For now, create a simple customer record
-        // In a real implementation, you might want to fetch user profile from Facebook API
-        
-        Optional<Customer> existingCustomer = customerRepository
-                .findByFacebookId(platformCustomerId);
+    private MessagingCustomer findOrCreateMessagingCustomer(String platformCustomerId, MessagingAccount account) {
+        Optional<MessagingCustomer> existingCustomer = messagingCustomerRepository
+                .findByPlatformCustomerIdAndPlatform(platformCustomerId, MessagingCustomer.MessagingPlatform.FACEBOOK);
         
         if (existingCustomer.isPresent()) {
-            return existingCustomer.get();
+            MessagingCustomer customer = existingCustomer.get();
+            // Try to fetch profile if not already fetched and should retry
+            if (customer.shouldRetryProfileFetch()) {
+                fetchAndUpdateProfileAsync(customer, account);
+            }
+            return customer;
         }
         
-        // Create new customer
-        Customer customer = Customer.builder()
-                .name("Facebook User " + platformCustomerId.substring(0, Math.min(8, platformCustomerId.length())))
-                .phone("N/A") // Required field, using placeholder
-                .address("N/A") // Required field, using placeholder
-                .facebookId(platformCustomerId)
+        // Create new messaging customer
+        MessagingCustomer customer = MessagingCustomer.builder()
+                .platformCustomerId(platformCustomerId)
+                .platform(MessagingCustomer.MessagingPlatform.FACEBOOK)
+                .displayName("Facebook User") // Temporary fallback
+                .profileFetched(false)
                 .build();
         
-        return customerRepository.save(customer);
+        customer = messagingCustomerRepository.save(customer);
+        
+        // Attempt to fetch profile asynchronously
+        fetchAndUpdateProfileAsync(customer, account);
+        
+        return customer;
+    }
+    
+    private void fetchAndUpdateProfileAsync(MessagingCustomer customer, MessagingAccount account) {
+        // For now, we'll do this synchronously, but in production you might want to use @Async
+        try {
+            fetchAndUpdateProfile(customer, account);
+        } catch (Exception e) {
+            log.warn("Failed to fetch Facebook profile for customer: {}", customer.getPlatformCustomerId(), e);
+        }
+    }
+    
+    private void fetchAndUpdateProfile(MessagingCustomer customer, MessagingAccount account) {
+        try {
+            // Use the FacebookApiService to get user profile
+            Map<String, Object> profile = facebookApiService.getUserProfile(account, customer.getPlatformCustomerId());
+            
+            String firstName = (String) profile.get("firstName");
+            String lastName = (String) profile.get("lastName");
+            String profilePictureUrl = (String) profile.get("profilePic");
+            
+            customer.updateProfileFromApi(firstName, lastName, profilePictureUrl);
+            messagingCustomerRepository.save(customer);
+            
+            log.info("Successfully fetched Facebook profile for customer: {}", customer.getPlatformCustomerId());
+            
+        } catch (Exception e) {
+            log.warn("Failed to fetch Facebook profile for customer: {}", customer.getPlatformCustomerId(), e);
+            customer.markProfileFetchAttempted();
+            messagingCustomerRepository.save(customer);
+        }
     }
     
     /**

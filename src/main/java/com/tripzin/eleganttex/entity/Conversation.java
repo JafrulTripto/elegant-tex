@@ -16,11 +16,11 @@ import java.util.Objects;
 @Entity
 @Table(name = "conversations",
        uniqueConstraints = {
-           @UniqueConstraint(columnNames = {"messaging_account_id", "platform_customer_id"})
+           @UniqueConstraint(columnNames = {"messaging_account_id", "messaging_customer_id"})
        })
 @Getter
 @Setter
-@ToString(exclude = {"messagingAccount", "customer", "messages"})
+@ToString(exclude = {"messagingAccount", "messagingCustomer", "messages"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,14 +35,10 @@ public class Conversation {
     @JoinColumn(name = "messaging_account_id", nullable = false)
     private MessagingAccount messagingAccount;
     
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
-    
-    @NotBlank
-    @Size(max = 100)
-    @Column(name = "platform_customer_id", nullable = false)
-    private String platformCustomerId;
+    @JoinColumn(name = "messaging_customer_id", nullable = false)
+    private MessagingCustomer messagingCustomer;
     
     @Size(max = 255)
     @Column(name = "conversation_name")
@@ -77,11 +73,12 @@ public class Conversation {
         if (o == null || getClass() != o.getClass()) return false;
         Conversation that = (Conversation) o;
         return Objects.equals(id, that.id) &&
-               Objects.equals(platformCustomerId, that.platformCustomerId);
+               Objects.equals(messagingCustomer, that.messagingCustomer) &&
+               Objects.equals(messagingAccount, that.messagingAccount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, platformCustomerId);
+        return Objects.hash(id, messagingCustomer, messagingAccount);
     }
 }

@@ -124,6 +124,7 @@ const MessagingLayout: React.FC = () => {
         height: '100%',
         display: 'flex',
         gap: 1,
+        minHeight: 0, // Important for flex children to shrink
       }}
     >
       {/* Account Panel - Left */}

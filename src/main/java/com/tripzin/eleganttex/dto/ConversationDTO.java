@@ -18,9 +18,12 @@ public class ConversationDTO {
     private Long messagingAccountId;
     private String accountName;
     private String platform;
-    private Long customerId;
+    private Long messagingCustomerId;
     private String customerName;
-    private String platformCustomerId;
+    private String customerFirstName;
+    private String customerLastName;
+    private String customerProfilePicture;
+    private Boolean customerProfileFetched;
     private String conversationName;
     private LocalDateTime lastMessageAt;
     private String lastMessageContent;
@@ -37,9 +40,12 @@ public class ConversationDTO {
                 .messagingAccountId(conversation.getMessagingAccount().getId())
                 .accountName(conversation.getMessagingAccount().getAccountName())
                 .platform(conversation.getMessagingAccount().getPlatform().name())
-                .customerId(conversation.getCustomer() != null ? conversation.getCustomer().getId() : null)
-                .customerName(conversation.getCustomer() != null ? conversation.getCustomer().getName() : null)
-                .platformCustomerId(conversation.getPlatformCustomerId())
+                .messagingCustomerId(conversation.getMessagingCustomer() != null ? conversation.getMessagingCustomer().getId() : null)
+                .customerName(conversation.getMessagingCustomer() != null ? conversation.getMessagingCustomer().getBestDisplayName() : null)
+                .customerFirstName(conversation.getMessagingCustomer() != null ? conversation.getMessagingCustomer().getFirstName() : null)
+                .customerLastName(conversation.getMessagingCustomer() != null ? conversation.getMessagingCustomer().getLastName() : null)
+                .customerProfilePicture(conversation.getMessagingCustomer() != null ? conversation.getMessagingCustomer().getProfilePictureUrl() : null)
+                .customerProfileFetched(conversation.getMessagingCustomer() != null ? conversation.getMessagingCustomer().getProfileFetched() : false)
                 .conversationName(conversation.getConversationName())
                 .lastMessageAt(conversation.getLastMessageAt())
                 .unreadCount(conversation.getUnreadCount())

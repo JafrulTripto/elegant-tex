@@ -35,7 +35,7 @@ public class MessageService {
         User user = getUserById(userId);
         Conversation conversation = getConversationByUserAndId(user, conversationId);
         
-        Page<Message> messages = messageRepository.findByConversationOrderByTimestampDesc(conversation, pageable);
+        Page<Message> messages = messageRepository.findByConversationOrderByTimestampAsc(conversation, pageable);
         return messages.map(this::convertToMap);
     }
     
@@ -93,9 +93,9 @@ public class MessageService {
         try {
             // Send message via appropriate platform API
             if (account.getPlatform() == MessagingAccount.MessagingPlatform.FACEBOOK) {
-                facebookApiService.sendTextMessage(account, conversation.getPlatformCustomerId(), content);
+                facebookApiService.sendTextMessage(account, conversation.getMessagingCustomer().getPlatformCustomerId(), content);
             } else if (account.getPlatform() == MessagingAccount.MessagingPlatform.WHATSAPP) {
-                whatsAppApiService.sendTextMessage(account, conversation.getPlatformCustomerId(), content);
+                whatsAppApiService.sendTextMessage(account, conversation.getMessagingCustomer().getPlatformCustomerId(), content);
             } else {
                 throw new IllegalArgumentException("Unsupported platform: " + account.getPlatform());
             }
@@ -104,10 +104,10 @@ public class MessageService {
             Message message = Message.builder()
                     .conversation(conversation)
                     .messagingAccount(account)
-                    .customer(conversation.getCustomer())
+                    .messagingCustomer(conversation.getMessagingCustomer())
                     .platformMessageId(generateTempMessageId()) // Will be updated by webhook
                     .senderId(account.getPageId() != null ? account.getPageId() : account.getPhoneNumberId())
-                    .recipientId(conversation.getPlatformCustomerId())
+                    .recipientId(conversation.getMessagingCustomer().getPlatformCustomerId())
                     .messageType(Message.MessageType.valueOf(messageType.toUpperCase()))
                     .content(content)
                     .isInbound(false)
@@ -273,7 +273,7 @@ public class MessageService {
         Map<String, Object> conversationInfo = new HashMap<>();
         conversationInfo.put("id", conversation.getId());
         conversationInfo.put("conversationName", conversation.getConversationName());
-        conversationInfo.put("platformCustomerId", conversation.getPlatformCustomerId());
+        conversationInfo.put("platformCustomerId", conversation.getMessagingCustomer().getPlatformCustomerId());
         map.put("conversation", conversationInfo);
         
         // Account info

@@ -1,8 +1,8 @@
 package com.tripzin.eleganttex.repository;
 
 import com.tripzin.eleganttex.entity.Conversation;
-import com.tripzin.eleganttex.entity.Customer;
 import com.tripzin.eleganttex.entity.MessagingAccount;
+import com.tripzin.eleganttex.entity.MessagingCustomer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,9 +24,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     
     List<Conversation> findByMessagingAccountAndIsActiveTrueOrderByLastMessageAtDesc(MessagingAccount messagingAccount);
     
-    List<Conversation> findByCustomerOrderByLastMessageAtDesc(Customer customer);
     
-    Optional<Conversation> findByMessagingAccountAndPlatformCustomerId(MessagingAccount messagingAccount, String platformCustomerId);
+    Optional<Conversation> findByMessagingAccountAndMessagingCustomer(MessagingAccount messagingAccount, MessagingCustomer messagingCustomer);
     
     Page<Conversation> findByMessagingAccountAndIsActiveTrueOrderByLastMessageAtDesc(MessagingAccount messagingAccount, Pageable pageable);
     
@@ -38,7 +37,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
            "(:hasUnread = false AND c.unreadCount = 0)) AND " +
            "(:search IS NULL OR :search = '' OR " +
            "LOWER(c.conversationName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "LOWER(c.platformCustomerId) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "LOWER(c.messagingCustomer.displayName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY c.lastMessageAt DESC")
     Page<Conversation> searchConversations(
         @Param("accounts") List<MessagingAccount> accounts,

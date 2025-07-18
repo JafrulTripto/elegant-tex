@@ -28,12 +28,17 @@ import {
 import { useMessaging } from '../layout/MessagingContext';
 import { MessageDTO, MessageStatus } from '../../../types/messaging';
 import { format, isToday, isYesterday } from 'date-fns';
+import EmojiPicker from '../common/EmojiPicker';
+import { insertEmojiAtCursor } from '../../../utils/emojiUtils';
 
 const MessagePanel: React.FC = () => {
   const theme = useTheme();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textFieldRef = useRef<HTMLInputElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const [messageInput, setMessageInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   
   const {
     messages,
@@ -46,7 +51,9 @@ const MessagePanel: React.FC = () => {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }, [messages]);
 
   const getPlatformIcon = (platform: 'FACEBOOK' | 'WHATSAPP') => {
@@ -108,6 +115,36 @@ const MessagePanel: React.FC = () => {
     }
   };
 
+  const handleEmojiClick = () => {
+    setEmojiPickerOpen(!emojiPickerOpen);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    if (textFieldRef.current) {
+      insertEmojiAtCursor(textFieldRef.current, emoji, setMessageInput);
+    }
+  };
+
+  const handleEmojiPickerClose = () => {
+    setEmojiPickerOpen(false);
+  };
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerOpen && 
+          emojiButtonRef.current && 
+          !emojiButtonRef.current.contains(event.target as Node)) {
+        setEmojiPickerOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [emojiPickerOpen]);
+
   const groupMessagesByDate = (messages: MessageDTO[]) => {
     const groups: { [key: string]: MessageDTO[] } = {};
     
@@ -159,50 +196,51 @@ const MessagePanel: React.FC = () => {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
+      {/* Header - Compact */}
       <Box
         sx={{
-          p: 2,
+          p: 1.5,
           borderBottom: `1px solid ${theme.palette.divider}`,
           display: 'flex',
           alignItems: 'center',
-          gap: 2,
+          gap: 1.5,
         }}
       >
         <Avatar
           sx={{
             bgcolor: theme.palette.grey[300],
             color: theme.palette.grey[600],
-            width: 40,
-            height: 40,
+            width: 32,
+            height: 32,
           }}
         >
-          <PersonIcon />
+          <PersonIcon fontSize="small" />
         </Avatar>
         <Box sx={{ flexGrow: 1 }}>
           <Typography
-            variant="h6"
+            variant="subtitle2"
             sx={{
               fontWeight: 600,
-              fontSize: '1.1rem',
+              fontSize: '0.95rem',
               color: theme.palette.text.primary,
+              lineHeight: 1.2,
             }}
           >
             {selectedConversation.customer.name}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {getPlatformIcon(selectedAccount.platform)}
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
               {selectedConversation.customer.phone || selectedConversation.customer.email || 'No contact info'}
             </Typography>
           </Box>
         </Box>
         {selectedConversation.unreadCount > 0 && (
           <Chip
-            label={`${selectedConversation.unreadCount} unread`}
+            label={selectedConversation.unreadCount}
             size="small"
             color="error"
-            sx={{ fontSize: '0.7rem' }}
+            sx={{ fontSize: '0.65rem', height: '20px', minWidth: '20px' }}
           />
         )}
       </Box>
@@ -285,25 +323,25 @@ const MessagePanel: React.FC = () => {
                   />
                 </Box>
 
-                {/* Messages for this date */}
+                {/* Messages for this date - Compact */}
                 {dateMessages.map((message) => (
                   <Box
                     key={message.id}
                     sx={{
                       display: 'flex',
                       justifyContent: message.isInbound ? 'flex-start' : 'flex-end',
-                      mb: 1,
+                      mb: 0.5,
                     }}
                   >
                     <Paper
                       elevation={1}
                       sx={{
-                        maxWidth: '70%',
-                        p: 1.5,
-                        borderRadius: 2,
+                        maxWidth: '75%',
+                        p: 0.8,
+                        borderRadius: 1.5,
                         backgroundColor: message.isInbound
                           ? theme.palette.background.paper
-                          : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                          : theme.palette.primary.main,
                         color: message.isInbound
                           ? theme.palette.text.primary
                           : theme.palette.primary.contrastText,
@@ -313,15 +351,14 @@ const MessagePanel: React.FC = () => {
                             }
                           : {
                               borderBottomRightRadius: 4,
-                              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                             }),
                       }}
                     >
                       <Typography
                         variant="body2"
                         sx={{
-                          fontSize: '0.9rem',
-                          lineHeight: 1.4,
+                          fontSize: '0.85rem',
+                          lineHeight: 1.3,
                           wordBreak: 'break-word',
                         }}
                       >
@@ -333,14 +370,14 @@ const MessagePanel: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'flex-end',
-                          gap: 0.5,
-                          mt: 0.5,
+                          gap: 0.3,
+                          mt: 0.3,
                         }}
                       >
                         <Typography
                           variant="caption"
                           sx={{
-                            fontSize: '0.7rem',
+                            fontSize: '0.65rem',
                             opacity: 0.8,
                             color: message.isInbound
                               ? 'text.secondary'
@@ -365,55 +402,82 @@ const MessagePanel: React.FC = () => {
         )}
       </Box>
 
-      {/* Message Input */}
+      {/* Message Input - Compact */}
       <Box
         sx={{
-          p: 2,
+          p: 1.5,
           borderTop: `1px solid ${theme.palette.divider}`,
           backgroundColor: theme.palette.background.paper,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
-          <TextField
-            fullWidth
-            multiline
-            maxRows={4}
-            placeholder="Type a message..."
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={sending}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-                backgroundColor: theme.palette.grey[50],
-              },
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <Tooltip title="Attach file">
-                      <IconButton size="small" disabled={sending}>
-                        <AttachIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Add emoji">
-                      <IconButton size="small" disabled={sending}>
-                        <EmojiIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </InputAdornment>
-              ),
-            }}
-          />
+        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.8 }}>
+          <Box sx={{ position: 'relative', flexGrow: 1 }}>
+            <TextField
+              fullWidth
+              multiline
+              maxRows={3}
+              placeholder="Type a message..."
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={sending}
+              size="small"
+              inputRef={textFieldRef}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2.5,
+                  backgroundColor: theme.palette.grey[50],
+                  fontSize: '0.9rem',
+                },
+                '& .MuiOutlinedInput-input': {
+                  py: 1,
+                },
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Box sx={{ display: 'flex', gap: 0.3 }}>
+                      <Tooltip title="Attach file">
+                        <IconButton size="small" disabled={sending}>
+                          <AttachIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Add emoji">
+                        <IconButton 
+                          ref={emojiButtonRef}
+                          size="small" 
+                          disabled={sending}
+                          onClick={handleEmojiClick}
+                          sx={{
+                            color: emojiPickerOpen ? 'primary.main' : 'inherit',
+                          }}
+                        >
+                          <EmojiIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            
+            {/* Emoji Picker */}
+            <EmojiPicker
+              isOpen={emojiPickerOpen}
+              anchorEl={emojiButtonRef.current}
+              onClose={handleEmojiPickerClose}
+              onEmojiSelect={handleEmojiSelect}
+            />
+          </Box>
           <IconButton
             onClick={handleSendMessage}
             disabled={!messageInput.trim() || sending}
+            size="small"
             sx={{
               bgcolor: theme.palette.primary.main,
               color: 'white',
+              width: 36,
+              height: 36,
               '&:hover': {
                 bgcolor: theme.palette.primary.dark,
               },
@@ -424,9 +488,9 @@ const MessagePanel: React.FC = () => {
             }}
           >
             {sending ? (
-              <CircularProgress size={20} color="inherit" />
+              <CircularProgress size={18} color="inherit" />
             ) : (
-              <SendIcon fontSize="small" />
+              <SendIcon sx={{ fontSize: 18 }} />
             )}
           </IconButton>
         </Box>

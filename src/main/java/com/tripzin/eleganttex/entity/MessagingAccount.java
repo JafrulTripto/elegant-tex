@@ -20,7 +20,7 @@ import java.util.Objects;
        })
 @Getter
 @Setter
-@ToString(exclude = {"user", "customer", "conversations"})
+@ToString(exclude = {"user", "conversations"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,9 +35,6 @@ public class MessagingAccount {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
     
     @NotNull
     @Enumerated(EnumType.STRING)

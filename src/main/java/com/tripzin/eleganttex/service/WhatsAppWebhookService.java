@@ -24,7 +24,7 @@ public class WhatsAppWebhookService {
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final WebhookEventRepository webhookEventRepository;
-    private final CustomerRepository customerRepository;
+    private final MessagingCustomerRepository messagingCustomerRepository;
     private final MessagingEventService messagingEventService;
     private final ObjectMapper objectMapper;
     
@@ -131,11 +131,11 @@ public class WhatsAppWebhookService {
             String messageType = messageNode.get("type").asText();
             String content = extractMessageContent(messageNode, messageType);
             
-            // Create message
-            Message message = Message.builder()
-                    .conversation(conversation)
-                    .messagingAccount(account)
-                    .customer(conversation.getCustomer())
+        // Create message
+        Message message = Message.builder()
+                .conversation(conversation)
+                .messagingAccount(account)
+                .messagingCustomer(conversation.getMessagingCustomer())
                     .platformMessageId(messageId)
                     .senderId(fromNumber)
                     .recipientId(account.getPhoneNumberId())
@@ -264,22 +264,22 @@ public class WhatsAppWebhookService {
     }
     
     private Conversation findOrCreateConversation(MessagingAccount account, String phoneNumber) {
+        // Try to find existing messaging customer first
+        MessagingCustomer messagingCustomer = findOrCreateMessagingCustomer(phoneNumber);
+        
+        // Look for existing conversation by account and customer
         Optional<Conversation> existingConversation = conversationRepository
-                .findByMessagingAccountAndPlatformCustomerId(account, phoneNumber);
+                .findByMessagingAccountAndMessagingCustomer(account, messagingCustomer);
         
         if (existingConversation.isPresent()) {
             return existingConversation.get();
         }
         
-        // Try to find existing customer or create new one
-        Customer customer = findOrCreateCustomer(phoneNumber);
-        
         // Create new conversation
         Conversation conversation = Conversation.builder()
                 .messagingAccount(account)
-                .customer(customer)
-                .platformCustomerId(phoneNumber)
-                .conversationName(customer.getName())
+                .messagingCustomer(messagingCustomer)
+                .conversationName(messagingCustomer.getBestDisplayName())
                 .unreadCount(0)
                 .isActive(true)
                 .build();
@@ -287,22 +287,24 @@ public class WhatsAppWebhookService {
         return conversationRepository.save(conversation);
     }
     
-    private Customer findOrCreateCustomer(String phoneNumber) {
-        // Try to find existing customer by phone
-        Optional<Customer> existingCustomer = customerRepository.findByPhone(phoneNumber);
+    private MessagingCustomer findOrCreateMessagingCustomer(String phoneNumber) {
+        Optional<MessagingCustomer> existingCustomer = messagingCustomerRepository
+                .findByPlatformCustomerIdAndPlatform(phoneNumber, MessagingCustomer.MessagingPlatform.WHATSAPP);
         
         if (existingCustomer.isPresent()) {
             return existingCustomer.get();
         }
         
-        // Create new customer
-        Customer customer = Customer.builder()
-                .name("WhatsApp User " + phoneNumber.substring(Math.max(0, phoneNumber.length() - 4)))
+        // Create new messaging customer
+        MessagingCustomer customer = MessagingCustomer.builder()
+                .platformCustomerId(phoneNumber)
+                .platform(MessagingCustomer.MessagingPlatform.WHATSAPP)
+                .displayName("WhatsApp User")
                 .phone(phoneNumber)
-                .address("N/A") // Required field, using placeholder
+                .profileFetched(false)
                 .build();
         
-        return customerRepository.save(customer);
+        return messagingCustomerRepository.save(customer);
     }
     
     /**

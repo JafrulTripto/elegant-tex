@@ -159,14 +159,14 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     }
     
     try {
-      const messageData = await messagingService.sendMessage({
+      await messagingService.sendMessage({
         conversationId: selectedConversation.id,
         content,
         messageType: MessageType.TEXT
       });
       
-      // Add the new message to the list
-      setMessages(prev => [...prev, messageData]);
+      // Don't add message immediately - let SSE handle it to avoid duplicates
+      // The message will be added via SSE when the webhook processes it
       
       // Refresh conversations to update last message
       refreshConversations();
@@ -181,7 +181,20 @@ export const MessagingProvider: React.FC<MessagingProviderProps> = ({ children }
     onNewMessage: useCallback((event: MessagingEvent) => {
       console.log('New message received:', event);
       if (event.data && selectedConversation && event.conversationId === selectedConversation.id) {
-        setMessages(prev => [...prev, event.data]);
+        // Add deduplication logic - check if message already exists
+        setMessages(prev => {
+          const messageExists = prev.some(msg => 
+            msg.id === event.data.id || 
+            (msg.platformMessageId && msg.platformMessageId === event.data.platformMessageId)
+          );
+          
+          if (messageExists) {
+            console.log('Message already exists, skipping duplicate:', event.data.id);
+            return prev;
+          }
+          
+          return [...prev, event.data];
+        });
       }
       // Update conversation list to show new message
       refreshConversations();

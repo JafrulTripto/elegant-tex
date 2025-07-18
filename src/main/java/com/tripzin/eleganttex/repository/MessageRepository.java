@@ -17,6 +17,11 @@ import java.util.Optional;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
     
+    List<Message> findByConversationOrderByTimestampAsc(Conversation conversation);
+    
+    Page<Message> findByConversationOrderByTimestampAsc(Conversation conversation, Pageable pageable);
+    
+    // Keep DESC version for getting latest messages
     List<Message> findByConversationOrderByTimestampDesc(Conversation conversation);
     
     Page<Message> findByConversationOrderByTimestampDesc(Conversation conversation, Pageable pageable);

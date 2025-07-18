@@ -17,7 +17,7 @@ import java.util.Objects;
 @Table(name = "messages")
 @Getter
 @Setter
-@ToString(exclude = {"conversation", "messagingAccount", "customer", "attachments"})
+@ToString(exclude = {"conversation", "messagingAccount", "messagingCustomer"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,9 +37,10 @@ public class Message {
     @JoinColumn(name = "messaging_account_id", nullable = false)
     private MessagingAccount messagingAccount;
     
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
+    @JoinColumn(name = "messaging_customer_id", nullable = false)
+    private MessagingCustomer messagingCustomer;
     
     @Size(max = 255)
     @Column(name = "platform_message_id")
@@ -78,13 +79,6 @@ public class Message {
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
     
-    @Builder.Default
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MessageAttachment> attachments = new ArrayList<>();
-    
-    @Builder.Default
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MessageNotification> notifications = new ArrayList<>();
     
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

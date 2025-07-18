@@ -126,7 +126,7 @@ public class ConversationService {
         try {
             if (conversation.getMessagingAccount().getPlatform() == MessagingAccount.MessagingPlatform.FACEBOOK) {
                 facebookApiService.markMessageAsRead(conversation.getMessagingAccount(), 
-                        conversation.getPlatformCustomerId());
+                        conversation.getMessagingCustomer().getPlatformCustomerId());
             }
             // WhatsApp doesn't have a mark as read API for business accounts
             
@@ -184,7 +184,6 @@ public class ConversationService {
         Map<String, Object> map = new HashMap<>();
         map.put("id", conversation.getId());
         map.put("conversationName", conversation.getConversationName());
-        map.put("platformCustomerId", conversation.getPlatformCustomerId());
         map.put("unreadCount", conversation.getUnreadCount());
         map.put("isActive", conversation.getIsActive());
         map.put("lastMessageAt", conversation.getLastMessageAt());
@@ -201,13 +200,17 @@ public class ConversationService {
         map.put("account", accountInfo);
         
         // Customer info
-        if (conversation.getCustomer() != null) {
-            Customer customer = conversation.getCustomer();
+        if (conversation.getMessagingCustomer() != null) {
+            MessagingCustomer customer = conversation.getMessagingCustomer();
             Map<String, Object> customerInfo = new HashMap<>();
             customerInfo.put("id", customer.getId());
-            customerInfo.put("name", customer.getName());
-            customerInfo.put("phone", customer.getPhone());
-            customerInfo.put("facebookId", customer.getFacebookId());
+            customerInfo.put("name", customer.getBestDisplayName());
+            customerInfo.put("firstName", customer.getFirstName());
+            customerInfo.put("lastName", customer.getLastName());
+            customerInfo.put("platform", customer.getPlatform().name());
+            customerInfo.put("platformCustomerId", customer.getPlatformCustomerId());
+            customerInfo.put("profilePictureUrl", customer.getProfilePictureUrl());
+            customerInfo.put("profileFetched", customer.getProfileFetched());
             map.put("customer", customerInfo);
         }
         

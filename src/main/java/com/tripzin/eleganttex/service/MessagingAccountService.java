@@ -3,12 +3,10 @@ package com.tripzin.eleganttex.service;
 import com.tripzin.eleganttex.dto.MessagingAccountDTO;
 import com.tripzin.eleganttex.dto.MessagingAccountRequestDTO;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
-import com.tripzin.eleganttex.entity.Customer;
 import com.tripzin.eleganttex.entity.MessagingAccount;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.exception.BadRequestException;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
-import com.tripzin.eleganttex.repository.CustomerRepository;
 import com.tripzin.eleganttex.repository.MessagingAccountRepository;
 import com.tripzin.eleganttex.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +28,6 @@ public class MessagingAccountService {
     
     private final MessagingAccountRepository messagingAccountRepository;
     private final UserRepository userRepository;
-    private final CustomerRepository customerRepository;
     private final FacebookApiService facebookApiService;
     private final WhatsAppApiService whatsAppApiService;
     
@@ -67,16 +64,8 @@ public class MessagingAccountService {
         // Check for duplicate accounts
         checkForDuplicateAccount(requestDTO);
         
-        // Get customer if provided
-        Customer customer = null;
-        if (requestDTO.getCustomerId() != null) {
-            customer = customerRepository.findById(requestDTO.getCustomerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + requestDTO.getCustomerId()));
-        }
-        
         MessagingAccount account = MessagingAccount.builder()
                 .user(user)
-                .customer(customer)
                 .platform(requestDTO.getPlatform())
                 .accountName(requestDTO.getAccountName())
                 .pageId(requestDTO.getPageId())
@@ -107,15 +96,7 @@ public class MessagingAccountService {
         // Check for duplicate accounts (excluding current account)
         checkForDuplicateAccountExcluding(requestDTO, accountId);
         
-        // Get customer if provided
-        Customer customer = null;
-        if (requestDTO.getCustomerId() != null) {
-            customer = customerRepository.findById(requestDTO.getCustomerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + requestDTO.getCustomerId()));
-        }
-        
         // Update account
-        account.setCustomer(customer);
         account.setPlatform(requestDTO.getPlatform());
         account.setAccountName(requestDTO.getAccountName());
         account.setPageId(requestDTO.getPageId());
