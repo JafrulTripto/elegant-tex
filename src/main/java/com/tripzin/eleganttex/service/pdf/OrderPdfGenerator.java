@@ -331,7 +331,9 @@ public class OrderPdfGenerator {
             customerCell.add(new Paragraph("Alternative Phone: " + order.getCustomer().getAlternativePhone()).setFont(regularFont));
         }
         
-        customerCell.add(new Paragraph("Address: " + order.getCustomer().getAddress()).setFont(regularFont));
+        // Enhanced address formatting with geographical information
+        String formattedAddress = formatCustomerAddress(order.getCustomer());
+        customerCell.add(new Paragraph("Address: " + formattedAddress).setFont(regularFont));
         
         if (order.getCustomer().getFacebookId() != null && !order.getCustomer().getFacebookId().isEmpty()) {
             customerCell.add(new Paragraph("Facebook: " + order.getCustomer().getFacebookId()).setFont(regularFont));
@@ -521,5 +523,35 @@ public class OrderPdfGenerator {
         }
         
         document.add(imageTable);
+    }
+    
+    /**
+     * Format customer address with geographical information when available
+     * @param customer The customer entity
+     * @return Formatted address string
+     */
+    private String formatCustomerAddress(com.tripzin.eleganttex.entity.Customer customer) {
+        // Use the helper method from Customer entity which handles both new and legacy addresses
+        String displayAddress = customer.getDisplayAddress();
+        
+        // If we have a geographical address, enhance it with postal code and landmark
+        if (customer.getAddress() != null) {
+            StringBuilder enhancedAddress = new StringBuilder(customer.getAddress().getFormattedAddress());
+            
+            // Add postal code if available
+            if (customer.getAddress().getPostalCode() != null && !customer.getAddress().getPostalCode().trim().isEmpty()) {
+                enhancedAddress.append(", ").append(customer.getAddress().getPostalCode().trim());
+            }
+            
+            // Add landmark if available
+            if (customer.getAddress().getLandmark() != null && !customer.getAddress().getLandmark().trim().isEmpty()) {
+                enhancedAddress.append(" (Landmark: ").append(customer.getAddress().getLandmark().trim()).append(")");
+            }
+            
+            return enhancedAddress.toString();
+        }
+        
+        // Fall back to display address (which handles legacy addresses)
+        return displayAddress != null ? displayAddress : "Address not available";
     }
 }

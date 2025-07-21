@@ -37,7 +37,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = Customer.builder()
                 .name(customerRequest.getName())
                 .phone(customerRequest.getPhone())
-                .address(customerRequest.getAddress())
+                .legacyAddress(customerRequest.getAddress())
                 .alternativePhone(customerRequest.getAlternativePhone())
                 .facebookId(customerRequest.getFacebookId())
                 .build();
@@ -67,7 +67,7 @@ public class CustomerServiceImpl implements CustomerService {
         // Update customer fields
         customer.setName(customerRequest.getName());
         customer.setPhone(customerRequest.getPhone());
-        customer.setAddress(customerRequest.getAddress());
+        customer.setLegacyAddress(customerRequest.getAddress());
         customer.setAlternativePhone(customerRequest.getAlternativePhone());
         customer.setFacebookId(customerRequest.getFacebookId());
         
@@ -156,7 +156,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(customer.getId())
                 .name(customer.getName())
                 .phone(customer.getPhone())
-                .address(customer.getAddress())
+                .address(customer.getDisplayAddress())
                 .alternativePhone(customer.getAlternativePhone())
                 .facebookId(customer.getFacebookId())
                 .createdAt(customer.getCreatedAt())

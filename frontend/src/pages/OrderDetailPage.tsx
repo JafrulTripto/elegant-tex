@@ -54,6 +54,7 @@ import OrderImagePreview from '../components/orders/OrderImagePreview';
 import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import SimilarOrdersSection from '../components/orders/SimilarOrdersSection';
 import TakaSymble from '@/components/common/TakaSymble';
+import { AddressDisplay } from '../components/common';
 
 const ORDER_STATUS_STEPS: string[] = [
   'Order Created',
@@ -575,15 +576,8 @@ const OrderDetailPage: React.FC = () => {
                   </>
                 )}
                 
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Address
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 8 }}>
-                  <Typography variant="body1">
-                    {order.customer.address}
-                  </Typography>
+                <Grid size={{ xs: 12 }}>
+                  <AddressDisplay customer={order.customer} variant="body1" />
                 </Grid>
               </Grid>
             </Paper>

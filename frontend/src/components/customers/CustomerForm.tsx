@@ -4,9 +4,14 @@ import {
   TextField,
   Grid,
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormControlLabel,
+  Switch,
+  Divider
 } from '@mui/material';
 import { CustomerRequest } from '../../types/customer';
+import { AddressFormData, AddressType } from '../../types/geographical';
+import AddressSelector from '../common/AddressSelector';
 
 interface CustomerFormProps {
   initialData: CustomerRequest;
@@ -23,6 +28,16 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<CustomerRequest>(initialData);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [useNewAddressSystem, setUseNewAddressSystem] = useState(false);
+  const [addressData, setAddressData] = useState<AddressFormData>({
+    divisionId: null,
+    districtId: null,
+    upazilaId: null,
+    addressLine: '',
+    postalCode: '',
+    landmark: '',
+    addressType: AddressType.PRIMARY
+  });
 
   useEffect(() => {
     setFormData(initialData);
@@ -37,6 +52,34 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     setFormData(updatedData);
     validateField(field, value);
     onDataChange(updatedData);
+  };
+
+  // Handle address data change
+  const handleAddressChange = (newAddressData: AddressFormData) => {
+    setAddressData(newAddressData);
+    // For now, we'll still update the legacy address field for backward compatibility
+    // In the future, this will be handled differently when we have full address entity support
+    if (newAddressData.addressLine && newAddressData.divisionId && newAddressData.districtId && newAddressData.upazilaId) {
+      const formattedAddress = `${newAddressData.addressLine}${newAddressData.landmark ? ', ' + newAddressData.landmark : ''}${newAddressData.postalCode ? ', ' + newAddressData.postalCode : ''}`;
+      handleChange('address', formattedAddress);
+    }
+  };
+
+  // Handle address system toggle
+  const handleAddressSystemToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUseNewAddressSystem(event.target.checked);
+    if (!event.target.checked) {
+      // Reset address data when switching back to legacy system
+      setAddressData({
+        divisionId: null,
+        districtId: null,
+        upazilaId: null,
+        addressLine: '',
+        postalCode: '',
+        landmark: '',
+        addressType: AddressType.PRIMARY
+      });
+    }
   };
 
   // Validate a single field
@@ -63,7 +106,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         break;
         
       case 'address':
-        if (!value.trim()) {
+        if (!useNewAddressSystem && !value.trim()) {
           errors.address = 'Address is required';
         } else {
           delete errors.address;
@@ -75,6 +118,46 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
     
     setValidationErrors(errors);
   };
+
+  // Validate new address system
+  const validateNewAddress = () => {
+    const errors = { ...validationErrors };
+    
+    if (useNewAddressSystem) {
+      if (!addressData.divisionId) {
+        errors.divisionId = 'Division is required';
+      } else {
+        delete errors.divisionId;
+      }
+      
+      if (!addressData.districtId) {
+        errors.districtId = 'District is required';
+      } else {
+        delete errors.districtId;
+      }
+      
+      if (!addressData.upazilaId) {
+        errors.upazilaId = 'Upazila is required';
+      } else {
+        delete errors.upazilaId;
+      }
+      
+      if (!addressData.addressLine.trim()) {
+        errors.addressLine = 'Address line is required';
+      } else {
+        delete errors.addressLine;
+      }
+    }
+    
+    setValidationErrors(errors);
+  };
+
+  // Validate new address when address data changes
+  useEffect(() => {
+    if (useNewAddressSystem) {
+      validateNewAddress();
+    }
+  }, [addressData, useNewAddressSystem]);
 
   return (
     <Box sx={{ pt: 2 }}>
@@ -115,20 +198,56 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             disabled={isSubmitting}
           />
         </Grid>
+        {/* Address System Toggle */}
         <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Address"
-            multiline
-            rows={3}
-            value={formData.address}
-            onChange={(e) => handleChange('address', e.target.value)}
-            error={!!validationErrors.address}
-            helperText={validationErrors.address}
-            required
-            disabled={isSubmitting}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={useNewAddressSystem}
+                onChange={handleAddressSystemToggle}
+                disabled={isSubmitting}
+              />
+            }
+            label="Use detailed address system (Division, District, Upazila)"
           />
         </Grid>
+
+        {/* Address Input */}
+        <Grid item xs={12}>
+          {useNewAddressSystem ? (
+            <AddressSelector
+              value={addressData}
+              onChange={handleAddressChange}
+              error={{
+                divisionId: validationErrors.divisionId,
+                districtId: validationErrors.districtId,
+                upazilaId: validationErrors.upazilaId,
+                addressLine: validationErrors.addressLine
+              }}
+              disabled={isSubmitting}
+              required={true}
+            />
+          ) : (
+            <TextField
+              fullWidth
+              label="Address"
+              multiline
+              rows={3}
+              value={formData.address}
+              onChange={(e) => handleChange('address', e.target.value)}
+              error={!!validationErrors.address}
+              helperText={validationErrors.address}
+              required
+              disabled={isSubmitting}
+            />
+          )}
+        </Grid>
+
+        {useNewAddressSystem && (
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+          </Grid>
+        )}
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
