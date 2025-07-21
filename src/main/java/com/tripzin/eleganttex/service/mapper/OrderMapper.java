@@ -47,7 +47,7 @@ public class OrderMapper {
                 .id(order.getCustomer().getId())
                 .name(order.getCustomer().getName())
                 .phone(order.getCustomer().getPhone())
-                .address(order.getCustomer().getAddress())
+                .address(order.getCustomer().getDisplayAddress())
                 .alternativePhone(order.getCustomer().getAlternativePhone())
                 .facebookId(order.getCustomer().getFacebookId())
                 .createdAt(order.getCustomer().getCreatedAt())
