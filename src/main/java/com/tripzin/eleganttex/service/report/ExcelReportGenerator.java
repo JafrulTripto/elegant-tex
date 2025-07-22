@@ -243,7 +243,8 @@ public class ExcelReportGenerator implements ReportGenerator {
      */
     private CellStyle createCurrencyStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
-        style.setDataFormat((short)8); // Currency format
+        DataFormat format = workbook.createDataFormat();
+        style.setDataFormat(format.getFormat("#,##0.00"));
         return style;
     }
     

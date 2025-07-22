@@ -22,6 +22,7 @@ import { Fabric } from '../../../types/fabric';
 import OrderFileUpload from '../OrderFileUpload';
 import OrderImagePreview from '../OrderImagePreview';
 import FabricSelector from './FabricSelector';
+import TakaSymble from '@/components/common/TakaSymble';
 
 interface ProductFormItemProps {
   product: OrderProductFormData;
@@ -168,7 +169,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
                   label="Price"
                   type="number"
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    startAdornment: <InputAdornment position="start"><TakaSymble/> </InputAdornment>,
                     inputProps: { step: 0.01 }
                   }}
                   error={meta.touched && Boolean(meta.error)}
