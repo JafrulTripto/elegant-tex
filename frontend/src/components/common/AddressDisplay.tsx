@@ -13,7 +13,6 @@ const AddressDisplay: React.FC<AddressDisplayProps> = ({
   variant = 'body1',
   showLabel = true
 }) => {
-
   return (
     <Box>
       {showLabel && (
@@ -22,7 +21,7 @@ const AddressDisplay: React.FC<AddressDisplayProps> = ({
         </Typography>
       )}
       <Typography variant={variant}>
-        {customer.address}
+        {customer.address? customer.address.formattedAddress : "No address provided"}
       </Typography>
     </Box>
   );

@@ -4,12 +4,13 @@ export interface Customer {
   phone: string;
   alternativePhone?: string;
   facebookId?: string;
-  address: string;
+  address: Address;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CustomerRequest {
+  id?: number | undefined;
   name: string;
   phone: string;
   divisionId: number;
@@ -19,5 +20,15 @@ export interface CustomerRequest {
   postalCode?: string;
   alternativePhone?: string;
   facebookId?: string;
+}
+
+export interface Address {
+  id: number;
+  divisionId: number;
+  districtId: number;
+  upazilaId: number;
+  addressLine: string;
+  postalCode?: string;
+  formattedAddress?: string;
 }
 

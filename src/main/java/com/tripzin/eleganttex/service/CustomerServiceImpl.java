@@ -1,6 +1,7 @@
 package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.request.CustomerRequest;
+import com.tripzin.eleganttex.dto.response.AddressResponse;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
 import com.tripzin.eleganttex.entity.Address;
 import com.tripzin.eleganttex.entity.Customer;
@@ -8,6 +9,7 @@ import com.tripzin.eleganttex.entity.Division;
 import com.tripzin.eleganttex.entity.District;
 import com.tripzin.eleganttex.entity.Upazila;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
+import com.tripzin.eleganttex.mapper.AddressResponseMapper;
 import com.tripzin.eleganttex.repository.AddressRepository;
 import com.tripzin.eleganttex.repository.CustomerRepository;
 import com.tripzin.eleganttex.repository.DivisionRepository;
@@ -216,7 +218,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(customer.getId())
                 .name(customer.getName())
                 .phone(customer.getPhone())
-                .address(customer.getDisplayAddress())
+                .address(AddressResponseMapper.mapToAddressResponse(customer.getAddress()))
                 .alternativePhone(customer.getAlternativePhone())
                 .facebookId(customer.getFacebookId())
                 .createdAt(customer.getCreatedAt())
