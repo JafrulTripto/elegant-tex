@@ -184,16 +184,6 @@ const Dashboard: React.FC = () => {
               >
                 New Order
               </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<AddIcon />}
-                onClick={handleCreateMarketplace}
-                sx={{ py: 0.5, px: 1.5, fontSize: '0.85rem' }}
-                size="small"
-              >
-                New Marketplace
-              </Button>
             </Box>
           </Box>
 
