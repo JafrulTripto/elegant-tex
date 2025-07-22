@@ -182,17 +182,30 @@ export const generateOrdersExcel = async (
   }
 };
 
-export const getOrderStatusCounts = async (currentMonth = true): Promise<OrderStatusCount[]> => {
-  const response = await api.get(`${BASE_URL}/status-counts`, {
-    params: { currentMonth }
-  });
+export const getOrderStatusCounts = async (
+  currentMonth = true,
+  startDate?: string,
+  endDate?: string,
+  orderType?: string
+): Promise<OrderStatusCount[]> => {
+  const params: any = { currentMonth };
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/status-counts`, { params });
   return response.data;
 };
 
-export const getOrderStatusCountsByMonth = async (month: number, year: number): Promise<OrderStatusCount[]> => {
-  const response = await api.get(`${BASE_URL}/status-counts`, {
-    params: { month, year }
-  });
+export const getOrderStatusCountsByMonth = async (
+  month: number, 
+  year: number,
+  orderType?: string
+): Promise<OrderStatusCount[]> => {
+  const params: any = { month, year };
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/status-counts`, { params });
   return response.data;
 };
 
@@ -210,31 +223,57 @@ export const getUserOrderStatusCountsByMonth = async (userId: number, month: num
   return response.data;
 };
 
-export const getUserOrderStatistics = async (currentMonth = true): Promise<any[]> => {
-  const response = await api.get(`${BASE_URL}/user-statistics`, {
-    params: { currentMonth }
-  });
+export const getUserOrderStatistics = async (
+  currentMonth = true,
+  startDate?: string,
+  endDate?: string,
+  orderType?: string
+): Promise<any[]> => {
+  const params: any = { currentMonth };
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/user-statistics`, { params });
   return response.data;
 };
 
-export const getUserOrderStatisticsByMonth = async (month: number, year: number): Promise<any[]> => {
-  const response = await api.get(`${BASE_URL}/user-statistics`, {
-    params: { month, year }
-  });
+export const getUserOrderStatisticsByMonth = async (
+  month: number, 
+  year: number,
+  orderType?: string
+): Promise<any[]> => {
+  const params: any = { month, year };
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/user-statistics`, { params });
   return response.data;
 };
 
-export const getMarketplaceOrderStatistics = async (currentMonth = true): Promise<any[]> => {
-  const response = await api.get(`${BASE_URL}/marketplace-statistics`, {
-    params: { currentMonth }
-  });
+export const getMarketplaceOrderStatistics = async (
+  currentMonth = true,
+  startDate?: string,
+  endDate?: string,
+  orderType?: string
+): Promise<any[]> => {
+  const params: any = { currentMonth };
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/marketplace-statistics`, { params });
   return response.data;
 };
 
-export const getMarketplaceOrderStatisticsByMonth = async (month: number, year: number): Promise<any[]> => {
-  const response = await api.get(`${BASE_URL}/marketplace-statistics`, {
-    params: { month, year }
-  });
+export const getMarketplaceOrderStatisticsByMonth = async (
+  month: number, 
+  year: number,
+  orderType?: string
+): Promise<any[]> => {
+  const params: any = { month, year };
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/marketplace-statistics`, { params });
   return response.data;
 };
 
@@ -265,16 +304,25 @@ export const getLastMonthOrders = async (): Promise<MonthlyOrderData[]> => {
  * @param month optional month (0-11)
  * @param year optional year
  * @param currentMonth whether to use current month if month/year not provided
+ * @param startDate optional start date for date range filtering
+ * @param endDate optional end date for date range filtering
+ * @param orderType optional order type filter (marketplace/merchant)
  * @returns Array of daily order counts and amounts
  */
 export const getMonthlyOrderCountAndAmount = async (
   month?: number,
   year?: number,
-  currentMonth: boolean = true
+  currentMonth: boolean = true,
+  startDate?: string,
+  endDate?: string,
+  orderType?: string
 ): Promise<MonthlyOrderCountAmount[]> => {
-  const response = await api.get(`${BASE_URL}/monthly-count-amount`, {
-    params: { month, year, currentMonth }
-  });
+  const params: any = { month, year, currentMonth };
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/monthly-count-amount`, { params });
   
   // Map the response to the expected format
   return response.data.map((item: any) => ({
@@ -282,6 +330,48 @@ export const getMonthlyOrderCountAndAmount = async (
     count: item.count,
     amount: item.amount
   }));
+};
+
+/**
+ * Get sales data (revenue) for dashboard
+ * @param startDate optional start date
+ * @param endDate optional end date
+ * @param orderType optional order type filter (marketplace/merchant)
+ * @returns Sales data with total revenue, order count, and other metrics
+ */
+export const getSalesData = async (
+  startDate?: string,
+  endDate?: string,
+  orderType?: string
+): Promise<any> => {
+  const params: any = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (orderType) params.orderType = orderType;
+  
+  const response = await api.get(`${BASE_URL}/sales`, { params });
+  return response.data;
+};
+
+/**
+ * Get order statistics by date range for reactive dashboard cards
+ * @param startDate start date in YYYY-MM-DD format
+ * @param endDate end date in YYYY-MM-DD format
+ * @param orderType order type filter (marketplace/merchant/all)
+ * @returns Object with totalOrders, totalSales, and deliveredOrders
+ */
+export const getOrderStatisticsByDateRange = async (
+  startDate: string,
+  endDate: string,
+  orderType: string
+): Promise<{ totalOrders: number; totalSales: number; deliveredOrders: number }> => {
+  const params: any = { startDate, endDate };
+  if (orderType && orderType !== 'all') {
+    params.orderType = orderType;
+  }
+  
+  const response = await api.get(`${BASE_URL}/statistics-summary`, { params });
+  return response.data;
 };
 
 /**
@@ -349,7 +439,9 @@ const orderService = {
   reuseOrder,
   downloadBlob,
   getLastMonthOrders,
-  getMonthlyOrderCountAndAmount
+  getMonthlyOrderCountAndAmount,
+  getSalesData,
+  getOrderStatisticsByDateRange
 };
 
 export default orderService;

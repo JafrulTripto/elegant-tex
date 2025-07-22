@@ -2,9 +2,18 @@ package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.request.CustomerRequest;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
+import com.tripzin.eleganttex.entity.Address;
 import com.tripzin.eleganttex.entity.Customer;
+import com.tripzin.eleganttex.entity.Division;
+import com.tripzin.eleganttex.entity.District;
+import com.tripzin.eleganttex.entity.Upazila;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
+import com.tripzin.eleganttex.mapper.AddressResponseMapper;
+import com.tripzin.eleganttex.repository.AddressRepository;
 import com.tripzin.eleganttex.repository.CustomerRepository;
+import com.tripzin.eleganttex.repository.DivisionRepository;
+import com.tripzin.eleganttex.repository.DistrictRepository;
+import com.tripzin.eleganttex.repository.UpazilaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +29,10 @@ import java.util.Optional;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final AddressRepository addressRepository;
+    private final DivisionRepository divisionRepository;
+    private final DistrictRepository districtRepository;
+    private final UpazilaRepository upazilaRepository;
 
     @Override
     @Transactional
@@ -33,11 +46,14 @@ public class CustomerServiceImpl implements CustomerService {
             return mapCustomerToResponse(existingCustomer.get());
         }
         
+        // Create address first
+        Address address = createAddressFromRequest(customerRequest);
+        
         // Create new customer
         Customer customer = Customer.builder()
                 .name(customerRequest.getName())
                 .phone(customerRequest.getPhone())
-                .address(customerRequest.getAddress())
+                .address(address)
                 .alternativePhone(customerRequest.getAlternativePhone())
                 .facebookId(customerRequest.getFacebookId())
                 .build();
@@ -64,10 +80,13 @@ public class CustomerServiceImpl implements CustomerService {
             }
         }
         
+        // Update or create address
+        Address address = createAddressFromRequest(customerRequest);
+        
         // Update customer fields
         customer.setName(customerRequest.getName());
         customer.setPhone(customerRequest.getPhone());
-        customer.setAddress(customerRequest.getAddress());
+        customer.setAddress(address);
         customer.setAlternativePhone(customerRequest.getAlternativePhone());
         customer.setFacebookId(customerRequest.getFacebookId());
         
@@ -149,6 +168,48 @@ public class CustomerServiceImpl implements CustomerService {
     }
     
     /**
+     * Create or find existing address from customer request
+     */
+    private Address createAddressFromRequest(CustomerRequest customerRequest) {
+        // Get geographical entities
+        Division division = divisionRepository.findById(customerRequest.getDivisionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Division not found with ID: " + customerRequest.getDivisionId()));
+        
+        District district = districtRepository.findById(customerRequest.getDistrictId())
+                .orElseThrow(() -> new ResourceNotFoundException("District not found with ID: " + customerRequest.getDistrictId()));
+        
+        Upazila upazila = upazilaRepository.findById(customerRequest.getUpazilaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Upazila not found with ID: " + customerRequest.getUpazilaId()));
+        
+        // Check if address already exists
+        Optional<Address> existingAddress = addressRepository.findByGeographicalLocationAndAddressLine(
+                customerRequest.getDivisionId(),
+                customerRequest.getDistrictId(),
+                customerRequest.getUpazilaId(),
+                customerRequest.getAddressLine()
+        );
+        
+        if (existingAddress.isPresent()) {
+            log.info("Found existing address with ID: {}", existingAddress.get().getId());
+            return existingAddress.get();
+        }
+        
+        // Create new address
+        Address address = Address.builder()
+                .division(division)
+                .district(district)
+                .upazila(upazila)
+                .addressLine(customerRequest.getAddressLine())
+                .postalCode(customerRequest.getPostalCode())
+                .build();
+        
+        Address savedAddress = addressRepository.save(address);
+        log.info("Created new address with ID: {}", savedAddress.getId());
+        
+        return savedAddress;
+    }
+
+    /**
      * Map a Customer entity to a CustomerResponse DTO
      */
     private CustomerResponse mapCustomerToResponse(Customer customer) {
@@ -156,7 +217,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(customer.getId())
                 .name(customer.getName())
                 .phone(customer.getPhone())
-                .address(customer.getAddress())
+                .address(AddressResponseMapper.mapToAddressResponse(customer.getAddress()))
                 .alternativePhone(customer.getAlternativePhone())
                 .facebookId(customer.getFacebookId())
                 .createdAt(customer.getCreatedAt())

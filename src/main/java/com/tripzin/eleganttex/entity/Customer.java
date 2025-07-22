@@ -30,8 +30,9 @@ public class Customer {
     @Column(name = "phone", nullable = false, unique = true)
     private String phone;
 
-    @Column(name = "address", nullable = false)
-    private String address;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     @Column(name = "alternative_phone")
     private String alternativePhone;
@@ -50,4 +51,12 @@ public class Customer {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Helper method to get formatted address
+    public String getDisplayAddress() {
+        if (address != null) {
+            return address.getFormattedAddress();
+        }
+        return null;
+    }
 }

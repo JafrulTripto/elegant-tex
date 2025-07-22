@@ -16,7 +16,8 @@ import {
   useMediaQuery
 } from '@mui/material';
 import orderService from '../../services/order.service';
-import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 interface UserOrderStatistics {
   userId: number;
@@ -33,42 +34,12 @@ type SortDirection = 'asc' | 'desc';
 const UserOrdersTable: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   
   const [userStats, setUserStats] = useState<UserOrderStatistics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // New state for month/year selection
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  
-  // Generate month options
-  const generateMonthOptions = (): MonthSelectorOption[] => {
-    const options: MonthSelectorOption[] = [
-      { value: 'full-year', label: 'Full Year', isFullYear: true }
-    ];
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    // Add options for each month up to the current month
-    for (let i = 0; i <= currentMonth; i++) {
-      options.push({
-        value: `${i}-${currentYear}`,
-        label: `${monthNames[i]} ${currentYear}`,
-        isFullYear: false
-      });
-    }
-    
-    return options;
-  };
-  
-  const monthOptions = generateMonthOptions();
-  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
-  const [isFullYear, setIsFullYear] = useState<boolean>(false);
   
   // Sorting
   const [sortField, setSortField] = useState<SortField>('orderCount');
@@ -76,23 +47,24 @@ const UserOrdersTable: React.FC = () => {
 
   useEffect(() => {
     fetchUserOrderStatistics();
-  }, [selectedValue, isFullYear]);
+  }, [currentRange, currentOrderType]);
 
   const fetchUserOrderStatistics = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      let data;
-      if (isFullYear) {
-        // Use existing method for full year
-        data = await orderService.getUserOrderStatistics(false);
-      } else {
-        // Parse month and year from selected value
-        const [month, year] = selectedValue.split('-').map(Number);
-        // Use new method for specific month
-        data = await orderService.getUserOrderStatisticsByMonth(month, year);
-      }
+      // Convert dates to ISO string format for API
+      const startDate = currentRange.startDate.toISOString().split('T')[0];
+      const endDate = currentRange.endDate.toISOString().split('T')[0];
+      
+      // Use the enhanced API with date range and order type filtering
+      const data = await orderService.getUserOrderStatistics(
+        false, // currentMonth - not used when we provide date range
+        startDate,
+        endDate,
+        currentOrderType
+      );
       
       setUserStats(data);
       setLoading(false);
@@ -100,11 +72,6 @@ const UserOrdersTable: React.FC = () => {
       setError(err.message || 'Failed to load user order statistics');
       setLoading(false);
     }
-  };
-
-  const handleMonthChange = (value: string, fullYear: boolean) => {
-    setSelectedValue(value);
-    setIsFullYear(fullYear);
   };
 
   const handleSort = (field: SortField) => {
@@ -158,13 +125,15 @@ const UserOrdersTable: React.FC = () => {
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          User Order Statistics
+          User Order Statistics ({currentRange.label})
         </Typography>
-        <MonthYearSelector
-          selectedValue={selectedValue}
-          options={monthOptions}
-          onChange={handleMonthChange}
-        />
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem' }}
+        >
+          {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
+        </Typography>
       </Box>
 
       {error && (

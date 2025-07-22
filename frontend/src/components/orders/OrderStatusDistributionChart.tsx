@@ -17,7 +17,8 @@ import { Doughnut } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { OrderStatusCount, ORDER_STATUS_DISPLAY } from '../../types/order';
 import { getStatusColor } from '../../utils/statusConfig';
-import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -28,61 +29,32 @@ ChartJS.register(
 
 const OrderStatusDistributionChart: React.FC = () => {
   const theme = useTheme();
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // New state for month/year selection
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  
-  // Generate month options
-  const generateMonthOptions = (): MonthSelectorOption[] => {
-    const options: MonthSelectorOption[] = [
-      { value: 'full-year', label: 'Full Year', isFullYear: true }
-    ];
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    // Add options for each month up to the current month
-    for (let i = 0; i <= currentMonth; i++) {
-      options.push({
-        value: `${i}-${currentYear}`,
-        label: `${monthNames[i]} ${currentYear}`,
-        isFullYear: false
-      });
-    }
-    
-    return options;
-  };
-  
-  const monthOptions = generateMonthOptions();
-  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
-  const [isFullYear, setIsFullYear] = useState<boolean>(false);
 
   useEffect(() => {
     fetchOrderStatusCounts();
-  }, [selectedValue, isFullYear]);
+  }, [currentRange, currentOrderType]);
 
   const fetchOrderStatusCounts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      let data;
-      if (isFullYear) {
-        // Use existing method for full year
-        data = await orderService.getOrderStatusCounts(false);
-      } else {
-        // Parse month and year from selected value
-        const [month, year] = selectedValue.split('-').map(Number);
-        // Use new method for specific month
-        data = await orderService.getOrderStatusCountsByMonth(month, year);
-      }
+      // Convert dates to ISO string format for API
+      const startDate = currentRange.startDate.toISOString().split('T')[0];
+      const endDate = currentRange.endDate.toISOString().split('T')[0];
+      
+      // Use the enhanced API with date range and order type filtering
+      const data = await orderService.getOrderStatusCounts(
+        false, // currentMonth - not used when we provide date range
+        startDate,
+        endDate,
+        currentOrderType
+      );
       
       setStatusCounts(data);
       setLoading(false);
@@ -90,11 +62,6 @@ const OrderStatusDistributionChart: React.FC = () => {
       setError(err.message || 'Failed to load order status counts');
       setLoading(false);
     }
-  };
-
-  const handleMonthChange = (value: string, fullYear: boolean) => {
-    setSelectedValue(value);
-    setIsFullYear(fullYear);
   };
 
   // Calculate total orders
@@ -194,13 +161,15 @@ const OrderStatusDistributionChart: React.FC = () => {
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          Order Status Distribution
+          Order Status Distribution ({currentRange.label})
         </Typography>
-        <MonthYearSelector
-          selectedValue={selectedValue}
-          options={monthOptions}
-          onChange={handleMonthChange}
-        />
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem' }}
+        >
+          {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
+        </Typography>
       </Box>
 
       {error && (

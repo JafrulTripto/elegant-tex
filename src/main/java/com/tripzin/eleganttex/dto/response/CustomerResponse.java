@@ -15,7 +15,7 @@ public class CustomerResponse {
     private Long id;
     private String name;
     private String phone;
-    private String address;
+    private AddressResponse address;
     private String alternativePhone;
     private String facebookId;
     private LocalDateTime createdAt;

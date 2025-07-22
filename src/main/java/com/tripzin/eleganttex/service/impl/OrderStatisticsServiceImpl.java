@@ -1,6 +1,7 @@
 package com.tripzin.eleganttex.service.impl;
 
 import com.tripzin.eleganttex.entity.Order;
+import com.tripzin.eleganttex.entity.OrderStatus;
 import com.tripzin.eleganttex.repository.OrderRepository;
 import com.tripzin.eleganttex.service.OrderStatisticsService;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,8 +31,9 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
      * Get order status counts for the current month or year
      */
     @Override
-    public List<Map<String, Object>> getOrderStatusCounts(boolean currentMonth) {
-        log.info("Getting order status counts for {}", currentMonth ? "current month" : "current year");
+    public List<Map<String, Object>> getOrderStatusCounts(boolean currentMonth, String orderType) {
+        log.info("Getting order status counts for {} with order type: {}", 
+                currentMonth ? "current month" : "current year", orderType);
         
         LocalDate now = LocalDate.now();
         LocalDate startDate;
@@ -44,40 +47,77 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
             startDate = now.withDayOfYear(1);
         }
         
-        log.info("Date range: {} to {}", startDate, endDate);
-        
-        return orderRepository.getOrderStatusCountsByDateRange(
-                startDate.atStartOfDay(), 
-                endDate.atTime(23, 59, 59)
-        );
+        return getOrderStatusCountsByDateRange(startDate, endDate, orderType);
     }
     
     /**
      * Get order counts by status for a specific month and year
      */
     @Override
-    public List<Map<String, Object>> getOrderStatusCountsByMonth(int month, int year) {
-        log.info("Getting order status counts for month {} of year {}", month, year);
+    public List<Map<String, Object>> getOrderStatusCountsByMonth(int month, int year, String orderType) {
+        log.info("Getting order status counts for month {} of year {} with order type: {}", month, year, orderType);
         
         // Calculate start and end dates for the specified month
         // Note: Month is 0-based in JS, 1-based in Java
         LocalDate startDate = LocalDate.of(year, month + 1, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
         
-        log.info("Date range: {} to {}", startDate, endDate);
+        return getOrderStatusCountsByDateRange(startDate, endDate, orderType);
+    }
+    
+    /**
+     * Get order counts by status for a specific date range
+     */
+    @Override
+    public List<Map<String, Object>> getOrderStatusCountsByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        log.info("Getting order status counts from {} to {} with order type: {}", startDate, endDate, orderType);
         
-        return orderRepository.getOrderStatusCountsByDateRange(
+        // Get all orders in the date range
+        List<Order> orders = orderRepository.findByCreatedAtBetween(
                 startDate.atStartOfDay(), 
                 endDate.atTime(23, 59, 59)
         );
+        
+        // Filter by order type if specified
+        if (orderType != null && !orderType.isEmpty()) {
+            orders = orders.stream()
+                    .filter(order -> {
+                        if ("marketplace".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() != null;
+                        } else if ("merchant".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() == null;
+                        }
+                        return true; // If orderType is not recognized, include all orders
+                    })
+                    .toList();
+        }
+        
+        // Count orders by status
+        Map<String, Integer> statusCounts = new HashMap<>();
+        for (Order order : orders) {
+            String status = order.getStatus().name();
+            statusCounts.put(status, statusCounts.getOrDefault(status, 0) + 1);
+        }
+        
+        // Convert to list of maps
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : statusCounts.entrySet()) {
+            Map<String, Object> statusCount = new HashMap<>();
+            statusCount.put("status", entry.getKey());
+            statusCount.put("count", entry.getValue());
+            result.add(statusCount);
+        }
+        
+        return result;
     }
     
     /**
      * Get user order statistics
      */
     @Override
-    public List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth) {
-        log.info("Getting user order statistics for {}", currentMonth ? "current month" : "current year");
+    public List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth, String orderType) {
+        log.info("Getting user order statistics for {} with order type: {}", 
+                currentMonth ? "current month" : "current year", orderType);
         
         LocalDate now = LocalDate.now();
         LocalDate startDate;
@@ -91,36 +131,50 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
             startDate = now.withDayOfYear(1);
         }
         
-        log.info("Date range: {} to {}", startDate, endDate);
-        
-        // Get all orders in the date range
-        List<Order> orders = orderRepository.findByCreatedAtBetween(
-                startDate.atStartOfDay(), 
-                endDate.atTime(23, 59, 59)
-        );
-        
-        return calculateUserOrderStatistics(orders);
+        return getUserOrderStatisticsByDateRange(startDate, endDate, orderType);
     }
     
     /**
      * Get user order statistics for a specific month and year
      */
     @Override
-    public List<Map<String, Object>> getUserOrderStatisticsByMonth(int month, int year) {
-        log.info("Getting user order statistics for month {} of year {}", month, year);
+    public List<Map<String, Object>> getUserOrderStatisticsByMonth(int month, int year, String orderType) {
+        log.info("Getting user order statistics for month {} of year {} with order type: {}", month, year, orderType);
         
         // Calculate start and end dates for the specified month
         // Note: Month is 0-based in JS, 1-based in Java
         LocalDate startDate = LocalDate.of(year, month + 1, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
         
-        log.info("Date range: {} to {}", startDate, endDate);
+        return getUserOrderStatisticsByDateRange(startDate, endDate, orderType);
+    }
+    
+    /**
+     * Get user order statistics for a specific date range
+     */
+    @Override
+    public List<Map<String, Object>> getUserOrderStatisticsByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        log.info("Getting user order statistics from {} to {} with order type: {}", startDate, endDate, orderType);
         
         // Get all orders in the date range
         List<Order> orders = orderRepository.findByCreatedAtBetween(
                 startDate.atStartOfDay(), 
                 endDate.atTime(23, 59, 59)
         );
+        
+        // Filter by order type if specified
+        if (orderType != null && !orderType.isEmpty()) {
+            orders = orders.stream()
+                    .filter(order -> {
+                        if ("marketplace".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() != null;
+                        } else if ("merchant".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() == null;
+                        }
+                        return true; // If orderType is not recognized, include all orders
+                    })
+                    .toList();
+        }
         
         return calculateUserOrderStatistics(orders);
     }
@@ -168,8 +222,9 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
      * Get marketplace order statistics
      */
     @Override
-    public List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth) {
-        log.info("Getting marketplace order statistics for {}", currentMonth ? "current month" : "current year");
+    public List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth, String orderType) {
+        log.info("Getting marketplace order statistics for {} with order type: {}", 
+                currentMonth ? "current month" : "current year", orderType);
         
         LocalDate now = LocalDate.now();
         LocalDate startDate;
@@ -183,36 +238,50 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
             startDate = now.withDayOfYear(1);
         }
         
-        log.info("Date range: {} to {}", startDate, endDate);
-        
-        // Get all orders in the date range
-        List<Order> orders = orderRepository.findByCreatedAtBetween(
-                startDate.atStartOfDay(), 
-                endDate.atTime(23, 59, 59)
-        );
-        
-        return calculateMarketplaceOrderStatistics(orders);
+        return getMarketplaceOrderStatisticsByDateRange(startDate, endDate, orderType);
     }
     
     /**
      * Get marketplace order statistics for a specific month and year
      */
     @Override
-    public List<Map<String, Object>> getMarketplaceOrderStatisticsByMonth(int month, int year) {
-        log.info("Getting marketplace order statistics for month {} of year {}", month, year);
+    public List<Map<String, Object>> getMarketplaceOrderStatisticsByMonth(int month, int year, String orderType) {
+        log.info("Getting marketplace order statistics for month {} of year {} with order type: {}", month, year, orderType);
         
         // Calculate start and end dates for the specified month
         // Note: Month is 0-based in JS, 1-based in Java
         LocalDate startDate = LocalDate.of(year, month + 1, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
         
-        log.info("Date range: {} to {}", startDate, endDate);
+        return getMarketplaceOrderStatisticsByDateRange(startDate, endDate, orderType);
+    }
+    
+    /**
+     * Get marketplace order statistics for a specific date range
+     */
+    @Override
+    public List<Map<String, Object>> getMarketplaceOrderStatisticsByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        log.info("Getting marketplace order statistics from {} to {} with order type: {}", startDate, endDate, orderType);
         
         // Get all orders in the date range
         List<Order> orders = orderRepository.findByCreatedAtBetween(
                 startDate.atStartOfDay(), 
                 endDate.atTime(23, 59, 59)
         );
+        
+        // Filter by order type if specified
+        if (orderType != null && !orderType.isEmpty()) {
+            orders = orders.stream()
+                    .filter(order -> {
+                        if ("marketplace".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() != null;
+                        } else if ("merchant".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() == null;
+                        }
+                        return true; // If orderType is not recognized, include all orders
+                    })
+                    .toList();
+        }
         
         return calculateMarketplaceOrderStatistics(orders);
     }
@@ -312,8 +381,8 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
      * Get monthly order count and amount statistics
      */
     @Override
-    public List<Map<String, Object>> getMonthlyOrderCountAndAmount(Integer month, Integer year, boolean currentMonth) {
-        log.info("Getting monthly order count and amount for month: {}, year: {}, currentMonth: {}", month, year, currentMonth);
+    public List<Map<String, Object>> getMonthlyOrderCountAndAmount(Integer month, Integer year, boolean currentMonth, String orderType) {
+        log.info("Getting monthly order count and amount for month: {}, year: {}, currentMonth: {}, orderType: {}", month, year, currentMonth, orderType);
         
         // Calculate date range based on parameters
         LocalDate startDate, endDate;
@@ -334,13 +403,35 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
             }
         }
         
-        log.info("Date range: {} to {}", startDate, endDate);
+        return getMonthlyOrderCountAndAmountByDateRange(startDate, endDate, orderType);
+    }
+    
+    /**
+     * Get monthly order count and amount statistics for a specific date range
+     */
+    @Override
+    public List<Map<String, Object>> getMonthlyOrderCountAndAmountByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        log.info("Getting monthly order count and amount from {} to {} with order type: {}", startDate, endDate, orderType);
         
         // Get orders in date range
         List<Order> orders = orderRepository.findByCreatedAtBetween(
                 startDate.atStartOfDay(), 
                 endDate.atTime(23, 59, 59)
         );
+        
+        // Filter by order type if specified
+        if (orderType != null && !orderType.isEmpty()) {
+            orders = orders.stream()
+                    .filter(order -> {
+                        if ("marketplace".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() != null;
+                        } else if ("merchant".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() == null;
+                        }
+                        return true; // If orderType is not recognized, include all orders
+                    })
+                    .toList();
+        }
         
         // Group by date and calculate count and amount
         Map<String, Map<String, Object>> resultMap = new HashMap<>();
@@ -384,5 +475,137 @@ public class OrderStatisticsServiceImpl implements OrderStatisticsService {
         result.sort(Comparator.comparing(m -> (String) m.get("date")));
         
         return result;
+    }
+    
+    /**
+     * Get sales data (revenue) for dashboard
+     */
+    @Override
+    public Map<String, Object> getSalesData(LocalDate startDate, LocalDate endDate, String orderType) {
+        log.info("Getting sales data from {} to {} with order type: {}", startDate, endDate, orderType);
+        
+        // If dates not provided, default to current month
+        if (startDate == null || endDate == null) {
+            LocalDate now = LocalDate.now();
+            startDate = now.withDayOfMonth(1);
+            endDate = now;
+        }
+        
+        // Get orders in date range
+        List<Order> orders = orderRepository.findByCreatedAtBetween(
+                startDate.atStartOfDay(), 
+                endDate.atTime(23, 59, 59)
+        );
+        
+        // Filter by order type if specified
+        if (orderType != null && !orderType.isEmpty()) {
+            orders = orders.stream()
+                    .filter(order -> {
+                        if ("marketplace".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() != null;
+                        } else if ("merchant".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() == null;
+                        }
+                        return true; // If orderType is not recognized, include all orders
+                    })
+                    .toList();
+        }
+        
+        // Calculate sales metrics
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        int totalOrders = orders.size();
+        int completedOrders = 0;
+        int pendingOrders = 0;
+        
+        for (Order order : orders) {
+            totalRevenue = totalRevenue.add(order.getTotalAmount());
+            
+            // Count orders by status
+            switch (order.getStatus()) {
+                case DELIVERED:
+                    completedOrders++;
+                    break;
+                case ORDER_CREATED:
+                case APPROVED:
+                case BOOKING:
+                case PRODUCTION:
+                case QA:
+                case READY:
+                    pendingOrders++;
+                    break;
+                case RETURNED:
+                case CANCELLED:
+                default:
+                    break;
+            }
+        }
+        
+        // Calculate average order value
+        BigDecimal averageOrderValue = totalOrders > 0 ? 
+                totalRevenue.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP) : 
+                BigDecimal.ZERO;
+        
+        // Build response
+        Map<String, Object> salesData = new HashMap<>();
+        salesData.put("totalRevenue", totalRevenue);
+        salesData.put("totalOrders", totalOrders);
+        salesData.put("completedOrders", completedOrders);
+        salesData.put("pendingOrders", pendingOrders);
+        salesData.put("averageOrderValue", averageOrderValue);
+        salesData.put("startDate", startDate.toString());
+        salesData.put("endDate", endDate.toString());
+        salesData.put("orderType", orderType);
+        
+        return salesData;
+    }
+    
+    /**
+     * Get order statistics summary for reactive dashboard cards
+     */
+    @Override
+    public Map<String, Object> getOrderStatisticsSummary(LocalDate startDate, LocalDate endDate, String orderType) {
+        log.info("Getting order statistics summary from {} to {} with order type: {}", startDate, endDate, orderType);
+        
+        // Get orders in date range
+        List<Order> orders = orderRepository.findByCreatedAtBetween(
+                startDate.atStartOfDay(), 
+                endDate.atTime(23, 59, 59)
+        );
+        
+        // Filter by order type if specified and not "all"
+        if (orderType != null && !orderType.isEmpty() && !"all".equalsIgnoreCase(orderType)) {
+            orders = orders.stream()
+                    .filter(order -> {
+                        if ("marketplace".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() != null;
+                        } else if ("merchant".equalsIgnoreCase(orderType)) {
+                            return order.getMarketplace() == null;
+                        }
+                        return true; // If orderType is not recognized, include all orders
+                    })
+                    .toList();
+        }
+        
+        // Calculate summary statistics
+        int totalOrders = orders.size();
+        BigDecimal totalSales = BigDecimal.ZERO;
+        int deliveredOrders = 0;
+        
+        for (Order order : orders) {
+            totalSales = totalSales.add(order.getTotalAmount());
+            
+            // Count delivered orders
+            if (order.getStatus() == OrderStatus.DELIVERED) {
+                deliveredOrders++;
+            }
+        }
+        
+        // Build response
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalOrders", totalOrders);
+        summary.put("totalSales", totalSales);
+        summary.put("deliveredOrders", deliveredOrders);
+        
+        return summary;
     }
 }

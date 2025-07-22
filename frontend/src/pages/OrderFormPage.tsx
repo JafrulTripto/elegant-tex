@@ -56,8 +56,7 @@ const OrderValidationSchema = Yup.object().shape({
 
       if (customerData && 
           customerData.name && 
-          customerData.phone && 
-          customerData.address) {
+          customerData.phone) {
         return true;
       }
 
@@ -90,7 +89,7 @@ const OrderValidationSchema = Yup.object().shape({
       
       price: Yup.number()
         .required('Price is required')
-        .min(0.01, 'Price must be greater than 0'),
+        .min(0, 'Price cannot be negative'),
       
       description: Yup.string()
         .notRequired(),
@@ -121,7 +120,11 @@ const OrderFormPage: React.FC = () => {
     customerData: {
       name: '',
       phone: '',
-      address: '',
+      divisionId: 0,
+      districtId: 0,
+      upazilaId: 0,
+      addressLine: '',
+      postalCode: '',
       alternativePhone: '',
       facebookId: ''
     },
@@ -311,7 +314,6 @@ const OrderFormPage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (values: OrderFormData, { setSubmitting }: FormikHelpers<OrderFormData>) => {
     setError(null);
-    
     try {
       // Submit form with the current values
       if (isEditMode && id) {
