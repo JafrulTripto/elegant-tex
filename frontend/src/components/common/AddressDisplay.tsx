@@ -1,9 +1,9 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
-import { CustomerResponse } from '../../types/customer';
+import { Customer } from '../../types/customer';
 
 interface AddressDisplayProps {
-  customer: CustomerResponse;
+  customer: Customer;
   variant?: 'body1' | 'body2' | 'caption';
   showLabel?: boolean;
 }

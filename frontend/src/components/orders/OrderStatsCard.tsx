@@ -9,10 +9,10 @@ import {
   IconButton,
   LinearProgress,
   Chip,
-  Grid,
   CircularProgress,
   Alert
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {
   ExpandMore as ExpandMoreIcon,
   Assignment as PendingIcon,
@@ -198,7 +198,7 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ onStatusClick }) => {
       <Grid container spacing={2}>
         {/* Status Category Cards */}
         {processedCategories.map((category) => (
-          <Grid item xs={12} sm={6} md={3} key={category.key}>
+          <Grid size={{xs:12, sm:6, md:3}} key={category.key}>
             <Card 
               sx={{ 
                 height: '100%',
@@ -316,7 +316,7 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ onStatusClick }) => {
         ))}
 
         {/* Overview Summary Card */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{xs:12, sm:6, md:3}}>
           <Card 
             sx={{ 
               height: '100%',
