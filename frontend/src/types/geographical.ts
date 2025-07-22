@@ -29,17 +29,6 @@ export interface Upazila {
   updatedAt: string;
 }
 
-export interface Address {
-  id: number;
-  division: Division;
-  district: District;
-  upazila: Upazila;
-  addressLine: string;
-  postalCode?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // For dropdown options
 export interface GeographicalOption {
   value: number;
@@ -54,4 +43,15 @@ export interface AddressFormData {
   upazilaId: number | null;
   addressLine: string;
   postalCode?: string;
+}
+export interface Address {
+  id: number;
+  divisionId: number;
+  districtId: number;
+  upazilaId: number;
+  addressLine: string;
+  postalCode?: string;
+  formattedAddress: string;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -1,3 +1,5 @@
+import { Address } from "./geographical";
+
 export interface Customer {
   id: number;
   name: string;
@@ -20,15 +22,5 @@ export interface CustomerRequest {
   postalCode?: string;
   alternativePhone?: string;
   facebookId?: string;
-}
-
-export interface Address {
-  id: number;
-  divisionId: number;
-  districtId: number;
-  upazilaId: number;
-  addressLine: string;
-  postalCode?: string;
-  formattedAddress?: string;
 }
 

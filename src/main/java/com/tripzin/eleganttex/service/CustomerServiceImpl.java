@@ -1,7 +1,6 @@
 package com.tripzin.eleganttex.service;
 
 import com.tripzin.eleganttex.dto.request.CustomerRequest;
-import com.tripzin.eleganttex.dto.response.AddressResponse;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
 import com.tripzin.eleganttex.entity.Address;
 import com.tripzin.eleganttex.entity.Customer;

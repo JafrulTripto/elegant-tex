@@ -18,7 +18,7 @@ import {
   Delete as DeleteIcon,
   Phone as PhoneIcon
 } from '@mui/icons-material';
-import { Customer, CustomerRequest } from '../../types/customer';
+import { Customer } from '../../types/customer';
 import { SortableTableHead, AddressDisplay } from '../common';
 import type { Column } from '../common';
 
