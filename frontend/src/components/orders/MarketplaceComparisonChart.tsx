@@ -20,8 +20,6 @@ import { Bar } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
-import TakaSymble from '../common/TakaSymble';
-
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
