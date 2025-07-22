@@ -102,11 +102,6 @@ const Dashboard: React.FC = () => {
     navigate('/orders/new');
   };
 
-  // Function to navigate to create marketplace page
-  const handleCreateMarketplace = () => {
-    navigate('/marketplaces/new');
-  };
-
   // Function to navigate to orders with specific status
   const handleOrderStatusClick = (status: string) => {
     navigate(`/orders?status=${status}`);
