@@ -72,7 +72,11 @@ export interface OrderFormData {
   customerData?: {
     name: string;
     phone: string;
-    address: string;
+    divisionId: number;
+    districtId: number;
+    upazilaId: number;
+    addressLine: string;
+    postalCode?: string;
     alternativePhone?: string;
     facebookId?: string;
   };
@@ -193,7 +197,11 @@ export interface OrderRequest {
   customerData?: {
     name: string;
     phone: string;
-    address: string;
+    divisionId: number;
+    districtId: number;
+    upazilaId: number;
+    addressLine: string;
+    postalCode?: string;
     alternativePhone?: string;
     facebookId?: string;
   };

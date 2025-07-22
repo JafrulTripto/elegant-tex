@@ -180,14 +180,23 @@ public class OrderController {
     public ResponseEntity<List<Map<String, Object>>> getOrderStatusCounts(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String orderType) {
+        
+        // If startDate and endDate are provided, use date range filtering
+        if (startDate != null && endDate != null) {
+            List<Map<String, Object>> statusCounts = orderService.getOrderStatusCountsByDateRange(startDate, endDate, orderType);
+            return ResponseEntity.ok(statusCounts);
+        }
         // If month and year are provided, use them
-        if (month != null && year != null) {
-            List<Map<String, Object>> statusCounts = orderService.getOrderStatusCountsByMonth(month, year);
+        else if (month != null && year != null) {
+            List<Map<String, Object>> statusCounts = orderService.getOrderStatusCountsByMonth(month, year, orderType);
             return ResponseEntity.ok(statusCounts);
         }
         // Otherwise, fall back to the existing method
-        List<Map<String, Object>> statusCounts = orderService.getOrderStatusCounts(currentMonth);
+        List<Map<String, Object>> statusCounts = orderService.getOrderStatusCounts(currentMonth, orderType);
         return ResponseEntity.ok(statusCounts);
     }
     
@@ -196,14 +205,23 @@ public class OrderController {
     public ResponseEntity<List<Map<String, Object>>> getUserOrderStatistics(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String orderType) {
+        
+        // If startDate and endDate are provided, use date range filtering
+        if (startDate != null && endDate != null) {
+            List<Map<String, Object>> userStats = orderService.getUserOrderStatisticsByDateRange(startDate, endDate, orderType);
+            return ResponseEntity.ok(userStats);
+        }
         // If month and year are provided, use them
-        if (month != null && year != null) {
-            List<Map<String, Object>> userStats = orderService.getUserOrderStatisticsByMonth(month, year);
+        else if (month != null && year != null) {
+            List<Map<String, Object>> userStats = orderService.getUserOrderStatisticsByMonth(month, year, orderType);
             return ResponseEntity.ok(userStats);
         }
         // Otherwise, fall back to the existing method
-        List<Map<String, Object>> userStats = orderService.getUserOrderStatistics(currentMonth);
+        List<Map<String, Object>> userStats = orderService.getUserOrderStatistics(currentMonth, orderType);
         return ResponseEntity.ok(userStats);
     }
     
@@ -212,14 +230,23 @@ public class OrderController {
     public ResponseEntity<List<Map<String, Object>>> getMarketplaceOrderStatistics(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String orderType) {
+        
+        // If startDate and endDate are provided, use date range filtering
+        if (startDate != null && endDate != null) {
+            List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatisticsByDateRange(startDate, endDate, orderType);
+            return ResponseEntity.ok(marketplaceStats);
+        }
         // If month and year are provided, use them
-        if (month != null && year != null) {
-            List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatisticsByMonth(month, year);
+        else if (month != null && year != null) {
+            List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatisticsByMonth(month, year, orderType);
             return ResponseEntity.ok(marketplaceStats);
         }
         // Otherwise, fall back to the existing method
-        List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatistics(currentMonth);
+        List<Map<String, Object>> marketplaceStats = orderService.getMarketplaceOrderStatistics(currentMonth, orderType);
         return ResponseEntity.ok(marketplaceStats);
     }
     
@@ -275,10 +302,55 @@ public class OrderController {
     public ResponseEntity<List<Map<String, Object>>> getMonthlyOrderCountAndAmount(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false, defaultValue = "true") boolean currentMonth) {
+            @RequestParam(required = false, defaultValue = "true") boolean currentMonth,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String orderType) {
         
-        List<Map<String, Object>> data = orderService.getMonthlyOrderCountAndAmount(month, year, currentMonth);
+        // If startDate and endDate are provided, use date range filtering
+        if (startDate != null && endDate != null) {
+            List<Map<String, Object>> data = orderService.getMonthlyOrderCountAndAmountByDateRange(startDate, endDate, orderType);
+            return ResponseEntity.ok(data);
+        }
+        
+        List<Map<String, Object>> data = orderService.getMonthlyOrderCountAndAmount(month, year, currentMonth, orderType);
         return ResponseEntity.ok(data);
+    }
+    
+    /**
+     * Get sales data (revenue) for dashboard
+     * @param startDate optional start date
+     * @param endDate optional end date
+     * @param orderType optional order type filter (marketplace/merchant)
+     * @return sales data with total revenue and count
+     */
+    @GetMapping("/sales")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<Map<String, Object>> getSalesData(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String orderType) {
+        
+        Map<String, Object> salesData = orderService.getSalesData(startDate, endDate, orderType);
+        return ResponseEntity.ok(salesData);
+    }
+    
+    /**
+     * Get order statistics summary for reactive dashboard cards
+     * @param startDate start date for filtering
+     * @param endDate end date for filtering
+     * @param orderType order type filter (marketplace/merchant/all)
+     * @return summary statistics with total orders and sales
+     */
+    @GetMapping("/statistics-summary")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
+    public ResponseEntity<Map<String, Object>> getOrderStatisticsSummary(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String orderType) {
+        
+        Map<String, Object> summary = orderService.getOrderStatisticsSummary(startDate, endDate, orderType);
+        return ResponseEntity.ok(summary);
     }
     
     /**

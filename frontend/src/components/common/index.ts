@@ -12,6 +12,8 @@ import SearchBar from './SearchBar';
 import SortableTableHead, { Column } from './SortableTableHead';
 import StatusChip, { StatusType } from './StatusChip';
 import * as StyledComponents from './StyledComponents';
+import AddressDisplay from './AddressDisplay';
+import AddressSelector from './AddressSelector';
 
 export {
   ConfirmationDialog,
@@ -26,7 +28,9 @@ export {
   SearchBar,
   SortableTableHead,
   StatusChip,
-  StyledComponents
+  StyledComponents,
+  AddressDisplay,
+  AddressSelector
 };
 
 // Export types

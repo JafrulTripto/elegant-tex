@@ -144,7 +144,7 @@ public class ExcelReportGenerator implements ReportGenerator {
             row.createCell(colNum++).setCellValue(order.getMarketplace() != null ? order.getMarketplace().getName() : OrderType.MERCHANT.toString());
             row.createCell(colNum++).setCellValue(order.getCustomer().getName());
             row.createCell(colNum++).setCellValue(order.getCustomer().getPhone());
-            row.createCell(colNum++).setCellValue(order.getCustomer().getAddress());
+            row.createCell(colNum++).setCellValue(order.getCustomer().getDisplayAddress());
             
             String altPhone = order.getCustomer().getAlternativePhone();
             row.createCell(colNum++).setCellValue(altPhone != null ? altPhone : "");
