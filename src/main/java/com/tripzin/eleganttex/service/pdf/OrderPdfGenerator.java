@@ -1,6 +1,5 @@
 package com.tripzin.eleganttex.service.pdf;
 
-import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -20,7 +19,6 @@ import com.itextpdf.layout.element.Div;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.BorderRadius;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
@@ -130,7 +128,6 @@ public class OrderPdfGenerator {
     // Define brand colors
     private final Color PRIMARY_COLOR = new DeviceRgb(41, 128, 185); // Blue
     private final Color SECONDARY_COLOR = new DeviceRgb(52, 73, 94); // Dark blue-gray
-    private final Color ACCENT_COLOR = new DeviceRgb(46, 204, 113); // Green
     private final Color LIGHT_GRAY = new DeviceRgb(236, 240, 241); // Light gray for backgrounds
     
     /**
@@ -534,18 +531,13 @@ public class OrderPdfGenerator {
         // Use the helper method from Customer entity which handles both new and legacy addresses
         String displayAddress = customer.getDisplayAddress();
         
-        // If we have a geographical address, enhance it with postal code and landmark
+        // If we have a geographical address, enhance it with postal code
         if (customer.getAddress() != null) {
             StringBuilder enhancedAddress = new StringBuilder(customer.getAddress().getFormattedAddress());
             
             // Add postal code if available
             if (customer.getAddress().getPostalCode() != null && !customer.getAddress().getPostalCode().trim().isEmpty()) {
                 enhancedAddress.append(", ").append(customer.getAddress().getPostalCode().trim());
-            }
-            
-            // Add landmark if available
-            if (customer.getAddress().getLandmark() != null && !customer.getAddress().getLandmark().trim().isEmpty()) {
-                enhancedAddress.append(" (Landmark: ").append(customer.getAddress().getLandmark().trim()).append(")");
             }
             
             return enhancedAddress.toString();

@@ -23,7 +23,8 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import orderService, { MonthlyOrderCountAmount } from '../../services/order.service';
-import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -250,49 +251,33 @@ const CombinedChart: React.FC<ChartProps> = ({ data, labels, loading, activeView
 // Main Container Component
 const OrderCountAmountChart: React.FC = () => {
   const theme = useTheme();
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [chartData, setChartData] = useState<MonthlyOrderCountAmount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  // State for month/year selection
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  const [selectedOption, setSelectedOption] = useState<string>(`${currentMonth}-${currentYear}`);
-  const [isFullYear, setIsFullYear] = useState<boolean>(false);
-  // New state for toggle between count and amount
   const [activeView, setActiveView] = useState<'count' | 'amount'>('count');
   
-  // Generate month options for the selector
-  const generateMonthOptions = (): MonthSelectorOption[] => {
-    const options: MonthSelectorOption[] = [
-      { value: 'full-year', label: 'Full Year', isFullYear: true }
-    ];
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    // Add options for each month up to the current month
-    for (let i = 0; i <= currentMonth; i++) {
-      options.push({
-        value: `${i}-${currentYear}`,
-        label: `${monthNames[i]} ${currentYear}`,
-        isFullYear: false
-      });
-    }
-    
-    return options;
-  };
-  
-  const monthOptions = generateMonthOptions();
-  
-  // Fetch data based on selected month/year
-  const fetchData = async (month?: number, year?: number, currentMonth: boolean = true) => {
+  // Fetch data based on global timeline
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await orderService.getMonthlyOrderCountAndAmount(month, year, currentMonth);
+      
+      // Convert dates to ISO string format for API
+      const startDate = currentRange.startDate.toISOString().split('T')[0];
+      const endDate = currentRange.endDate.toISOString().split('T')[0];
+      
+      // Use the enhanced API with date range and order type filtering
+      const data = await orderService.getMonthlyOrderCountAndAmount(
+        undefined, // month
+        undefined, // year
+        false, // currentMonth - not used when we provide date range
+        startDate,
+        endDate,
+        currentOrderType
+      );
+      
       setChartData(data);
       setLoading(false);
     } catch (err: any) {
@@ -301,32 +286,9 @@ const OrderCountAmountChart: React.FC = () => {
     }
   };
   
-  // Handle month selection change
-  const handleMonthChange = (value: string, fullYear: boolean) => {
-    setSelectedOption(value);
-    setIsFullYear(fullYear);
-    
-    // Determine which data to fetch based on selection
-    if (fullYear) {
-      // Full year data
-      fetchData(undefined, undefined, false);
-    } else {
-      // Specific month data
-      const [month, year] = value.split('-').map(Number);
-      fetchData(month, year, false);
-    }
-  };
-  
-  // Initial data fetch
   useEffect(() => {
-    // Fetch data for the initially selected month
-    if (isFullYear) {
-      fetchData(undefined, undefined, false);
-    } else {
-      const [month, year] = selectedOption.split('-').map(Number);
-      fetchData(month, year, false);
-    }
-  }, []);
+    fetchData();
+  }, [currentRange, currentOrderType]);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -357,9 +319,16 @@ const OrderCountAmountChart: React.FC = () => {
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          Order Count and Amount
+          Order Count and Amount ({currentRange.label})
         </Typography>
-        <Box display="flex" alignItems="center" gap={1}> {/* Reduced gap from 2 */}
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ fontSize: '0.75rem' }}
+          >
+            {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
+          </Typography>
           <ToggleButtonGroup
             value={activeView}
             exclusive
@@ -372,9 +341,9 @@ const OrderCountAmountChart: React.FC = () => {
             aria-label="Chart view"
             sx={{ 
               '& .MuiToggleButton-root': {
-                py: 0.5, // Reduced padding
+                py: 0.5,
                 px: 1.5,
-                fontSize: '0.75rem', // Smaller font
+                fontSize: '0.75rem',
                 textTransform: 'none'
               }
             }}
@@ -386,11 +355,6 @@ const OrderCountAmountChart: React.FC = () => {
               Amount
             </ToggleButton>
           </ToggleButtonGroup>
-          <MonthYearSelector
-            selectedValue={selectedOption}
-            options={monthOptions}
-            onChange={handleMonthChange}
-          />
         </Box>
       </Box>
 

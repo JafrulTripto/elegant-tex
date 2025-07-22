@@ -40,14 +40,6 @@ public class Address {
     @Column(name = "postal_code", length = 10)
     private String postalCode;
 
-    @Column(name = "landmark", length = 255)
-    private String landmark;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "address_type", length = 50)
-    @Builder.Default
-    private AddressType addressType = AddressType.PRIMARY;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -1,7 +1,6 @@
 package com.tripzin.eleganttex.repository;
 
 import com.tripzin.eleganttex.entity.Address;
-import com.tripzin.eleganttex.entity.AddressType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,11 +29,6 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
      */
     @Query("SELECT a FROM Address a WHERE a.upazila.id = :upazilaId ORDER BY a.createdAt DESC")
     List<Address> findByUpazilaIdOrderByCreatedAtDesc(@Param("upazilaId") Long upazilaId);
-
-    /**
-     * Find addresses by address type
-     */
-    List<Address> findByAddressTypeOrderByCreatedAtDesc(AddressType addressType);
 
     /**
      * Find address by exact geographical location and address line

@@ -44,7 +44,11 @@ const CustomersPage: React.FC = () => {
   const [formData, setFormData] = useState<CustomerRequest>({
     name: '',
     phone: '',
-    address: '',
+    divisionId: 0,
+    districtId: 0,
+    upazilaId: 0,
+    addressLine: '',
+    postalCode: '',
     alternativePhone: '',
     facebookId: ''
   });
@@ -130,7 +134,11 @@ const CustomersPage: React.FC = () => {
     setFormData({
       name: '',
       phone: '',
-      address: '',
+      divisionId: 0,
+      districtId: 0,
+      upazilaId: 0,
+      addressLine: '',
+      postalCode: '',
       alternativePhone: '',
       facebookId: ''
     });
@@ -144,7 +152,11 @@ const CustomersPage: React.FC = () => {
     setFormData({
       name: customer.name,
       phone: customer.phone,
-      address: customer.address,
+      divisionId: customer.division?.id || 0,
+      districtId: customer.district?.id || 0,
+      upazilaId: customer.upazila?.id || 0,
+      addressLine: customer.addressLine || '',
+      postalCode: customer.postalCode || '',
       alternativePhone: customer.alternativePhone || '',
       facebookId: customer.facebookId || ''
     });
@@ -169,7 +181,7 @@ const CustomersPage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async () => {
     // Validate form
-    if (!formData.name || !formData.phone || !formData.address) {
+    if (!formData.name || !formData.phone || !formData.addressLine || !formData.divisionId || !formData.districtId || !formData.upazilaId) {
       setFormError('Please fill in all required fields');
       return;
     }

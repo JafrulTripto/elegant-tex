@@ -45,8 +45,6 @@ CREATE TABLE addresses (
     upazila_id BIGINT NOT NULL,
     address_line VARCHAR(500) NOT NULL,
     postal_code VARCHAR(10),
-    landmark VARCHAR(255),
-    address_type VARCHAR(50) DEFAULT 'PRIMARY',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (division_id) REFERENCES divisions(id),
@@ -55,8 +53,12 @@ CREATE TABLE addresses (
 );
 
 -- Add address_id to customers table
+-- ALTER TABLE customers 
+-- ADD address_id BIGINT;
+
+-- Remove legacy address column from customers table
 ALTER TABLE customers 
-ADD address_id BIGINT;
+DROP COLUMN IF EXISTS address;
 
 -- Add foreign key constraint
 ALTER TABLE customers 
@@ -68,6 +70,6 @@ CREATE INDEX idx_upazilas_district_id ON upazilas(district_id);
 CREATE INDEX idx_addresses_division_id ON addresses(division_id);
 CREATE INDEX idx_addresses_district_id ON addresses(district_id);
 CREATE INDEX idx_addresses_upazila_id ON addresses(upazila_id);
-CREATE INDEX idx_customers_address_id ON customers(address_id);
+-- CREATE INDEX idx_customers_address_id ON customers(address_id);
 
 -- Insert sample Bangladesh geographical data
