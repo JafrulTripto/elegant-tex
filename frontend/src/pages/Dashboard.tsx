@@ -29,7 +29,6 @@ import {
   Refresh as RefreshIcon,
   ShoppingCart as ShoppingCartIcon,
   Store as StoreIcon,
-  AttachMoney as AttachMoneyIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -39,10 +38,14 @@ import MarketplaceComparisonChart from '../components/orders/MarketplaceComparis
 import OrderStatusDistributionChart from '../components/orders/OrderStatusDistributionChart';
 import LastMonthOrdersChart from '../components/orders/LastMonthOrdersChart';
 import OrderCountAmountChart from '../components/orders/OrderCountAmountChart';
-import MonthlyOrderStatusCard from '../components/orders/MonthlyOrderStatusCard';
+import GlobalTimelineSelector from '../components/common/GlobalTimelineSelector';
+import GlobalOrderTypeToggle from '../components/common/GlobalOrderTypeToggle';
+import ReactiveOrderStats from '../components/orders/ReactiveOrderStats';
+import { TimelineProvider } from '../contexts/TimelineContext';
+import { OrderTypeProvider } from '../contexts/OrderTypeContext';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
-import { OrderStatusCount, Order } from '../types/order';
+import { Order } from '../types/order';
 import { getStatusColor } from '../utils/statusConfig';
 import { Marketplace } from '../types/marketplace';
 
@@ -57,8 +60,6 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // State for order statistics
-  const [orderStatusCounts, setOrderStatusCounts] = useState<OrderStatusCount[]>([]);
-  const [totalOrders, setTotalOrders] = useState<number>(0);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   
   // State for marketplace statistics
@@ -70,14 +71,6 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Fetch order status counts
-      const statusCounts = await orderService.getOrderStatusCounts();
-      setOrderStatusCounts(statusCounts);
-      
-      // Calculate total orders
-      const total = statusCounts.reduce((sum, item) => sum + item.count, 0);
-      setTotalOrders(total);
       
       // Fetch recent orders (first page, 5 items)
       const ordersResponse = await orderService.getAllOrders(0, 5);
@@ -139,10 +132,6 @@ const Dashboard: React.FC = () => {
     });
   };
 
-  // Function to calculate total revenue from orders
-  const calculateTotalRevenue = () => {
-    return recentOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-  };
 
   if (!user) {
     return (
@@ -158,53 +147,77 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <Box 
-        display="flex" 
-        justifyContent="space-between" 
-        alignItems="center" 
-        mb={2} // Reduced from mb={3}
-        pb={1}
-        sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}
-      >
-        <Typography 
-          variant="h5" // Changed from h4 for more compact look
-          sx={{ fontWeight: 500 }}
-        >
-          Dashboard
-        </Typography>
-        <Box>
-          <Tooltip title="Refresh Data">
-            <IconButton 
-              onClick={handleRefresh} 
-              color="primary"
-              size="small" // Smaller button
+    <TimelineProvider>
+      <OrderTypeProvider>
+        <Box sx={{ flexGrow: 1 }}>
+          <Box 
+            display="flex" 
+            justifyContent="space-between" 
+            alignItems="center" 
+            mb={2}
+            pb={1}
+            sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}
+          >
+            <Typography 
+              variant="h5"
+              sx={{ fontWeight: 500 }}
             >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleCreateOrder}
-            sx={{ ml: 1, py: 0.5, px: 1.5, fontSize: '0.85rem' }} // More compact button
-            size="small"
+              Dashboard
+            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Tooltip title="Refresh Data">
+                <IconButton 
+                  onClick={handleRefresh} 
+                  color="primary"
+                  size="small"
+                >
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleCreateOrder}
+                sx={{ py: 0.5, px: 1.5, fontSize: '0.85rem' }}
+                size="small"
+              >
+                New Order
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleCreateMarketplace}
+                sx={{ py: 0.5, px: 1.5, fontSize: '0.85rem' }}
+                size="small"
+              >
+                New Marketplace
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Global Controls */}
+          <Box 
+            display="flex" 
+            justifyContent="space-between" 
+            alignItems="center" 
+            mb={2}
+            p={2}
+            sx={{ 
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+              borderRadius: 1,
+              border: `1px solid ${theme.palette.divider}`
+            }}
           >
-            New Order
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleCreateMarketplace}
-            sx={{ ml: 1, py: 0.5, px: 1.5, fontSize: '0.85rem' }} // More compact button
-            size="small"
-          >
-            New Marketplace
-          </Button>
-        </Box>
-      </Box>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                Global Filters:
+              </Typography>
+              <GlobalOrderTypeToggle />
+            </Box>
+            <GlobalTimelineSelector />
+          </Box>
       
       {error && (
         <Alert 
@@ -241,26 +254,8 @@ const Dashboard: React.FC = () => {
             </Typography>
           </Grid>
           
-          {/* Total Orders Card */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography variant="h4" component="div" fontWeight="bold">
-                      {totalOrders}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Orders
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    <ShoppingCartIcon />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          {/* Reactive Order Statistics */}
+          <ReactiveOrderStats />
           
           {/* Total Marketplaces Card */}
           <Grid size={{ xs: 12, md: 3 }}>
@@ -283,55 +278,11 @@ const Dashboard: React.FC = () => {
             </Card>
           </Grid>
           
-          {/* Total Revenue Card */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography variant="h4" component="div" fontWeight="bold">
-                      ${calculateTotalRevenue().toFixed(2)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Recent Revenue
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: 'success.main' }}>
-                    <AttachMoneyIcon />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          {/* Monthly Order Status Card */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <MonthlyOrderStatusCard title="This Month's Orders" />
-          </Grid>
-          
           {/* Order Status Cards */}
           <Grid size={{ xs: 12 }}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
-                fontSize: '0.9rem', 
-                fontWeight: 500, 
-                mb: 1 
-              }}
-            >
-              Orders by Status
-            </Typography>
-            <Grid container spacing={1}> {/* Reduced spacing from 2 to 1 */}
-              {orderStatusCounts.map((statusCount) => (
-                <Grid size={{ xs: 6, sm: 4, md: 2 }} key={statusCount.status}>
-                  <OrderStatsCard
-                    status={statusCount.status}
-                    count={statusCount.count}
-                    onClick={() => handleOrderStatusClick(statusCount.status)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
+            <OrderStatsCard
+              onStatusClick={handleOrderStatusClick}
+            />
           </Grid>
           
           {/* User Order Statistics */}
@@ -629,7 +580,9 @@ const Dashboard: React.FC = () => {
           </Grid>
         </Grid>
       )}
-    </Box>
+        </Box>
+      </OrderTypeProvider>
+    </TimelineProvider>
   );
 };
 

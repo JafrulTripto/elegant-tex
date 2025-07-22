@@ -37,9 +37,8 @@ import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'date-fns';
 import orderService from '../services/order.service';
-import { Order, OrderStatus, OrderFilterParams, OrderStatusCount} from '../types/order';
+import { Order, OrderStatus, OrderFilterParams} from '../types/order';
 import { OrderType } from '../types/orderType';
-import OrderStatsCard from '../components/orders/OrderStatsCard';
 import { useAuth } from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
 
@@ -70,7 +69,6 @@ const OrdersPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filters, setFilters] = useState<OrderFilterParams>({ orderType: undefined });
-  const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
@@ -108,24 +106,9 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  const fetchStatusCounts = async () => {
-    try {
-      const counts = await orderService.getOrderStatusCounts();
-      if (counts) {
-        setStatusCounts(counts);
-      } else {
-        setStatusCounts([]);
-      }
-    } catch (error) {
-      console.error('Error fetching status counts:', error);
-      setError('Failed to load status counts. Please try again.');
-      setStatusCounts([]);
-    }
-  };
 
   useEffect(() => {
     fetchOrders();
-    fetchStatusCounts();
   }, [
     paginationModel?.page, 
     paginationModel?.pageSize, 
@@ -492,20 +475,6 @@ const OrdersPage: React.FC = () => {
             </Box>
           </Grid>
 
-          {/* Status Cards */}
-          <Grid size={{ xs: 12 }}>
-            <Grid container spacing={theme.customSpacing.item}>
-              {statusCounts.map((statusCount) => (
-                <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={statusCount?.status || 'unknown'}>
-                  <OrderStatsCard
-                    status={statusCount?.status || ''}
-                    count={statusCount?.count || 0}
-                    onClick={() => setFilters({ ...filters, status: statusCount?.status as OrderStatus })}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Grid>
 
           {/* Orders DataGrid */}
           <Grid size={{ xs: 12 }}>

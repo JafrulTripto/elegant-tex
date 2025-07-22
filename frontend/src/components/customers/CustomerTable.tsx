@@ -16,11 +16,10 @@ import {
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Phone as PhoneIcon,
-  LocationOn as LocationIcon
+  Phone as PhoneIcon
 } from '@mui/icons-material';
 import { Customer } from '../../types/customer';
-import { SortableTableHead } from '../common';
+import { SortableTableHead, AddressDisplay } from '../common';
 import type { Column } from '../common';
 
 interface CustomerTableProps {
@@ -126,14 +125,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                 
                 {/* Address Column */}
                 <TableCell>
-                  <Tooltip title={customer.address}>
-                    <Box display="flex" alignItems="center">
-                      <LocationIcon fontSize="small" sx={{ mr: 1 }} />
-                      {customer.address.length > 30
-                        ? `${customer.address.substring(0, 30)}...`
-                        : customer.address}
-                    </Box>
-                  </Tooltip>
+                  <AddressDisplay 
+                    customer={customer} 
+                    variant="body2" 
+                    showLabel={false} 
+                  />
                 </TableCell>
                 
                 {/* Alternative Phone Column */}

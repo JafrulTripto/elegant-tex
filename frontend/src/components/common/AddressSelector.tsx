@@ -7,10 +7,11 @@ import {
   TextField,
   Box,
   Typography,
+  Grid,
   SelectChangeEvent
 } from '@mui/material';
 import { geographicalService } from '../../services/geographical.service';
-import { GeographicalOption, AddressFormData, AddressType } from '../../types/geographical';
+import { GeographicalOption, AddressFormData } from '../../types/geographical';
 
 interface AddressSelectorProps {
   value: AddressFormData;
@@ -23,7 +24,6 @@ interface AddressSelectorProps {
   };
   disabled?: boolean;
   required?: boolean;
-  showAddressType?: boolean;
 }
 
 const AddressSelector: React.FC<AddressSelectorProps> = ({
@@ -31,8 +31,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   onChange,
   error,
   disabled = false,
-  required = false,
-  showAddressType = false
+  required = false
 }) => {
   const [divisions, setDivisions] = useState<GeographicalOption[]>([]);
   const [districts, setDistricts] = useState<GeographicalOption[]>([]);
@@ -144,19 +143,6 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
     });
   };
 
-  const handleLandmarkChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({
-      ...value,
-      landmark: event.target.value
-    });
-  };
-
-  const handleAddressTypeChange = (event: SelectChangeEvent<AddressType>) => {
-    onChange({
-      ...value,
-      addressType: event.target.value as AddressType
-    });
-  };
 
   return (
     <Box>
@@ -164,139 +150,121 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
         Address Information
       </Typography>
       
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {/* Division Selector */}
-        <FormControl fullWidth error={!!error?.divisionId} disabled={disabled}>
-          <InputLabel>Division {required && '*'}</InputLabel>
-          <Select
-            value={value.divisionId || ''}
-            onChange={handleDivisionChange}
-            label={`Division ${required ? '*' : ''}`}
-          >
-            <MenuItem value="">
-              <em>Select Division</em>
-            </MenuItem>
-            {divisions.map((division) => (
-              <MenuItem key={division.value} value={division.value}>
-                {division.label} ({division.bnLabel})
-              </MenuItem>
-            ))}
-          </Select>
-          {error?.divisionId && (
-            <Typography variant="caption" color="error">
-              {error.divisionId}
-            </Typography>
-          )}
-        </FormControl>
+      <Grid container spacing={2}>
+        {/* Address Line - Always full width at the top */}
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label={`Address Line ${required ? '*' : ''}`}
+            value={value.addressLine}
+            onChange={handleAddressLineChange}
+            error={!!error?.addressLine}
+            helperText={error?.addressLine}
+            disabled={disabled}
+            multiline
+            rows={2}
+            placeholder="Enter detailed address (house/building number, street, area)"
+          />
+        </Grid>
 
-        {/* District Selector */}
-        <FormControl 
-          fullWidth 
-          error={!!error?.districtId} 
-          disabled={disabled || !value.divisionId || loading.districts}
-        >
-          <InputLabel>District {required && '*'}</InputLabel>
-          <Select
-            value={value.districtId || ''}
-            onChange={handleDistrictChange}
-            label={`District ${required ? '*' : ''}`}
-          >
-            <MenuItem value="">
-              <em>Select District</em>
-            </MenuItem>
-            {districts.map((district) => (
-              <MenuItem key={district.value} value={district.value}>
-                {district.label} ({district.bnLabel})
-              </MenuItem>
-            ))}
-          </Select>
-          {error?.districtId && (
-            <Typography variant="caption" color="error">
-              {error.districtId}
-            </Typography>
-          )}
-        </FormControl>
-
-        {/* Upazila Selector */}
-        <FormControl 
-          fullWidth 
-          error={!!error?.upazilaId} 
-          disabled={disabled || !value.districtId || loading.upazilas}
-        >
-          <InputLabel>Upazila {required && '*'}</InputLabel>
-          <Select
-            value={value.upazilaId || ''}
-            onChange={handleUpazilaChange}
-            label={`Upazila ${required ? '*' : ''}`}
-          >
-            <MenuItem value="">
-              <em>Select Upazila</em>
-            </MenuItem>
-            {upazilas.map((upazila) => (
-              <MenuItem key={upazila.value} value={upazila.value}>
-                {upazila.label} ({upazila.bnLabel})
-              </MenuItem>
-            ))}
-          </Select>
-          {error?.upazilaId && (
-            <Typography variant="caption" color="error">
-              {error.upazilaId}
-            </Typography>
-          )}
-        </FormControl>
-
-        {/* Address Line */}
-        <TextField
-          fullWidth
-          label={`Address Line ${required ? '*' : ''}`}
-          value={value.addressLine}
-          onChange={handleAddressLineChange}
-          error={!!error?.addressLine}
-          helperText={error?.addressLine}
-          disabled={disabled}
-          multiline
-          rows={2}
-          placeholder="Enter detailed address (house/building number, street, area)"
-        />
-
-        {/* Postal Code */}
-        <TextField
-          fullWidth
-          label="Postal Code"
-          value={value.postalCode || ''}
-          onChange={handlePostalCodeChange}
-          disabled={disabled}
-          placeholder="Enter postal code"
-        />
-
-        {/* Landmark */}
-        <TextField
-          fullWidth
-          label="Landmark"
-          value={value.landmark || ''}
-          onChange={handleLandmarkChange}
-          disabled={disabled}
-          placeholder="Enter nearby landmark (optional)"
-        />
-
-        {/* Address Type */}
-        {showAddressType && (
-          <FormControl fullWidth disabled={disabled}>
-            <InputLabel>Address Type</InputLabel>
+        {/* Division Selector - Responsive grid */}
+        <Grid item xs={12} sm={6} md={6} lg={3}>
+          <FormControl fullWidth error={!!error?.divisionId} disabled={disabled}>
+            <InputLabel>Division {required && '*'}</InputLabel>
             <Select
-              value={value.addressType}
-              onChange={handleAddressTypeChange}
-              label="Address Type"
+              value={value.divisionId || ''}
+              onChange={handleDivisionChange}
+              label={`Division ${required ? '*' : ''}`}
             >
-              {Object.values(AddressType).map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type.charAt(0) + type.slice(1).toLowerCase()}
+              <MenuItem value="">
+                <em>Select Division</em>
+              </MenuItem>
+              {divisions.map((division) => (
+                <MenuItem key={division.value} value={division.value}>
+                  {division.label} ({division.bnLabel})
                 </MenuItem>
               ))}
             </Select>
+            {error?.divisionId && (
+              <Typography variant="caption" color="error">
+                {error.divisionId}
+              </Typography>
+            )}
           </FormControl>
-        )}
-      </Box>
+        </Grid>
+
+        {/* District Selector - Responsive grid */}
+        <Grid item xs={12} sm={6} md={6} lg={3}>
+          <FormControl 
+            fullWidth 
+            error={!!error?.districtId} 
+            disabled={disabled || !value.divisionId || loading.districts}
+          >
+            <InputLabel>District {required && '*'}</InputLabel>
+            <Select
+              value={value.districtId || ''}
+              onChange={handleDistrictChange}
+              label={`District ${required ? '*' : ''}`}
+            >
+              <MenuItem value="">
+                <em>Select District</em>
+              </MenuItem>
+              {districts.map((district) => (
+                <MenuItem key={district.value} value={district.value}>
+                  {district.label} ({district.bnLabel})
+                </MenuItem>
+              ))}
+            </Select>
+            {error?.districtId && (
+              <Typography variant="caption" color="error">
+                {error.districtId}
+              </Typography>
+            )}
+          </FormControl>
+        </Grid>
+
+        {/* Upazila Selector - Responsive grid */}
+        <Grid item xs={12} sm={6} md={6} lg={3}>
+          <FormControl 
+            fullWidth 
+            error={!!error?.upazilaId} 
+            disabled={disabled || !value.districtId || loading.upazilas}
+          >
+            <InputLabel>Upazila {required && '*'}</InputLabel>
+            <Select
+              value={value.upazilaId || ''}
+              onChange={handleUpazilaChange}
+              label={`Upazila ${required ? '*' : ''}`}
+            >
+              <MenuItem value="">
+                <em>Select Upazila</em>
+              </MenuItem>
+              {upazilas.map((upazila) => (
+                <MenuItem key={upazila.value} value={upazila.value}>
+                  {upazila.label} ({upazila.bnLabel})
+                </MenuItem>
+              ))}
+            </Select>
+            {error?.upazilaId && (
+              <Typography variant="caption" color="error">
+                {error.upazilaId}
+              </Typography>
+            )}
+          </FormControl>
+        </Grid>
+
+        {/* Postal Code - Responsive grid */}
+        <Grid item xs={12} sm={6} md={6} lg={3}>
+          <TextField
+            fullWidth
+            label="Postal Code"
+            value={value.postalCode || ''}
+            onChange={handlePostalCodeChange}
+            disabled={disabled}
+            placeholder="Enter postal code"
+          />
+        </Grid>
+      </Grid>
     </Box>
   );
 };

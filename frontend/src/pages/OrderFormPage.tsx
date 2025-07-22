@@ -120,7 +120,11 @@ const OrderFormPage: React.FC = () => {
     customerData: {
       name: '',
       phone: '',
-      address: '',
+      divisionId: 0,
+      districtId: 0,
+      upazilaId: 0,
+      addressLine: '',
+      postalCode: '',
       alternativePhone: '',
       facebookId: ''
     },

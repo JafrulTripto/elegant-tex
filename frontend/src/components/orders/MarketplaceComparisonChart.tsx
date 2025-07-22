@@ -18,7 +18,8 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
-import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -38,61 +39,32 @@ interface MarketplaceOrderStatistics {
 
 const MarketplaceComparisonChart: React.FC = () => {
   const theme = useTheme();
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceOrderStatistics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // New state for month/year selection
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  
-  // Generate month options
-  const generateMonthOptions = (): MonthSelectorOption[] => {
-    const options: MonthSelectorOption[] = [
-      { value: 'full-year', label: 'Full Year', isFullYear: true }
-    ];
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    // Add options for each month up to the current month
-    for (let i = 0; i <= currentMonth; i++) {
-      options.push({
-        value: `${i}-${currentYear}`,
-        label: `${monthNames[i]} ${currentYear}`,
-        isFullYear: false
-      });
-    }
-    
-    return options;
-  };
-  
-  const monthOptions = generateMonthOptions();
-  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
-  const [isFullYear, setIsFullYear] = useState<boolean>(false);
 
   useEffect(() => {
     fetchMarketplaceOrderStatistics();
-  }, [selectedValue, isFullYear]);
+  }, [currentRange, currentOrderType]);
 
   const fetchMarketplaceOrderStatistics = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      let data;
-      if (isFullYear) {
-        // Use existing method for full year
-        data = await orderService.getMarketplaceOrderStatistics(false);
-      } else {
-        // Parse month and year from selected value
-        const [month, year] = selectedValue.split('-').map(Number);
-        // Use new method for specific month
-        data = await orderService.getMarketplaceOrderStatisticsByMonth(month, year);
-      }
+      // Convert dates to ISO string format for API
+      const startDate = currentRange.startDate.toISOString().split('T')[0];
+      const endDate = currentRange.endDate.toISOString().split('T')[0];
+      
+      // Use the enhanced API with date range and order type filtering
+      const data = await orderService.getMarketplaceOrderStatistics(
+        false, // currentMonth - not used when we provide date range
+        startDate,
+        endDate,
+        currentOrderType
+      );
       
       setMarketplaceStats(data);
       setLoading(false);
@@ -100,11 +72,6 @@ const MarketplaceComparisonChart: React.FC = () => {
       setError(err.message || 'Failed to load marketplace order statistics');
       setLoading(false);
     }
-  };
-
-  const handleMonthChange = (value: string, fullYear: boolean) => {
-    setSelectedValue(value);
-    setIsFullYear(fullYear);
   };
 
   // Prepare data for Chart.js
@@ -250,7 +217,7 @@ const MarketplaceComparisonChart: React.FC = () => {
         display="flex" 
         justifyContent="space-between" 
         alignItems="center" 
-        mb={1} // Added mb={1}
+        mb={1}
         sx={{ 
           borderBottom: `1px solid ${theme.palette.divider}`,
           pb: 0.75
@@ -261,13 +228,15 @@ const MarketplaceComparisonChart: React.FC = () => {
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          Marketplace Order Comparison
+          Marketplace Order Comparison ({currentRange.label})
         </Typography>
-        <MonthYearSelector
-          selectedValue={selectedValue}
-          options={monthOptions}
-          onChange={handleMonthChange}
-        />
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem' }}
+        >
+          {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
+        </Typography>
       </Box>
 
       {error && (

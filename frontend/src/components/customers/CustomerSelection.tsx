@@ -8,13 +8,11 @@ import {
   Button,
   CircularProgress,
   Autocomplete,
-  Divider,
-  FormControlLabel,
-  Switch
+  Divider
 } from '@mui/material';
 import { debounce } from 'lodash';
 import { Customer, CustomerRequest } from '../../types/customer';
-import { AddressFormData, AddressType } from '../../types/geographical';
+import { AddressFormData } from '../../types/geographical';
 import * as customerService from '../../services/customer.service';
 import { AddressSelector, AddressDisplay } from '../common';
 
@@ -33,23 +31,23 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [useGeographicalAddress, setUseGeographicalAddress] = useState<boolean>(false);
   const [customerData, setCustomerData] = useState<CustomerRequest>({
     name: '',
     phone: '',
-    address: '',
+    divisionId: 0,
+    districtId: 0,
+    upazilaId: 0,
+    addressLine: '',
+    postalCode: '',
     alternativePhone: '',
-    facebookId: '',
-    useGeographicalAddress: false
+    facebookId: ''
   });
   const [addressData, setAddressData] = useState<AddressFormData>({
     divisionId: null,
     districtId: null,
     upazilaId: null,
     addressLine: '',
-    postalCode: '',
-    landmark: '',
-    addressType: AddressType.PRIMARY
+    postalCode: ''
   });
 
   // Track previous initialCustomerId to prevent unnecessary API calls
@@ -127,12 +125,30 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
   };
 
   // Handle new customer form changes
-  const handleCustomerDataChange = (field: keyof CustomerRequest, value: string) => {
+  const handleCustomerDataChange = (field: keyof CustomerRequest, value: string | number) => {
     setCustomerData(prev => {
       const updated = { ...prev, [field]: value };
       onCustomerDataChange(updated);
       return updated;
     });
+  };
+
+  // Handle address data change
+  const handleAddressChange = (newAddressData: AddressFormData) => {
+    setAddressData(newAddressData);
+    
+    // Update customer data with address fields
+    const updatedCustomerData = {
+      ...customerData,
+      divisionId: newAddressData.divisionId || 0,
+      districtId: newAddressData.districtId || 0,
+      upazilaId: newAddressData.upazilaId || 0,
+      addressLine: newAddressData.addressLine,
+      postalCode: newAddressData.postalCode || ''
+    };
+    
+    setCustomerData(updatedCustomerData);
+    onCustomerDataChange(updatedCustomerData);
   };
 
   // Handle phone search
@@ -252,79 +268,20 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
                 />
               </Grid>
               
-              {/* Address Type Toggle */}
+              {/* Address Fields - Always use AddressSelector */}
               <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={useGeographicalAddress}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setUseGeographicalAddress(checked);
-                        setCustomerData(prev => ({
-                          ...prev,
-                          useGeographicalAddress: checked
-                        }));
-                        onCustomerDataChange({
-                          ...customerData,
-                          useGeographicalAddress: checked
-                        });
-                      }}
-                    />
-                  }
-                  label="Use structured address (Division > District > Upazila)"
+                <AddressSelector
+                  value={addressData}
+                  onChange={handleAddressChange}
+                  required={true}
                 />
               </Grid>
-
-              {/* Address Fields */}
-              {useGeographicalAddress ? (
-                <Grid item xs={12}>
-                  <AddressSelector
-                    value={addressData}
-                    onChange={(newAddressData) => {
-                      setAddressData(newAddressData);
-                      // Update customer data with geographical address fields
-                      setCustomerData(prev => ({
-                        ...prev,
-                        divisionId: newAddressData.divisionId,
-                        districtId: newAddressData.districtId,
-                        upazilaId: newAddressData.upazilaId,
-                        addressLine: newAddressData.addressLine,
-                        postalCode: newAddressData.postalCode,
-                        landmark: newAddressData.landmark
-                      }));
-                      onCustomerDataChange({
-                        ...customerData,
-                        divisionId: newAddressData.divisionId,
-                        districtId: newAddressData.districtId,
-                        upazilaId: newAddressData.upazilaId,
-                        addressLine: newAddressData.addressLine,
-                        postalCode: newAddressData.postalCode,
-                        landmark: newAddressData.landmark
-                      });
-                    }}
-                    showAddressType={false}
-                  />
-                </Grid>
-              ) : (
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Address"
-                    value={customerData.address}
-                    onChange={(e) => handleCustomerDataChange('address', e.target.value)}
-                    multiline
-                    rows={2}
-                    required
-                  />
-                </Grid>
-              )}
 
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Alternative Phone"
-                  value={customerData.alternativePhone}
+                  value={customerData.alternativePhone || ''}
                   onChange={(e) => handleCustomerDataChange('alternativePhone', e.target.value)}
                 />
               </Grid>
@@ -332,7 +289,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
                 <TextField
                   fullWidth
                   label="Facebook ID"
-                  value={customerData.facebookId}
+                  value={customerData.facebookId || ''}
                   onChange={(e) => handleCustomerDataChange('facebookId', e.target.value)}
                 />
               </Grid>
@@ -387,15 +344,27 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
                 // Reset the customer ID in the parent component
                 onCustomerSelected(null);
                 // Reset the form data
-                const resetData = {
+                const resetData: CustomerRequest = {
                   name: '',
                   phone: '',
-                  address: '',
+                  divisionId: 0,
+                  districtId: 0,
+                  upazilaId: 0,
+                  addressLine: '',
+                  postalCode: '',
                   alternativePhone: '',
                   facebookId: ''
                 };
                 setCustomerData(resetData);
                 onCustomerDataChange(resetData);
+                // Reset address data
+                setAddressData({
+                  divisionId: null,
+                  districtId: null,
+                  upazilaId: null,
+                  addressLine: '',
+                  postalCode: ''
+                });
               }}
               sx={{ mt: 2 }}
             >

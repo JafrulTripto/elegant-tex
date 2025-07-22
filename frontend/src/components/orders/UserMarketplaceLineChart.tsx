@@ -21,7 +21,8 @@ import {
 import { Line } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { Marketplace } from '../../types/marketplace';
-import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -48,41 +49,11 @@ interface MarketplaceOrderData {
 const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ userMarketplaces }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [marketplaceOrderData, setMarketplaceOrderData] = useState<MarketplaceOrderData[]>([]);
-  
-  // New state for month/year selection
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  
-  // Generate month options
-  const generateMonthOptions = (): MonthSelectorOption[] => {
-    const options: MonthSelectorOption[] = [
-      { value: 'full-year', label: 'Full Year', isFullYear: true }
-    ];
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    // Add options for each month up to the current month
-    for (let i = 0; i <= currentMonth; i++) {
-      options.push({
-        value: `${i}-${currentYear}`,
-        label: `${monthNames[i]} ${currentYear}`,
-        isFullYear: false
-      });
-    }
-    
-    return options;
-  };
-  
-  const monthOptions = generateMonthOptions();
-  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
-  const [isFullYear, setIsFullYear] = useState<boolean>(false);
 
   // Generate colors for each marketplace
   const generateColors = (index: number) => {
@@ -105,20 +76,12 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
     } else {
       setLoading(false);
     }
-  }, [userMarketplaces, selectedValue, isFullYear]);
+  }, [userMarketplaces, currentRange, currentOrderType]);
 
   const fetchMarketplaceOrderData = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      const startDate = new Date();
-      if (isFullYear) {
-        startDate.setFullYear(startDate.getFullYear() - 1);
-      } else {
-        startDate.setMonth(startDate.getMonth() - 1);
-      }
-
 
       // For each marketplace, get order data
       const marketplaceData: MarketplaceOrderData[] = [];
@@ -130,14 +93,17 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       // Since we don't have a dedicated API for this, we'll use getLastMonthOrders
       const monthlyData = await orderService.getLastMonthOrders();
       
-      // Get marketplace statistics
-      let marketplaceStats;
-      if (isFullYear) {
-        marketplaceStats = await orderService.getMarketplaceOrderStatistics(false);
-      } else {
-        const [month, year] = selectedValue.split('-').map(Number);
-        marketplaceStats = await orderService.getMarketplaceOrderStatisticsByMonth(month, year);
-      }
+      // Convert dates to ISO string format for API
+      const startDate = currentRange.startDate.toISOString().split('T')[0];
+      const endDate = currentRange.endDate.toISOString().split('T')[0];
+      
+      // Get marketplace statistics with date range and order type filtering
+      const marketplaceStats = await orderService.getMarketplaceOrderStatistics(
+        false, // currentMonth - not used when we provide date range
+        startDate,
+        endDate,
+        currentOrderType
+      );
       
       // Create a dataset for each marketplace
       for (const marketplace of userMarketplaces) {
@@ -167,11 +133,6 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
       setError(err.message || 'Failed to load marketplace order data');
       setLoading(false);
     }
-  };
-
-  const handleMonthChange = (value: string, fullYear: boolean) => {
-    setSelectedValue(value);
-    setIsFullYear(fullYear);
   };
 
   // Format date for display
@@ -363,13 +324,15 @@ const UserMarketplaceLineChart: React.FC<UserMarketplaceLineChartProps> = ({ use
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          Marketplace Order Amounts
+          Marketplace Order Amounts ({currentRange.label})
         </Typography>
-        <MonthYearSelector
-          selectedValue={selectedValue}
-          options={monthOptions}
-          onChange={handleMonthChange}
-        />
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem' }}
+        >
+          {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
+        </Typography>
       </Box>
 
       {error && (

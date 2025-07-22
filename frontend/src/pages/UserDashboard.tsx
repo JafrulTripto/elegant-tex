@@ -32,6 +32,10 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import GlobalTimelineSelector from '../components/common/GlobalTimelineSelector';
+import GlobalOrderTypeToggle from '../components/common/GlobalOrderTypeToggle';
+import { TimelineProvider } from '../contexts/TimelineContext';
+import { OrderTypeProvider } from '../contexts/OrderTypeContext';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
 import { Order } from '../types/order';
@@ -157,45 +161,69 @@ const UserDashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <Box 
-        display="flex" 
-        justifyContent="space-between" 
-        alignItems="center" 
-        mb={2} // Reduced from mb={3}
-        pb={1}
-        sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}
-      >
-        <Typography 
-          variant="h5" // Changed from h4 for more compact look
-          sx={{ fontWeight: 500 }}
+    <TimelineProvider>
+      <OrderTypeProvider>
+        <Box sx={{ flexGrow: 1 }}>
+        <Box 
+          display="flex" 
+          justifyContent="space-between" 
+          alignItems="center" 
+          mb={2}
+          pb={1}
+          sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}
         >
-          My Dashboard
-        </Typography>
-        <Box>
-          <Tooltip title="Refresh Data">
-            <IconButton 
-              onClick={handleRefresh} 
-              color="primary"
-              size="small" // Smaller button
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {(user?.permissions?.includes('ORDER_CREATE') || user?.roles.includes('ROLE_ADMIN')) && (
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleCreateOrder}
-              sx={{ ml: 1, py: 0.5, px: 1.5, fontSize: '0.85rem' }} // More compact button
-              size="small"
-            >
-              New Order
-            </Button>
-          )}
+          <Typography 
+            variant="h5"
+            sx={{ fontWeight: 500 }}
+          >
+            My Dashboard
+          </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Tooltip title="Refresh Data">
+              <IconButton 
+                onClick={handleRefresh} 
+                color="primary"
+                size="small"
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            {(user?.permissions?.includes('ORDER_CREATE') || user?.roles.includes('ROLE_ADMIN')) && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleCreateOrder}
+                sx={{ py: 0.5, px: 1.5, fontSize: '0.85rem' }}
+                size="small"
+              >
+                New Order
+              </Button>
+            )}
+          </Box>
         </Box>
-      </Box>
+
+        {/* Global Controls */}
+        <Box 
+          display="flex" 
+          justifyContent="space-between" 
+          alignItems="center" 
+          mb={2}
+          p={2}
+          sx={{ 
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+            borderRadius: 1,
+            border: `1px solid ${theme.palette.divider}`
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+              Global Filters:
+            </Typography>
+            <GlobalOrderTypeToggle />
+          </Box>
+          <GlobalTimelineSelector />
+        </Box>
       
       {error && (
         <Alert 
@@ -523,7 +551,9 @@ const UserDashboard: React.FC = () => {
           </Grid>
         </Grid>
       )}
-    </Box>
+        </Box>
+      </OrderTypeProvider>
+    </TimelineProvider>
   );
 };
 

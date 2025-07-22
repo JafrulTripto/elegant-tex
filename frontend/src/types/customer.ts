@@ -4,12 +4,11 @@ export interface Customer {
   id: number;
   name: string;
   phone: string;
-  address: string;
   alternativePhone?: string;
   facebookId?: string;
   createdAt: string;
   updatedAt: string;
-  // Geographical address fields (optional for backward compatibility)
+  // Geographical address fields
   division?: Division;
   district?: District;
   upazila?: Upazila;
@@ -17,21 +16,28 @@ export interface Customer {
   // Individual address components for display
   addressLine?: string;
   postalCode?: string;
-  landmark?: string;
 }
 
 export interface CustomerRequest {
   name: string;
   phone: string;
-  address: string;
+  divisionId: number;
+  districtId: number;
+  upazilaId: number;
+  addressLine: string;
+  postalCode?: string;
   alternativePhone?: string;
   facebookId?: string;
-  // Geographical address fields for new address system
-  divisionId?: number | null;
-  districtId?: number | null;
-  upazilaId?: number | null;
-  addressLine?: string;
-  postalCode?: string;
-  landmark?: string;
-  useGeographicalAddress?: boolean;
 }
+
+export type CustomerResponse = {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+  alternativePhone: string;
+  facebookId: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+};
+
