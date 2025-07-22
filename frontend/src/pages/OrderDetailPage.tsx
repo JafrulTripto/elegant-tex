@@ -741,14 +741,15 @@ const OrderDetailPage: React.FC = () => {
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 8 }}>
-                      <Typography variant="body1">
+                      <Typography variant="body2">
                         <a 
                           href={order.marketplace.pageUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           style={{ 
                             color: theme.palette.primary.main,
-                            textDecoration: 'none'
+                            textDecoration: 'none',
+                            wordBreak: 'break-all'
                           }}
                         >
                           {order.marketplace.pageUrl}

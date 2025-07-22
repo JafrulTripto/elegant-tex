@@ -20,6 +20,7 @@ import { Bar } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import TakaSymble from '../common/TakaSymble';
 
 // Register Chart.js components
 ChartJS.register(
@@ -172,7 +173,7 @@ const MarketplaceComparisonChart: React.FC = () => {
           },
           padding: 5, // Reduced padding
           callback: function(value: any) {
-            return '$' + value;
+            return 'BDT ' + value;
           }
         }
       }
