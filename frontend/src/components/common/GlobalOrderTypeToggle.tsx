@@ -26,15 +26,6 @@ const GlobalOrderTypeToggle: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {!isMobile && (
-        <Typography 
-          variant="body2" 
-          color="text.secondary"
-          sx={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-        >
-          Order Type:
-        </Typography>
-      )}
       <ToggleButtonGroup
         value={currentOrderType}
         exclusive
@@ -62,6 +53,18 @@ const GlobalOrderTypeToggle: React.FC = () => {
         }}
       >
         <ToggleButton
+          value="all"
+          aria-label="All orders"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5
+          }}
+        >
+          <AllIcon sx={{ fontSize: '0.9rem' }} />
+          All
+        </ToggleButton>
+        <ToggleButton
           value="marketplace"
           aria-label="Marketplace orders"
           sx={{
@@ -84,18 +87,6 @@ const GlobalOrderTypeToggle: React.FC = () => {
         >
           <MerchantIcon sx={{ fontSize: '0.9rem' }} />
           Merchant
-        </ToggleButton>
-        <ToggleButton
-          value="all"
-          aria-label="All orders"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5
-          }}
-        >
-          <AllIcon sx={{ fontSize: '0.9rem' }} />
-          All
         </ToggleButton>
       </ToggleButtonGroup>
     </Box>
