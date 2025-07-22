@@ -18,7 +18,7 @@ import {
   Delete as DeleteIcon,
   Phone as PhoneIcon
 } from '@mui/icons-material';
-import { Customer } from '../../types/customer';
+import { Customer, CustomerRequest } from '../../types/customer';
 import { SortableTableHead, AddressDisplay } from '../common';
 import type { Column } from '../common';
 
@@ -52,7 +52,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
     { id: 'facebookId', label: 'Facebook ID', sortable: false },
     { id: 'actions', label: 'Actions', sortable: false, align: 'right' }
   ];
-
   return (
     <TableContainer 
       component={Paper} 

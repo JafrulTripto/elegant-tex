@@ -53,8 +53,8 @@ CREATE TABLE addresses (
 );
 
 -- Add address_id to customers table
-ALTER TABLE customers 
-ADD address_id BIGINT;
+-- ALTER TABLE customers 
+-- ADD address_id BIGINT;
 
 -- Remove legacy address column from customers table
 ALTER TABLE customers 
@@ -70,6 +70,6 @@ CREATE INDEX idx_upazilas_district_id ON upazilas(district_id);
 CREATE INDEX idx_addresses_division_id ON addresses(division_id);
 CREATE INDEX idx_addresses_district_id ON addresses(district_id);
 CREATE INDEX idx_addresses_upazila_id ON addresses(upazila_id);
-CREATE INDEX idx_customers_address_id ON customers(address_id);
+-- CREATE INDEX idx_customers_address_id ON customers(address_id);
 
 -- Insert sample Bangladesh geographical data

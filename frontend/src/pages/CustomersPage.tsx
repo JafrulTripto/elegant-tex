@@ -152,11 +152,11 @@ const CustomersPage: React.FC = () => {
     setFormData({
       name: customer.name,
       phone: customer.phone,
-      divisionId: customer.division?.id || 0,
-      districtId: customer.district?.id || 0,
-      upazilaId: customer.upazila?.id || 0,
-      addressLine: customer.addressLine || '',
-      postalCode: customer.postalCode || '',
+      divisionId: customer.address?.divisionId || 0,
+      districtId: customer.address?.districtId || 0,
+      upazilaId: customer.address?.upazilaId || 0,
+      addressLine: customer.address?.addressLine || '',
+      postalCode: customer.address?.postalCode || '',
       alternativePhone: customer.alternativePhone || '',
       facebookId: customer.facebookId || ''
     });
@@ -189,16 +189,15 @@ const CustomersPage: React.FC = () => {
     setSubmitting(true);
     setFormError(null);
     
-    try {
-      if (selectedCustomer) {
-        // Update existing customer
-        await customerService.updateCustomer(selectedCustomer.id, formData);
+   try {
+      const isUpdate = selectedCustomer?.id !== undefined;
+
+      if (isUpdate) {
+        await customerService.updateCustomer(selectedCustomer.id!, formData);
       } else {
-        // Create new customer
         await customerService.createCustomer(formData);
       }
-      
-      // Close dialog and reload customers
+
       setDialogOpen(false);
       loadCustomers();
     } catch (err) {

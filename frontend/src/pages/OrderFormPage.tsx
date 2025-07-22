@@ -314,7 +314,6 @@ const OrderFormPage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (values: OrderFormData, { setSubmitting }: FormikHelpers<OrderFormData>) => {
     setError(null);
-    console.log('Submitting order form with values:', values);
     try {
       // Submit form with the current values
       if (isEditMode && id) {
