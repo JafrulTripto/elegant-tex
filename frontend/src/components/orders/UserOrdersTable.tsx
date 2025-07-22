@@ -18,6 +18,7 @@ import {
 import orderService from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import TakaSymble from '../common/TakaSymble';
 
 interface UserOrderStatistics {
   userId: number;
@@ -268,7 +269,7 @@ const UserOrdersTable: React.FC = () => {
                       <TableCell>{user.email}</TableCell>
                     )}
                     <TableCell align="right">{user.orderCount}</TableCell>
-                    <TableCell align="right">${user.totalAmount.toFixed(2)}</TableCell>
+                    <TableCell align="right"><TakaSymble/> {user.totalAmount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
