@@ -4,8 +4,7 @@ import {
   ToggleButton,
   useTheme,
   useMediaQuery,
-  Box,
-  Typography
+  Box
 } from '@mui/material';
 import { Store as MarketplaceIcon, Business as MerchantIcon, ViewList as AllIcon } from '@mui/icons-material';
 import { useOrderType, OrderType } from '../../contexts/OrderTypeContext';
