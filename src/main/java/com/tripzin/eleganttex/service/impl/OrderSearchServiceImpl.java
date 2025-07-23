@@ -66,7 +66,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             OrderStatus status = null;
             LocalDate startDate = null;
             LocalDate endDate = null;
-            return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
+            return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, null, null, null, pageable)
                     .map(orderMapper::mapOrderToResponse);
         }
     }
@@ -88,7 +88,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             LocalDate startDate = null;
             LocalDate endDate = null;
             Long marketplaceId = null;
-            return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
+            return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, null, null, null, pageable)
                     .map(orderMapper::mapOrderToResponse);
         }
     }
@@ -108,7 +108,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             // Use the repository method that filters by both delivery date range and created by user ID
             OrderStatus status = null;
             Long marketplaceId = null;
-            return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
+            return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, null, null, null, pageable)
                     .map(orderMapper::mapOrderToResponse);
         }
     }
@@ -133,35 +133,48 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             String statusStr,
             LocalDate startDate,
             LocalDate endDate,
+            LocalDate createdStartDate,
+            LocalDate createdEndDate,
             Long marketplaceId,
+            Boolean isDirectMerchant,
             String customerName,
+            String orderNumber,
+            Double minAmount,
+            Double maxAmount,
             Long currentUserId,
             boolean hasReadAllPermission,
             Pageable pageable) {
-        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, marketplaceId={}, customerName={}, userId={}, hasReadAllPermission={}",
-                orderTypeStr, statusStr, startDate, endDate, marketplaceId, customerName, currentUserId, hasReadAllPermission);
+        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, createdStartDate={}, createdEndDate={}, marketplaceId={}, isDirectMerchant={}, customerName={}, orderNumber={}, minAmount={}, maxAmount={}, userId={}, hasReadAllPermission={}",
+                orderTypeStr, statusStr, startDate, endDate, createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, minAmount, maxAmount, currentUserId, hasReadAllPermission);
         
         OrderStatus status = statusStr != null ? OrderStatus.fromString(statusStr) : null;
         OrderType orderType = orderTypeStr != null ? OrderType.valueOf(orderTypeStr) : null;
         
+        // Handle direct merchant filtering
+        if (isDirectMerchant != null && isDirectMerchant) {
+            marketplaceId = null; // Ensure we're looking for orders without marketplace
+        }
+        
         if (hasReadAllPermission) {
             if (orderType != null) {
                 // If order type is provided, use the repository method that filters by order type
-                return orderRepository.findByOrderTypeAndFilters(orderType, status, startDate, endDate, marketplaceId, customerName, pageable)
+                return orderRepository.findByOrderTypeAndFilters(orderType, status, startDate, endDate, marketplaceId, customerName, orderNumber, minAmount, maxAmount, pageable)
                         .map(orderMapper::mapOrderToResponse);
             } else {
-                // Otherwise, use the existing repository method
-                return orderRepository.findByFilters(status, startDate, endDate, marketplaceId, customerName, pageable)
+                // Use delivery date filtering if provided, otherwise use created date filtering
+                LocalDate filterStartDate = startDate != null ? startDate : createdStartDate;
+                LocalDate filterEndDate = endDate != null ? endDate : createdEndDate;
+                
+                return orderRepository.findByFilters(status, filterStartDate, filterEndDate, marketplaceId, customerName, orderNumber, minAmount, maxAmount, pageable)
                         .map(orderMapper::mapOrderToResponse);
             }
         } else {
-            if (customerName != null && !customerName.isEmpty()) {
-                return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
-                        .map(orderMapper::mapOrderToResponse);
-            } else {
-                return orderRepository.findByFiltersWithCreatedBy(status, startDate, endDate, marketplaceId, currentUserId, pageable)
-                        .map(orderMapper::mapOrderToResponse);
-            }
+            // For users without read all permission, always filter by their created orders
+            LocalDate filterStartDate = startDate != null ? startDate : createdStartDate;
+            LocalDate filterEndDate = endDate != null ? endDate : createdEndDate;
+            
+            return orderRepository.findByFiltersWithCreatedBy(status, filterStartDate, filterEndDate, marketplaceId, currentUserId, orderNumber, minAmount, maxAmount, pageable)
+                    .map(orderMapper::mapOrderToResponse);
         }
     }
 

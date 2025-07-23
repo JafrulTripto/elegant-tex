@@ -38,26 +38,35 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Page<Order> findByCreatedById(Long userId, Pageable pageable);
     
     @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
-           "(:status IS NULL OR o.status = :status) AND " +
-           "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
-           "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +
-           "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
-           "(:customerName IS NULL OR LOWER(CAST(c.name as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%')))")
+           "(:#{#status == null} = true OR o.status = :status) AND " +
+           "(:#{#startDate == null} = true OR o.deliveryDate >= :startDate) AND " +
+           "(:#{#endDate == null} = true OR o.deliveryDate <= :endDate) AND " +
+           "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
+           "(:#{#customerName == null or #customerName == ''} = true OR LOWER(c.name) LIKE LOWER(CONCAT('%', :customerName, '%'))) AND " +
+           "(:#{#orderNumber == null or #orderNumber == ''} = true OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :orderNumber, '%'))) AND " +
+           "(:#{#minAmount == null} = true OR o.totalAmount >= :minAmount) AND " +
+           "(:#{#maxAmount == null} = true OR o.totalAmount <= :maxAmount)")
     Page<Order> findByFilters(
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("marketplaceId") Long marketplaceId,
             @Param("customerName") String customerName,
+            @Param("orderNumber") String orderNumber,
+            @Param("minAmount") Double minAmount,
+            @Param("maxAmount") Double maxAmount,
             Pageable pageable);
             
     @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
            "o.orderType = :orderType AND " +
-           "(:status IS NULL OR o.status = :status) AND " +
-           "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
-           "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +
-           "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
-           "(:customerName IS NULL OR LOWER(CAST(c.name as string)) LIKE LOWER(CONCAT('%', CAST(:customerName AS string), '%')))")
+           "(:#{#status == null} = true OR o.status = :status) AND " +
+           "(:#{#startDate == null} = true OR o.deliveryDate >= :startDate) AND " +
+           "(:#{#endDate == null} = true OR o.deliveryDate <= :endDate) AND " +
+           "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
+           "(:#{#customerName == null or #customerName == ''} = true OR LOWER(c.name) LIKE LOWER(CONCAT('%', :customerName, '%'))) AND " +
+           "(:#{#orderNumber == null or #orderNumber == ''} = true OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :orderNumber, '%'))) AND " +
+           "(:#{#minAmount == null} = true OR o.totalAmount >= :minAmount) AND " +
+           "(:#{#maxAmount == null} = true OR o.totalAmount <= :maxAmount)")
     Page<Order> findByOrderTypeAndFilters(
             @Param("orderType") OrderType orderType,
             @Param("status") OrderStatus status,
@@ -65,20 +74,43 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             @Param("endDate") LocalDate endDate,
             @Param("marketplaceId") Long marketplaceId,
             @Param("customerName") String customerName,
+            @Param("orderNumber") String orderNumber,
+            @Param("minAmount") Double minAmount,
+            @Param("maxAmount") Double maxAmount,
             Pageable pageable);
             
     @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
-           "(:status IS NULL OR o.status = :status) AND " +
-           "(:startDate IS NULL OR o.deliveryDate >= :startDate) AND " +
-           "(:endDate IS NULL OR o.deliveryDate <= :endDate) AND " +
-           "(:marketplaceId IS NULL OR o.marketplace.id = :marketplaceId) AND " +
-           "(:createdById IS NULL OR o.createdBy.id = :createdById)")
+           "(:#{#status == null} = true OR o.status = :status) AND " +
+           "(:#{#startDate == null} = true OR o.deliveryDate >= :startDate) AND " +
+           "(:#{#endDate == null} = true OR o.deliveryDate <= :endDate) AND " +
+           "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
+           "(:#{#createdById == null} = true OR o.createdBy.id = :createdById) AND " +
+           "(:#{#orderNumber == null or #orderNumber == ''} = true OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :orderNumber, '%'))) AND " +
+           "(:#{#minAmount == null} = true OR o.totalAmount >= :minAmount) AND " +
+           "(:#{#maxAmount == null} = true OR o.totalAmount <= :maxAmount)")
     Page<Order> findByFiltersWithCreatedBy(
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("marketplaceId") Long marketplaceId,
             @Param("createdById") Long createdById,
+            @Param("orderNumber") String orderNumber,
+            @Param("minAmount") Double minAmount,
+            @Param("maxAmount") Double maxAmount,
+            Pageable pageable);
+            
+    @Query("SELECT o FROM Order o JOIN o.customer c WHERE " +
+           "(:#{#status == null} = true OR o.status = :status) AND " +
+           "(:#{#startDate == null} = true OR CAST(o.createdAt AS LocalDate) >= :startDate) AND " +
+           "(:#{#endDate == null} = true OR CAST(o.createdAt AS LocalDate) <= :endDate) AND " +
+           "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
+           "(:#{#customerName == null or #customerName == ''} = true OR LOWER(c.name) LIKE LOWER(CONCAT('%', :customerName, '%')))")
+    Page<Order> findByFiltersWithCreatedAt(
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("marketplaceId") Long marketplaceId,
+            @Param("customerName") String customerName,
             Pageable pageable);
             
     /**

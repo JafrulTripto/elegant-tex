@@ -146,13 +146,20 @@ public class OrderServiceImpl implements OrderService {
             String status,
             LocalDate startDate,
             LocalDate endDate,
+            LocalDate createdStartDate,
+            LocalDate createdEndDate,
             Long marketplaceId,
+            Boolean isDirectMerchant,
             String customerName,
+            String orderNumber,
+            Double minAmount,
+            Double maxAmount,
             Pageable pageable) {
         Long currentUserId = getCurrentUserId(null);
         boolean hasReadAllPermission = hasReadAllOrdersPermission();
         
-        return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, marketplaceId, customerName, 
+        return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, createdStartDate, 
+                createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, minAmount, maxAmount, 
                 currentUserId, hasReadAllPermission, pageable);
     }
 
