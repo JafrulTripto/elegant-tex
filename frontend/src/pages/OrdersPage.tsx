@@ -10,13 +10,12 @@ import {
   Snackbar,
   Alert,
   useMediaQuery,
-  useTheme,
-  ToggleButtonGroup,
-  ToggleButton
+  useTheme
 } from '@mui/material';
 import OrderExcelExportDialog from '../components/orders/OrderExcelExportDialog';
 import StatusChip from '../components/common/StatusChip';
-import { spacing, layoutUtils } from '../theme/styleUtils';
+import TakaSymble from '../components/common/TakaSymble';
+import { spacing } from '../theme/styleUtils';
 import Grid from '@mui/material/Grid2';
 import { 
   DataGrid, 
@@ -24,6 +23,8 @@ import {
   GridRenderCellParams,
   GridSortModel,
   GridPaginationModel,
+  GridFilterModel,
+  GridFilterItem
 } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
@@ -37,13 +38,10 @@ import OrderDeleteDialog from '../components/orders/OrderDeleteDialog';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'date-fns';
 import orderService from '../services/order.service';
-import { Order, OrderStatus, OrderFilterParams} from '../types/order';
+import { Order, OrderStatus, OrderFilterParams, STATUS_DISPLAY_OPTIONS} from '../types/order';
 import { OrderType } from '../types/orderType';
 import { useAuth } from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
-
-// Constant for the "All" filter option
-const ALL_FILTER = 'ALL';
 
 const OrdersPage: React.FC = () => {
   const theme = useTheme();
@@ -68,10 +66,168 @@ const OrdersPage: React.FC = () => {
   ]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [filters, setFilters] = useState<OrderFilterParams>({ orderType: undefined });
+  const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
   const [error, setError] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
+
+  // Convert DataGrid filter model to backend API parameters
+  const convertFiltersToApiParams = (filterModel: GridFilterModel): OrderFilterParams => {
+    const params: OrderFilterParams = {};
+    
+    // Collect all marketplace IDs for better filtering
+    const marketplaceMap = new Map<string, number>();
+    orders.forEach(order => {
+      if (order.marketplace) {
+        marketplaceMap.set(order.marketplace.name.toLowerCase(), order.marketplace.id);
+      }
+    });
+    
+    filterModel.items.forEach((item: GridFilterItem) => {
+      // Skip empty values but allow 0 for numeric fields
+      if (item.value === null || item.value === undefined || item.value === '') return;
+      
+      // Debug logging
+      console.log('Filter item:', item.field, item.operator, item.value);
+      
+      switch (item.field) {
+        case 'status':
+          if (item.value && typeof item.value === 'string') {
+            params.status = item.value;
+          }
+          break;
+          
+        case 'orderNumber':
+          if (item.value && typeof item.value === 'string') {
+            params.orderNumber = item.value.toString();
+          }
+          break;
+          
+        case 'marketplace':
+          if (item.value && typeof item.value === 'string') {
+            const searchValue = item.value.toLowerCase();
+            
+            // Check for direct merchant filtering
+            if (searchValue.includes('direct') || searchValue.includes('merchant')) {
+              params.isDirectMerchant = true;
+            } else {
+              // Find marketplace ID by name (partial match)
+              for (const [name, id] of marketplaceMap.entries()) {
+                if (name.includes(searchValue) || searchValue.includes(name)) {
+                  params.marketplaceId = id;
+                  break;
+                }
+              }
+            }
+          }
+          break;
+          
+        case 'customer':
+          if (item.value && typeof item.value === 'string') {
+            params.customerName = item.value;
+          }
+          break;
+          
+        case 'totalAmount':
+          if (item.value !== null && item.value !== undefined) {
+            const amount = Number(item.value);
+            if (!isNaN(amount)) {
+              // Handle various DataGrid operators
+              switch (item.operator) {
+                case '>':
+                case 'greaterThan':
+                  params.minAmount = amount + 0.01; // Exclude the exact value
+                  break;
+                case '>=':
+                case 'greaterThanOrEqual':
+                  params.minAmount = amount;
+                  break;
+                case '<':
+                case 'lessThan':
+                  params.maxAmount = amount - 0.01; // Exclude the exact value
+                  break;
+                case '<=':
+                case 'lessThanOrEqual':
+                  params.maxAmount = amount;
+                  break;
+                case '=':
+                case 'equals':
+                  params.minAmount = amount;
+                  params.maxAmount = amount;
+                  break;
+                case '!=':
+                case 'not':
+                  // For "not equals", we can't easily handle this with min/max
+                  // Skip this filter for now
+                  console.warn('Not equals operator not supported for amount filtering');
+                  break;
+              }
+            }
+          }
+          break;
+          
+        case 'deliveryDate':
+          if (item.value) {
+            try {
+              const date = new Date(item.value);
+              const dateStr = date.toISOString().split('T')[0];
+              
+              switch (item.operator) {
+                case 'onOrAfter':
+                case 'after':
+                case '>=':
+                  params.startDate = dateStr;
+                  break;
+                case 'onOrBefore':
+                case 'before':
+                case '<=':
+                  params.endDate = dateStr;
+                  break;
+                case 'is':
+                case '=':
+                  params.startDate = dateStr;
+                  params.endDate = dateStr;
+                  break;
+              }
+            } catch (e) {
+              console.error('Invalid delivery date filter value:', item.value);
+            }
+          }
+          break;
+          
+        case 'createdAt':
+          if (item.value) {
+            try {
+              const date = new Date(item.value);
+              const dateStr = date.toISOString().split('T')[0];
+              
+              switch (item.operator) {
+                case 'onOrAfter':
+                case 'after':
+                case '>=':
+                  params.createdStartDate = dateStr;
+                  break;
+                case 'onOrBefore':
+                case 'before':
+                case '<=':
+                  params.createdEndDate = dateStr;
+                  break;
+                case 'is':
+                case '=':
+                  params.createdStartDate = dateStr;
+                  params.createdEndDate = dateStr;
+                  break;
+              }
+            } catch (e) {
+              console.error('Invalid created date filter value:', item.value);
+            }
+          }
+          break;
+      }
+    });
+    
+    return params;
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -80,8 +236,10 @@ const OrdersPage: React.FC = () => {
         ? `${sortModel[0].field},${sortModel[0].sort}` 
         : 'createdAt,desc';
       
+      const filterParams = convertFiltersToApiParams(filterModel);
+      
       const response = await orderService.getOrdersByFilters({
-        ...filters,
+        ...filterParams,
         page: paginationModel?.page || 0,
         size: paginationModel?.pageSize || 10,
         sort
@@ -113,7 +271,7 @@ const OrdersPage: React.FC = () => {
     paginationModel?.page, 
     paginationModel?.pageSize, 
     sortModel, 
-    filters
+    filterModel
   ]);
 
   // Update pagination model when screen size changes
@@ -156,18 +314,8 @@ const OrdersPage: React.FC = () => {
     setError(null);
   };
 
-  const handleOrderTypeChange = (
-    _: React.MouseEvent<HTMLElement>,
-    newOrderType: OrderType | string | null
-  ) => {
-    // If ALL_FILTER is selected or null, set orderType to undefined (show all)
-    const orderTypeFilter = newOrderType === ALL_FILTER ? undefined : newOrderType as OrderType | undefined;
-    
-    if (filters) {
-      setFilters({ ...filters, orderType: orderTypeFilter });
-    } else {
-      setFilters({ orderType: orderTypeFilter });
-    }
+  const handleFilterModelChange = (model: GridFilterModel) => {
+    setFilterModel(model);
   };
 
   const handleExportExcel = () => {
@@ -222,18 +370,20 @@ const OrdersPage: React.FC = () => {
         field: 'orderNumber', 
         headerName: 'Order #', 
         flex: 0.8,
-        minWidth: 100
+        minWidth: 100,
+        filterable: true
       },
       { 
         field: 'marketplace', 
         headerName: 'Marketplace', 
         flex: 1,
         minWidth: 120,
-        valueGetter: (params: any) => {
-          if (!params) {
+        filterable: true,
+        valueGetter: (_, row) => {
+          if (!row.marketplace) {
             return 'Direct Merchant';
           }
-          return params.name;
+          return row.marketplace.name;
         }
       },
       { 
@@ -241,12 +391,33 @@ const OrdersPage: React.FC = () => {
         headerName: 'Customer', 
         flex: 1,
         minWidth: 120,
-        valueGetter: (params: any) => {
-          // Check if params and params.row exist first
-          if (!params) {
+        filterable: true,
+        valueGetter: (_, row) => {
+          if (!row.customer) {
             return '';
           }
-          return params.name;
+          return row.customer.name;
+        }
+      },
+      { 
+        field: 'totalAmount', 
+        headerName: 'Amount', 
+        flex: 0.9,
+        minWidth: 100,
+        filterable: true,
+        type: 'number',
+        renderCell: (params: GridRenderCellParams) => {
+          if (!params || params.value === undefined || params.value === null) {
+            return null;
+          }
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <TakaSymble />
+              <Typography variant="body2" sx={{ ml: 0.5 }}>
+                {Number(params.value).toLocaleString()}
+              </Typography>
+            </Box>
+          );
         }
       },
       { 
@@ -254,11 +425,17 @@ const OrdersPage: React.FC = () => {
         headerName: 'Delivery', 
         flex: 1,
         minWidth: 110,
-        valueFormatter: (params: any) => {          
-          if (!params) return '';
+        filterable: true,
+        type: 'date',
+        valueGetter: (value) => {
+          if (!value) return null;
+          return new Date(value);
+        },
+        valueFormatter: (value) => {          
+          if (!value) return '';
           try {
             // Use shorter date format on medium screens
-            return format(new Date(params), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
+            return format(new Date(value), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
           } catch (e) {
             return 'Invalid Date';
           }
@@ -269,6 +446,9 @@ const OrdersPage: React.FC = () => {
         headerName: 'Status', 
         flex: 0.8,
         minWidth: 100,
+        filterable: true,
+        type: 'singleSelect',
+        valueOptions: STATUS_DISPLAY_OPTIONS,
         renderCell: (params: GridRenderCellParams) => {
           if (!params || params.value === undefined || params.value === null) {
             return null;
@@ -288,11 +468,17 @@ const OrdersPage: React.FC = () => {
         headerName: 'Created', 
         flex: 1,
         minWidth: 110,
-        valueFormatter: (params: any) => {
-          if (!params) return '';
+        filterable: true,
+        type: 'date',
+        valueGetter: (value) => {
+          if (!value) return null;
+          return new Date(value);
+        },
+        valueFormatter: (value) => {
+          if (!value) return '';
           try {
             // Use shorter date format on medium screens
-            return format(new Date(params), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
+            return format(new Date(value), isMdScreen ? 'MM/dd/yy' : 'MMM dd, yyyy');
           } catch (e) {
             return 'Invalid Date';
           }
@@ -304,6 +490,7 @@ const OrdersPage: React.FC = () => {
         flex: 0.7,
         minWidth: 100,
         sortable: false,
+        filterable: false,
         renderCell: (params: GridRenderCellParams) => {
           // Check if params and params.row exist first
           if (!params || !params.row) {
@@ -352,13 +539,13 @@ const OrdersPage: React.FC = () => {
     // Filter columns based on screen size
     if (isXsScreen) {
       return baseColumns.filter(column => 
-        ['orderNumber', 'status', 'actions'].includes(column.field)
+        ['orderNumber', 'totalAmount', 'status', 'actions'].includes(column.field)
       );
     }
     
     if (isMdScreen) {
       return baseColumns.filter(column => 
-        ['orderNumber', 'marketplace', 'customer', 'status', 'actions'].includes(column.field)
+        ['orderNumber', 'marketplace', 'customer', 'totalAmount', 'status', 'actions'].includes(column.field)
       );
     }
     
@@ -430,40 +617,11 @@ const OrdersPage: React.FC = () => {
           <Grid size={{ xs: 12 }}>
             <Box 
               sx={{
-                ...layoutUtils.spaceBetweenFlex,
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'flex-start', sm: 'center' },
-                mb: theme.customSpacing.section,
-                gap: 1
+                display: 'flex',
+                justifyContent: 'flex-end',
+                mb: 2
               }}
             >
-              <Box>
-                {/* Order type filter */}
-                <ToggleButtonGroup
-                  value={filters.orderType || ALL_FILTER}
-                  exclusive
-                  onChange={handleOrderTypeChange}
-                  aria-label="order type filter"
-                  size={isXsScreen ? "small" : "medium"}
-                  sx={{ 
-                    mb: { xs: 1, sm: 0 },
-                    '.MuiToggleButton-root': {
-                      textTransform: 'none',
-                      px: { xs: 1.5, sm: 2 }
-                    }
-                  }}
-                >
-                  <ToggleButton value={ALL_FILTER}>
-                    All
-                  </ToggleButton>
-                  <ToggleButton value={OrderType.MARKETPLACE}>
-                    Marketplace
-                  </ToggleButton>
-                  <ToggleButton value={OrderType.MERCHANT}>
-                    Merchant
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
               <Button
                 variant="outlined"
                 startIcon={isXsScreen ? null : <FileDownloadIcon />}
@@ -474,7 +632,6 @@ const OrdersPage: React.FC = () => {
               </Button>
             </Box>
           </Grid>
-
 
           {/* Orders DataGrid */}
           <Grid size={{ xs: 12 }}>
@@ -499,6 +656,8 @@ const OrdersPage: React.FC = () => {
                 sortModel={sortModel}
                 onSortModelChange={handleSortModelChange}
                 filterMode="server"
+                filterModel={filterModel}
+                onFilterModelChange={handleFilterModelChange}
                 initialState={{
                   sorting: {
                     sortModel: [{ field: 'createdAt', sort: 'desc' }]

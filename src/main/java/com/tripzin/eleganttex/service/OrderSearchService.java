@@ -63,10 +63,16 @@ public interface OrderSearchService {
      * Get orders by multiple filters
      * @param orderType order type (MARKETPLACE or MERCHANT)
      * @param status order status
-     * @param startDate start date (inclusive)
-     * @param endDate end date (inclusive)
+     * @param startDate delivery start date (inclusive)
+     * @param endDate delivery end date (inclusive)
+     * @param createdStartDate created start date (inclusive)
+     * @param createdEndDate created end date (inclusive)
      * @param marketplaceId marketplace ID
+     * @param isDirectMerchant filter for direct merchant orders
      * @param customerName customer name
+     * @param orderNumber order number
+     * @param minAmount minimum total amount
+     * @param maxAmount maximum total amount
      * @param currentUserId ID of the current user
      * @param hasReadAllPermission whether the user has permission to view all orders
      * @param pageable pagination information
@@ -77,8 +83,14 @@ public interface OrderSearchService {
             String status, 
             LocalDate startDate, 
             LocalDate endDate, 
+            LocalDate createdStartDate,
+            LocalDate createdEndDate,
             Long marketplaceId, 
+            Boolean isDirectMerchant,
             String customerName,
+            String orderNumber,
+            Double minAmount,
+            Double maxAmount,
             Long currentUserId,
             boolean hasReadAllPermission,
             Pageable pageable);

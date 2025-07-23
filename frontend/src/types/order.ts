@@ -106,8 +106,14 @@ export interface OrderFilterParams {
   status?: string;
   startDate?: string;
   endDate?: string;
+  createdStartDate?: string;
+  createdEndDate?: string;
   marketplaceId?: number;
+  isDirectMerchant?: boolean;
   customerName?: string;
+  orderNumber?: string;
+  minAmount?: number;
+  maxAmount?: number;
   createdById?: number;
   page?: number;
   size?: number;
