@@ -118,12 +118,20 @@ public class OrderController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdStartDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdEndDate,
             @RequestParam(required = false) Long marketplaceId,
+            @RequestParam(required = false) Boolean isDirectMerchant,
             @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String orderNumber,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
             @PageableDefault(size = 10) Pageable pageable,
             @AuthenticationPrincipal UserDetails userDetails) {
         // The user ID will be extracted in the service layer from the security context
-        Page<OrderResponse> orders = orderService.getOrdersByFilters(orderType, status, startDate, endDate, marketplaceId, customerName, pageable);
+        Page<OrderResponse> orders = orderService.getOrdersByFilters(orderType, status, startDate, endDate, 
+                createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, 
+                minAmount, maxAmount, pageable);
         return ResponseEntity.ok(orders);
     }
 
