@@ -2,7 +2,6 @@ package com.tripzin.eleganttex.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tripzin.eleganttex.config.MessagingProperties.Facebook;
 import com.tripzin.eleganttex.entity.MessagingAccount;
 import com.tripzin.eleganttex.exception.InvalidTokenException;
 import com.tripzin.eleganttex.exception.MessagingApiException;
@@ -13,9 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
