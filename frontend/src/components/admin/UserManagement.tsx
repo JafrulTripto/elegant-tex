@@ -285,15 +285,21 @@ const UserManagement: React.FC = () => {
       fetchUsers();
       
       setLoading(false);
-      setSuccess('User verified successfully');
+      setSuccess('User account activated successfully');
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to verify user');
+        setError(err.response?.data?.message || 'Failed to activate user account');
       } else {
         setError('An unexpected error occurred');
       }
     }
+  };
+
+  // Handle view user details
+  const handleViewUserDetails = (userId: number) => {
+    // Navigate to user detail page
+    window.location.href = `/admin/users/${userId}`;
   };
 
   // Close snackbar
@@ -410,6 +416,7 @@ const UserManagement: React.FC = () => {
           onEdit={handleOpenEditDialog}
           onDelete={handleDeleteClick}
           onVerify={handleVerifyUser}
+          onViewDetails={handleViewUserDetails}
           sortBy={filterParams.sortBy || 'id'}
           sortDir={(filterParams.sortDir as 'asc' | 'desc') || 'asc'}
           onSort={handleSortChange}
