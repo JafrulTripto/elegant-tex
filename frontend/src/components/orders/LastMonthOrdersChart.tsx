@@ -20,6 +20,8 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import orderService, { MonthlyOrderData } from '../../services/order.service';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -35,23 +37,45 @@ ChartJS.register(
 
 const LastMonthOrdersChart: React.FC = () => {
   const theme = useTheme();
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [orderData, setOrderData] = useState<MonthlyOrderData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchLastMonthOrders();
-  }, []);
+    fetchOrderData();
+  }, [currentRange, currentOrderType]);
 
-  const fetchLastMonthOrders = async () => {
+  const fetchOrderData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await orderService.getLastMonthOrders();
-      setOrderData(data);
+      
+      // Convert dates to ISO string format for API
+      const startDate = currentRange.startDate.toISOString().split('T')[0];
+      const endDate = currentRange.endDate.toISOString().split('T')[0];
+      
+      // Use the enhanced API with date range and order type filtering
+      const data = await orderService.getMonthlyOrderCountAndAmount(
+        undefined, // month
+        undefined, // year
+        false, // currentMonth - not used when we provide date range
+        startDate,
+        endDate,
+        currentOrderType
+      );
+      
+      // Convert to the expected format for this chart
+      const formattedData = data.map(item => ({
+        date: item.date,
+        count: item.count
+      }));
+      
+      setOrderData(formattedData);
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to load last month order data');
+      setError(err.message || 'Failed to load order data');
       setLoading(false);
     }
   };
@@ -213,7 +237,14 @@ const LastMonthOrdersChart: React.FC = () => {
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          Last Month Orders
+          Orders Trend ({currentRange.label})
+        </Typography>
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem' }}
+        >
+          {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
         </Typography>
       </Box>
 

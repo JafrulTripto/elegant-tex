@@ -9,6 +9,7 @@ import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderProduct;
 import com.tripzin.eleganttex.entity.OrderProductImage;
 import com.tripzin.eleganttex.entity.OrderStatusHistory;
+import com.tripzin.eleganttex.mapper.AddressResponseMapper;
 import com.tripzin.eleganttex.repository.OrderProductImageRepository;
 import com.tripzin.eleganttex.repository.OrderStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class OrderMapper {
                 .id(order.getCustomer().getId())
                 .name(order.getCustomer().getName())
                 .phone(order.getCustomer().getPhone())
-                .address(order.getCustomer().getAddress())
+                .address( AddressResponseMapper.mapToAddressResponse(order.getCustomer().getAddress()))
                 .alternativePhone(order.getCustomer().getAlternativePhone())
                 .facebookId(order.getCustomer().getFacebookId())
                 .createdAt(order.getCustomer().getCreatedAt())

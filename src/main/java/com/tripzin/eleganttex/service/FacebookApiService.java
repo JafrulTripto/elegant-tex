@@ -2,6 +2,7 @@ package com.tripzin.eleganttex.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tripzin.eleganttex.config.MessagingProperties.Facebook;
 import com.tripzin.eleganttex.entity.MessagingAccount;
 import com.tripzin.eleganttex.exception.InvalidTokenException;
 import com.tripzin.eleganttex.exception.MessagingApiException;
@@ -13,6 +14,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -263,32 +266,48 @@ public class FacebookApiService {
      */
     public Map<String, Object> getPageInfo(String pageId, String accessToken) {
         try {
+            if (pageId == null || accessToken == null || accessToken.trim().isEmpty()) {
+                throw new IllegalArgumentException("Page ID and access token are required");
+            }
+
             String url = UriComponentsBuilder.newInstance()
                     .scheme("https")
                     .host("graph.facebook.com")
-                    .port(443)
                     .path("/v23.0/" + pageId)
-                    .build()
+                    .queryParam("fields", "name,id,category")
+                    .queryParam("access_token", accessToken)
+                    .build(false)  // This prevents template expansion
                     .toUriString();
-            
+
+            log.debug("Requesting Facebook page info for pageId: {}", pageId);
+
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            
+
             if (response.getStatusCode() == HttpStatus.OK) {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
                 Map<String, Object> pageInfo = new HashMap<>();
-                pageInfo.put("name", jsonNode.get("name").asText());
-                pageInfo.put("id", jsonNode.get("id").asText());
-                pageInfo.put("category", jsonNode.get("category").asText());
-                if (jsonNode.has("picture")) {
+
+                pageInfo.put("name", jsonNode.has("name") ? jsonNode.get("name").asText() : null);
+                pageInfo.put("id", jsonNode.has("id") ? jsonNode.get("id").asText() : null);
+                pageInfo.put("category", jsonNode.has("category") ? jsonNode.get("category").asText() : null);
+
+                if (jsonNode.has("picture") && jsonNode.get("picture").has("data")
+                        && jsonNode.get("picture").get("data").has("url")) {
                     pageInfo.put("picture", jsonNode.get("picture").get("data").get("url").asText());
                 }
+
                 return pageInfo;
             }
-            
+
+        } catch (HttpClientErrorException e) {
+            log.error("Facebook API error for page {}: {} - {}",
+                    pageId, e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
-            log.error("Error fetching Facebook page info: {}", pageId, e);
+            log.error("Error fetching Facebook page info for page: {}", pageId, e);
+            throw new RuntimeException("Failed to fetch Facebook page info", e);
         }
-        
-        return new HashMap<>();
+
+        return null;
     }
 }

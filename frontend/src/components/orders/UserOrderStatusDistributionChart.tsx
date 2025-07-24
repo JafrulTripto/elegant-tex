@@ -17,8 +17,9 @@ import { Doughnut } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { OrderStatusCount, ORDER_STATUS_DISPLAY } from '../../types/order';
 import { getStatusColor } from '../../utils/statusConfig';
-import MonthYearSelector, { MonthSelectorOption } from '../common/MonthYearSelector';
 import { useAuth } from '../../hooks/useAuth';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -31,47 +32,17 @@ const UserOrderStatusDistributionChart: React.FC = () => {
   const theme = useTheme();
   const { authState } = useAuth();
   const { user } = authState;
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // New state for month/year selection
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  
-  // Generate month options
-  const generateMonthOptions = (): MonthSelectorOption[] => {
-    const options: MonthSelectorOption[] = [
-      { value: 'full-year', label: 'Full Year', isFullYear: true }
-    ];
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    // Add options for each month up to the current month
-    for (let i = 0; i <= currentMonth; i++) {
-      options.push({
-        value: `${i}-${currentYear}`,
-        label: `${monthNames[i]} ${currentYear}`,
-        isFullYear: false
-      });
-    }
-    
-    return options;
-  };
-  
-  const monthOptions = generateMonthOptions();
-  const [selectedValue, setSelectedValue] = useState<string>(`${currentMonth}-${currentYear}`);
-  const [isFullYear, setIsFullYear] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
       fetchUserOrderStatusCounts();
     }
-  }, [selectedValue, isFullYear, user]);
+  }, [user, currentRange, currentOrderType]);
 
   const fetchUserOrderStatusCounts = async () => {
     if (!user) return;
@@ -83,20 +54,13 @@ const UserOrderStatusDistributionChart: React.FC = () => {
       let data;
       
       try {
-        // First try to use the dedicated user-specific endpoints
-        if (isFullYear) {
-          data = await orderService.getUserOrderStatusCounts(user.id, false);
-        } else {
-          const [month, year] = selectedValue.split('-').map(Number);
-          data = await orderService.getUserOrderStatusCountsByMonth(user.id, month, year);
-        }
+        data = await orderService.getUserOrderStatusCounts(user.id, false);
       } catch (apiError) {
-        // If the dedicated endpoints fail (e.g., not implemented on backend yet),
-        // fall back to client-side filtering of the general data
+        // If the dedicated endpoints fail, fall back to client-side filtering
         console.warn('User-specific order status API not available, falling back to client-side filtering');
         
         // Get all orders to filter by user
-        const ordersResponse = await orderService.getAllOrders(0, 1000); // Get a large batch of orders
+        const ordersResponse = await orderService.getAllOrders(0, 1000);
         const userOrders = ordersResponse.content.filter(order => 
           order.createdBy && order.createdBy.id === user.id
         );
@@ -121,11 +85,6 @@ const UserOrderStatusDistributionChart: React.FC = () => {
       setError(err.message || 'Failed to load order status counts');
       setLoading(false);
     }
-  };
-
-  const handleMonthChange = (value: string, fullYear: boolean) => {
-    setSelectedValue(value);
-    setIsFullYear(fullYear);
   };
 
   // Calculate total orders
@@ -222,13 +181,15 @@ const UserOrderStatusDistributionChart: React.FC = () => {
           fontWeight="medium"
           sx={{ fontSize: '0.95rem' }}
         >
-          Order Status Distribution
+          Order Status Distribution ({currentRange.label})
         </Typography>
-        <MonthYearSelector
-          selectedValue={selectedValue}
-          options={monthOptions}
-          onChange={handleMonthChange}
-        />
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem' }}
+        >
+          {currentOrderType === 'marketplace' ? 'Marketplace Orders' : 'Merchant Orders'}
+        </Typography>
       </Box>
 
       {error && (

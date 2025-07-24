@@ -34,7 +34,7 @@ public class OrderProductRequest {
     private Integer quantity;
     
     @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
+    @DecimalMin(value = "0", inclusive = true, message = "Price must be greater than or equal to 0")
     private BigDecimal price;
     
     @Size(max = 1000, message = "Description must be less than 1000 characters")

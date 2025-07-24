@@ -72,7 +72,11 @@ export interface OrderFormData {
   customerData?: {
     name: string;
     phone: string;
-    address: string;
+    divisionId: number;
+    districtId: number;
+    upazilaId: number;
+    addressLine: string;
+    postalCode?: string;
     alternativePhone?: string;
     facebookId?: string;
   };
@@ -102,8 +106,14 @@ export interface OrderFilterParams {
   status?: string;
   startDate?: string;
   endDate?: string;
+  createdStartDate?: string;
+  createdEndDate?: string;
   marketplaceId?: number;
+  isDirectMerchant?: boolean;
   customerName?: string;
+  orderNumber?: string;
+  minAmount?: number;
+  maxAmount?: number;
   createdById?: number;
   page?: number;
   size?: number;
@@ -193,7 +203,11 @@ export interface OrderRequest {
   customerData?: {
     name: string;
     phone: string;
-    address: string;
+    divisionId: number;
+    districtId: number;
+    upazilaId: number;
+    addressLine: string;
+    postalCode?: string;
     alternativePhone?: string;
     facebookId?: string;
   };

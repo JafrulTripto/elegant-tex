@@ -1,6 +1,7 @@
 package com.tripzin.eleganttex.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,9 +22,21 @@ public class CustomerRequest {
     @Size(max = 20, message = "Customer phone must be less than 20 characters")
     private String phone;
     
-    @NotBlank(message = "Customer address is required")
-    @Size(max = 500, message = "Customer address must be less than 500 characters")
-    private String address;
+    @NotNull(message = "Division is required")
+    private Long divisionId;
+    
+    @NotNull(message = "District is required")
+    private Long districtId;
+    
+    @NotNull(message = "Upazila is required")
+    private Long upazilaId;
+    
+    @NotBlank(message = "Address line is required")
+    @Size(max = 500, message = "Address line must be less than 500 characters")
+    private String addressLine;
+    
+    @Size(max = 10, message = "Postal code must be less than 10 characters")
+    private String postalCode;
     
     @Size(max = 20, message = "Customer alternative phone must be less than 20 characters")
     private String alternativePhone;

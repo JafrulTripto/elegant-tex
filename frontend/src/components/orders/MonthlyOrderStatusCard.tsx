@@ -14,6 +14,8 @@ import { LocalShipping as DeliveredIcon, AssignmentReturn as ReturnedIcon } from
 import orderService from '../../services/order.service';
 import { OrderStatusCount } from '../../types/order';
 import { getStatusColor } from '../../utils/statusConfig';
+import { useTimeline } from '../../contexts/TimelineContext';
+import { useOrderType } from '../../contexts/OrderTypeContext';
 
 interface MonthlyOrderStatusCardProps {
   userId?: number; // Optional - if provided, shows only user's orders
@@ -24,8 +26,8 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
   userId
 }) => {
   const theme = useTheme();
-
-
+  const { currentRange } = useTimeline();
+  const { currentOrderType } = useOrderType();
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
 
   useEffect(() => {
     fetchOrderStatusCounts();
-  }, [userId]);
+  }, [userId, currentRange, currentOrderType]);
 
   const fetchOrderStatusCounts = async () => {
     try {
@@ -70,8 +72,17 @@ const MonthlyOrderStatusCard: React.FC<MonthlyOrderStatusCardProps> = ({
           }));
         }
       } else {
-        // Fetch all order status counts
-        data = await orderService.getOrderStatusCounts(true);
+        // Convert dates to ISO string format for API
+        const startDate = currentRange.startDate.toISOString().split('T')[0];
+        const endDate = currentRange.endDate.toISOString().split('T')[0];
+        
+        // Fetch all order status counts with date range and order type filtering
+        data = await orderService.getOrderStatusCounts(
+          false, // currentMonth - not used when we provide date range
+          startDate,
+          endDate,
+          currentOrderType
+        );
       }
 
       setStatusCounts(data);

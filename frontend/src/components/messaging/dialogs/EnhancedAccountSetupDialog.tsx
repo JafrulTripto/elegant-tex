@@ -101,7 +101,9 @@ const EnhancedAccountSetupDialog: React.FC<EnhancedAccountSetupDialogProps> = ({
       let isValid = false;
       
       if (formData.platform === 'FACEBOOK' && formData.pageId && formData.accessToken) {
-        isValid = await messagingService.validateFacebookToken(formData.pageId, formData.accessToken);
+        const data = await messagingService.validateFacebookToken(formData.pageId, formData.accessToken);
+        isValid = data.valid;
+        setFormData(prev => ({ ...prev, businessAccountId:data.pageInfo.name }));
       } else if (formData.platform === 'WHATSAPP' && formData.phoneNumberId && formData.accessToken) {
         isValid = await messagingService.validateWhatsAppToken(formData.phoneNumberId, formData.accessToken);
       }

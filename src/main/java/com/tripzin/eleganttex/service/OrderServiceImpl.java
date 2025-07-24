@@ -146,13 +146,20 @@ public class OrderServiceImpl implements OrderService {
             String status,
             LocalDate startDate,
             LocalDate endDate,
+            LocalDate createdStartDate,
+            LocalDate createdEndDate,
             Long marketplaceId,
+            Boolean isDirectMerchant,
             String customerName,
+            String orderNumber,
+            Double minAmount,
+            Double maxAmount,
             Pageable pageable) {
         Long currentUserId = getCurrentUserId(null);
         boolean hasReadAllPermission = hasReadAllOrdersPermission();
         
-        return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, marketplaceId, customerName, 
+        return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, createdStartDate, 
+                createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, minAmount, maxAmount, 
                 currentUserId, hasReadAllPermission, pageable);
     }
 
@@ -172,33 +179,48 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Map<String, Object>> getOrderStatusCounts(boolean currentMonth) {
-        return orderStatisticsService.getOrderStatusCounts(currentMonth);
+    public List<Map<String, Object>> getOrderStatusCounts(boolean currentMonth, String orderType) {
+        return orderStatisticsService.getOrderStatusCounts(currentMonth, orderType);
     }
     
     @Override
-    public List<Map<String, Object>> getOrderStatusCountsByMonth(int month, int year) {
-        return orderStatisticsService.getOrderStatusCountsByMonth(month, year);
+    public List<Map<String, Object>> getOrderStatusCountsByMonth(int month, int year, String orderType) {
+        return orderStatisticsService.getOrderStatusCountsByMonth(month, year, orderType);
     }
     
     @Override
-    public List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth) {
-        return orderStatisticsService.getUserOrderStatistics(currentMonth);
+    public List<Map<String, Object>> getOrderStatusCountsByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        return orderStatisticsService.getOrderStatusCountsByDateRange(startDate, endDate, orderType);
     }
     
     @Override
-    public List<Map<String, Object>> getUserOrderStatisticsByMonth(int month, int year) {
-        return orderStatisticsService.getUserOrderStatisticsByMonth(month, year);
+    public List<Map<String, Object>> getUserOrderStatistics(boolean currentMonth, String orderType) {
+        return orderStatisticsService.getUserOrderStatistics(currentMonth, orderType);
     }
     
     @Override
-    public List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth) {
-        return orderStatisticsService.getMarketplaceOrderStatistics(currentMonth);
+    public List<Map<String, Object>> getUserOrderStatisticsByMonth(int month, int year, String orderType) {
+        return orderStatisticsService.getUserOrderStatisticsByMonth(month, year, orderType);
     }
     
     @Override
-    public List<Map<String, Object>> getMarketplaceOrderStatisticsByMonth(int month, int year) {
-        return orderStatisticsService.getMarketplaceOrderStatisticsByMonth(month, year);
+    public List<Map<String, Object>> getUserOrderStatisticsByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        return orderStatisticsService.getUserOrderStatisticsByDateRange(startDate, endDate, orderType);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getMarketplaceOrderStatistics(boolean currentMonth, String orderType) {
+        return orderStatisticsService.getMarketplaceOrderStatistics(currentMonth, orderType);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getMarketplaceOrderStatisticsByMonth(int month, int year, String orderType) {
+        return orderStatisticsService.getMarketplaceOrderStatisticsByMonth(month, year, orderType);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getMarketplaceOrderStatisticsByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        return orderStatisticsService.getMarketplaceOrderStatisticsByDateRange(startDate, endDate, orderType);
     }
     
     @Override
@@ -215,8 +237,23 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
-    public List<Map<String, Object>> getMonthlyOrderCountAndAmount(Integer month, Integer year, boolean currentMonth) {
-        return orderStatisticsService.getMonthlyOrderCountAndAmount(month, year, currentMonth);
+    public List<Map<String, Object>> getMonthlyOrderCountAndAmount(Integer month, Integer year, boolean currentMonth, String orderType) {
+        return orderStatisticsService.getMonthlyOrderCountAndAmount(month, year, currentMonth, orderType);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getMonthlyOrderCountAndAmountByDateRange(LocalDate startDate, LocalDate endDate, String orderType) {
+        return orderStatisticsService.getMonthlyOrderCountAndAmountByDateRange(startDate, endDate, orderType);
+    }
+    
+    @Override
+    public Map<String, Object> getSalesData(LocalDate startDate, LocalDate endDate, String orderType) {
+        return orderStatisticsService.getSalesData(startDate, endDate, orderType);
+    }
+    
+    @Override
+    public Map<String, Object> getOrderStatisticsSummary(LocalDate startDate, LocalDate endDate, String orderType) {
+        return orderStatisticsService.getOrderStatisticsSummary(startDate, endDate, orderType);
     }
     
     @Override

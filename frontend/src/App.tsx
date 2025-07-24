@@ -34,9 +34,11 @@ import CustomersPage from './pages/CustomersPage';
 import MessagingPage from './pages/MessagingPage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
+import PrivacyPolicy from './pages/Privacy';
 
 const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage'));
 const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
+const UserDetailPage = React.lazy(() => import('./pages/admin/UserDetailPage'));
 
 const DashboardRouter: FC = () => {
   const { authState } = useAuth();
@@ -74,6 +76,8 @@ const App: React.FC = () => {
             {/* Public routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+
             
             {/* Auth routes - accessible only when not authenticated */}
             <Route element={<ProtectedRoute requireAuth={false} />}>
@@ -132,6 +136,11 @@ const App: React.FC = () => {
                 <Route path="/admin/users" element={
                   <Suspense fallback={<CircularProgress />}>
                     <UserManagement />
+                  </Suspense>
+                } />
+                <Route path="/admin/users/:id" element={
+                  <Suspense fallback={<CircularProgress />}>
+                    <UserDetailPage />
                   </Suspense>
                 } />
                 <Route path="/admin/settings" element={

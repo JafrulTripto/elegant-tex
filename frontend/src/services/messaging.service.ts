@@ -139,15 +139,15 @@ class MessagingService {
   }
 
   // Webhook validation
-  async validateFacebookToken(pageId: string, accessToken: string): Promise<boolean> {
+  async validateFacebookToken(pageId: string, accessToken: string): Promise<any> {
     try {
       const response = await api.post(`${this.baseUrl}/validate/facebook`, {
         pageId,
         accessToken
       });
-      return response.data.valid;
+      return response.data;
     } catch (error) {
-      return false;
+      return null;
     }
   }
 
