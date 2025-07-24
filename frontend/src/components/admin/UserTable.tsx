@@ -10,16 +10,19 @@ import {
   Box,
   Tooltip,
   useTheme,
-  alpha
+  alpha,
+  Typography
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   CheckCircle as VerifiedIcon,
-  Cancel as UnverifiedIcon
+  Cancel as UnverifiedIcon,
+  Visibility as ViewIcon
 } from '@mui/icons-material';
 import { User } from '../../types';
 import { SortableTableHead, StatusChip } from '../common';
+import UserAvatar from './UserAvatar';
 import type { Column } from '../common';
 
 interface UserTableProps {
@@ -27,6 +30,7 @@ interface UserTableProps {
   onEdit: (user: User) => void;
   onDelete: (userId: number) => void;
   onVerify: (userId: number) => void;
+  onViewDetails?: (userId: number) => void;
   sortBy: string;
   sortDir: 'asc' | 'desc';
   onSort: (column: string) => void;
@@ -38,6 +42,7 @@ const UserTable: React.FC<UserTableProps> = ({
   onEdit,
   onDelete,
   onVerify,
+  onViewDetails,
   sortBy,
   sortDir,
   onSort,
@@ -45,12 +50,31 @@ const UserTable: React.FC<UserTableProps> = ({
 }) => {
   const theme = useTheme();
 
+  // Helper function to format last login time
+  const formatLastLogin = (lastLoginTime?: string) => {
+    if (!lastLoginTime) return 'Never';
+    
+    const loginDate = new Date(lastLoginTime);
+    const now = new Date();
+    const diffInMs = now.getTime() - loginDate.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    return loginDate.toLocaleDateString();
+  };
+
   // Define table columns
   const columns: Column[] = [
+    { id: 'avatar', label: '', sortable: false },
     { id: 'firstName', label: 'Name', sortable: true },
     { id: 'phone', label: 'Phone', sortable: true },
     { id: 'email', label: 'Email', sortable: true },
     { id: 'roles', label: 'Roles', sortable: false },
+    { id: 'lastLoginTime', label: 'Last Login', sortable: true },
     { id: 'accountVerified', label: 'Status', sortable: true },
     { id: 'actions', label: 'Actions', sortable: false, align: 'right' }
   ];
@@ -97,7 +121,7 @@ const UserTable: React.FC<UserTableProps> = ({
         <TableBody>
           {users.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} align="center">
+              <TableCell colSpan={8} align="center">
                 No users found
               </TableCell>
             </TableRow>
@@ -112,9 +136,25 @@ const UserTable: React.FC<UserTableProps> = ({
                   transition: 'background-color 0.2s ease'
                 }}
               >
+                {/* Avatar Column */}
+                <TableCell sx={{ width: 60 }}>
+                  <UserAvatar 
+                    user={user} 
+                    size="small"
+                    onClick={onViewDetails ? () => onViewDetails(user.id) : undefined}
+                  />
+                </TableCell>
+                
                 {/* Name Column */}
                 <TableCell>
-                  {user.firstName} {user.lastName}
+                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="body2" fontWeight={500}>
+                      {user.firstName} {user.lastName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {user.id}
+                    </Typography>
+                  </Box>
                 </TableCell>
                 
                 {/* Phone Column */}
@@ -164,6 +204,13 @@ const UserTable: React.FC<UserTableProps> = ({
                   </Box>
                 </TableCell>
                 
+                {/* Last Login Column */}
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatLastLogin(user.lastLoginTime)}
+                  </Typography>
+                </TableCell>
+                
                 {/* Status Column */}
                 <TableCell>
                   <StatusChip
@@ -175,6 +222,21 @@ const UserTable: React.FC<UserTableProps> = ({
                 {/* Actions Column */}
                 <TableCell align="right">
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    {onViewDetails && (
+                      <IconButton
+                        color="info"
+                        size="small"
+                        onClick={() => onViewDetails(user.id)}
+                        sx={{ 
+                          '&:hover': { backgroundColor: theme.palette.info.light + '20' }
+                        }}
+                      >
+                        <Tooltip title="View Details">
+                          <ViewIcon fontSize="small" />
+                        </Tooltip>
+                      </IconButton>
+                    )}
+                    
                     <IconButton
                       color="primary"
                       size="small"
@@ -188,7 +250,7 @@ const UserTable: React.FC<UserTableProps> = ({
                       </Tooltip>
                     </IconButton>
                     
-                    {!user.emailVerified && (
+                    {!user.accountVerified && (
                       <IconButton
                         color="success"
                         size="small"
@@ -197,7 +259,7 @@ const UserTable: React.FC<UserTableProps> = ({
                           '&:hover': { backgroundColor: theme.palette.success.light + '20' }
                         }}
                       >
-                        <Tooltip title="Verify Email">
+                        <Tooltip title="Activate Account">
                           <VerifiedIcon fontSize="small" />
                         </Tooltip>
                       </IconButton>
