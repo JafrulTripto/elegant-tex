@@ -10,6 +10,7 @@ export interface User {
   permissions?: string[];
   accountVerified: boolean;
   emailVerified: boolean;
+  lastLoginTime?: string;
 }
 
 export interface Role {
