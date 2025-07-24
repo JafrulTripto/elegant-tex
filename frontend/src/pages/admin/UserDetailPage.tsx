@@ -33,9 +33,8 @@ import {
   Cancel as UnverifiedIcon,
   AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
-import { User, Role } from '../../types';
+import { User } from '../../types';
 import userService from '../../services/user.service';
-import UserAvatar from '../../components/admin/UserAvatar';
 import { StatusChip, ImagePreview } from '../../components/common';
 
 const UserDetailPage: React.FC = () => {
