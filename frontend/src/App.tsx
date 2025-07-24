@@ -37,6 +37,7 @@ import PrivacyPolicy from './pages/Privacy';
 
 const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage'));
 const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
+const UserDetailPage = React.lazy(() => import('./pages/admin/UserDetailPage'));
 
 const DashboardRouter: FC = () => {
   const { authState } = useAuth();
@@ -129,6 +130,11 @@ const App: React.FC = () => {
                 <Route path="/admin/users" element={
                   <Suspense fallback={<CircularProgress />}>
                     <UserManagement />
+                  </Suspense>
+                } />
+                <Route path="/admin/users/:id" element={
+                  <Suspense fallback={<CircularProgress />}>
+                    <UserDetailPage />
                   </Suspense>
                 } />
                 <Route path="/admin/settings" element={
