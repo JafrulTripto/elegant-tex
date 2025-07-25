@@ -11,14 +11,17 @@ import {
   Tooltip,
   useTheme,
   CircularProgress,
-  alpha
+  alpha,
+  Chip
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Phone as PhoneIcon
+  Phone as PhoneIcon,
+  Store as StoreIcon,
+  Business as BusinessIcon
 } from '@mui/icons-material';
-import { Customer } from '../../types/customer';
+import { Customer, CustomerType } from '../../types/customer';
 import { SortableTableHead, AddressDisplay } from '../common';
 import type { Column } from '../common';
 
@@ -47,11 +50,32 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
   const columns: Column[] = [
     { id: 'name', label: 'Name', sortable: true },
     { id: 'phone', label: 'Phone', sortable: true },
+    { id: 'customerType', label: 'Type', sortable: true },
     { id: 'address', label: 'Address', sortable: false },
     { id: 'alternativePhone', label: 'Alternative Phone', sortable: false },
     { id: 'facebookId', label: 'Facebook ID', sortable: false },
     { id: 'actions', label: 'Actions', sortable: false, align: 'right' }
   ];
+
+  // Helper function to render customer type chip
+  const renderCustomerTypeChip = (customerType: CustomerType) => {
+    const isMarketplace = customerType === CustomerType.MARKETPLACE;
+    return (
+      <Chip
+        icon={isMarketplace ? <StoreIcon /> : <BusinessIcon />}
+        label={customerType}
+        size="small"
+        color={isMarketplace ? 'primary' : 'secondary'}
+        variant="outlined"
+        sx={{
+          fontWeight: 500,
+          '& .MuiChip-icon': {
+            fontSize: '16px'
+          }
+        }}
+      />
+    );
+  };
   return (
     <TableContainer 
       component={Paper} 
@@ -96,7 +120,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
         <TableBody>
           {customers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} align="center">
+              <TableCell colSpan={7} align="center">
                 No customers found
               </TableCell>
             </TableRow>
@@ -120,6 +144,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                     <PhoneIcon fontSize="small" sx={{ mr: 1 }} />
                     {customer.phone}
                   </Box>
+                </TableCell>
+                
+                {/* Customer Type Column */}
+                <TableCell>
+                  {renderCustomerTypeChip(customer.customerType)}
                 </TableCell>
                 
                 {/* Address Column */}

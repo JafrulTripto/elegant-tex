@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { useFilters, FilterParams } from './useFilters';
 import { FilterChip } from '../components/common';
+import { CustomerType } from '../types/customer';
 
 // Extend the base FilterParams for customer-specific filters
 export interface CustomerFilterParams extends FilterParams {
-  // Add any customer-specific filters here
+  customerType?: CustomerType;
 }
 
 export const useCustomerFilters = (
@@ -39,6 +40,15 @@ export const useCustomerFilters = (
         key: 'search',
         label: `Search: ${customerFilterParams.search}`,
         color: 'primary'
+      });
+    }
+
+    // Add customer type filter chip
+    if (customerFilterParams.customerType) {
+      chips.push({
+        key: 'customerType',
+        label: `Type: ${customerFilterParams.customerType}`,
+        color: 'secondary'
       });
     }
 
