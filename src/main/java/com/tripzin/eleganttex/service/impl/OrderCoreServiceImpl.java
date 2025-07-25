@@ -293,10 +293,14 @@ public class OrderCoreServiceImpl implements OrderCoreService {
             log.info("Using existing customer with ID: {}", customer.getId());
             return customer;
         } else if (orderRequest.getCustomerData() != null) {
-            // Create new customer or find by phone
-            CustomerResponse customerResponse = customerService.findOrCreateCustomer(orderRequest.getCustomerData());
+            // Create new customer or find by phone - pass order type for customer type assignment
+            CustomerResponse customerResponse = customerService.findOrCreateCustomer(
+                    orderRequest.getCustomerData(), 
+                    orderRequest.getOrderType()
+            );
             Customer customer = customerService.getCustomerEntityById(customerResponse.getId());
-            log.info("Found or created customer with ID: {}", customer.getId());
+            log.info("Found or created customer with ID: {} and type based on order type: {}", 
+                    customer.getId(), orderRequest.getOrderType());
             return customer;
         } else {
             throw new IllegalArgumentException("Either customerId or customerData must be provided");

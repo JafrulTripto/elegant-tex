@@ -2,6 +2,7 @@ package com.tripzin.eleganttex.controller;
 
 import com.tripzin.eleganttex.dto.request.CustomerRequest;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
+import com.tripzin.eleganttex.entity.CustomerType;
 import com.tripzin.eleganttex.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +48,9 @@ public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Long id) {
 @GetMapping
 @PreAuthorize("hasAuthority('ORDER_READ')")
 public ResponseEntity<Page<CustomerResponse>> getAllCustomers(
+        @RequestParam(required = false) CustomerType customerType,
         @PageableDefault(size = 10) Pageable pageable) {
-    Page<CustomerResponse> customers = customerService.getAllCustomers(pageable);
+    Page<CustomerResponse> customers = customerService.getAllCustomers(customerType, pageable);
     return ResponseEntity.ok(customers);
 }
 
@@ -56,8 +58,9 @@ public ResponseEntity<Page<CustomerResponse>> getAllCustomers(
 @PreAuthorize("hasAuthority('ORDER_READ')")
 public ResponseEntity<Page<CustomerResponse>> searchCustomers(
         @RequestParam String term,
+        @RequestParam(required = false) CustomerType customerType,
         @PageableDefault(size = 10) Pageable pageable) {
-    Page<CustomerResponse> customers = customerService.searchCustomers(term, pageable);
+    Page<CustomerResponse> customers = customerService.searchCustomers(term, customerType, pageable);
     return ResponseEntity.ok(customers);
 }
 

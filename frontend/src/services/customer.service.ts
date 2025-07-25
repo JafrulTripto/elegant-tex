@@ -1,19 +1,23 @@
 import api from './api';
-import { Customer, CustomerRequest } from '../types/customer';
+import { Customer, CustomerRequest, CustomerType } from '../types/customer';
 
 const BASE_URL = '/customers';
 
 /**
- * Get all customers with pagination
+ * Get all customers with pagination and optional customer type filter
  * @param page Page number (0-based)
  * @param size Page size
+ * @param customerType Optional customer type filter
  * @returns Paginated list of customers
  */
-export const getCustomers = async (page = 0, size = 10): Promise<{ content: Customer[], totalElements: number }> => {
+export const getCustomers = async (page = 0, size = 10, customerType?: CustomerType): Promise<{ content: Customer[], totalElements: number }> => {
   try {
-    const response = await api.get(BASE_URL, {
-      params: { page, size }
-    });
+    const params: any = { page, size };
+    if (customerType) {
+      params.customerType = customerType;
+    }
+    
+    const response = await api.get(BASE_URL, { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching customers:', error);
@@ -37,17 +41,21 @@ export const getCustomerById = async (id: number): Promise<Customer> => {
 };
 
 /**
- * Search customers by name or phone
+ * Search customers by name or phone with optional customer type filter
  * @param term Search term
  * @param page Page number (0-based)
  * @param size Page size
+ * @param customerType Optional customer type filter
  * @returns Paginated list of customers matching the search term
  */
-export const searchCustomers = async (term: string, page = 0, size = 10): Promise<{ content: Customer[], totalElements: number }> => {
+export const searchCustomers = async (term: string, page = 0, size = 10, customerType?: CustomerType): Promise<{ content: Customer[], totalElements: number }> => {
   try {
-    const response = await api.get(`${BASE_URL}/search`, {
-      params: { term, page, size }
-    });
+    const params: any = { term, page, size };
+    if (customerType) {
+      params.customerType = customerType;
+    }
+    
+    const response = await api.get(`${BASE_URL}/search`, { params });
     return response.data;
   } catch (error) {
     console.error('Error searching customers:', error);

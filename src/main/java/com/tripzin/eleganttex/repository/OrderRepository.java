@@ -44,6 +44,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
            "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
            "(:#{#customerName == null or #customerName == ''} = true OR LOWER(c.name) LIKE LOWER(CONCAT('%', :customerName, '%'))) AND " +
            "(:#{#orderNumber == null or #orderNumber == ''} = true OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :orderNumber, '%'))) AND " +
+           "(:#{#deliveryChannel == null or #deliveryChannel == ''} = true OR LOWER(o.deliveryChannel) LIKE LOWER(CONCAT('%', :deliveryChannel, '%'))) AND " +
            "(:#{#minAmount == null} = true OR o.totalAmount >= :minAmount) AND " +
            "(:#{#maxAmount == null} = true OR o.totalAmount <= :maxAmount)")
     Page<Order> findByFilters(
@@ -53,6 +54,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             @Param("marketplaceId") Long marketplaceId,
             @Param("customerName") String customerName,
             @Param("orderNumber") String orderNumber,
+            @Param("deliveryChannel") String deliveryChannel,
             @Param("minAmount") Double minAmount,
             @Param("maxAmount") Double maxAmount,
             Pageable pageable);
@@ -65,6 +67,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
            "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
            "(:#{#customerName == null or #customerName == ''} = true OR LOWER(c.name) LIKE LOWER(CONCAT('%', :customerName, '%'))) AND " +
            "(:#{#orderNumber == null or #orderNumber == ''} = true OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :orderNumber, '%'))) AND " +
+           "(:#{#deliveryChannel == null or #deliveryChannel == ''} = true OR LOWER(o.deliveryChannel) LIKE LOWER(CONCAT('%', :deliveryChannel, '%'))) AND " +
            "(:#{#minAmount == null} = true OR o.totalAmount >= :minAmount) AND " +
            "(:#{#maxAmount == null} = true OR o.totalAmount <= :maxAmount)")
     Page<Order> findByOrderTypeAndFilters(
@@ -75,6 +78,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             @Param("marketplaceId") Long marketplaceId,
             @Param("customerName") String customerName,
             @Param("orderNumber") String orderNumber,
+            @Param("deliveryChannel") String deliveryChannel,
             @Param("minAmount") Double minAmount,
             @Param("maxAmount") Double maxAmount,
             Pageable pageable);

@@ -40,6 +40,10 @@ public class Customer {
     @Column(name = "facebook_id")
     private String facebookId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "customer_type", nullable = false)
+    private CustomerType customerType;
+
     @OneToMany(mappedBy = "customer")
     @Builder.Default
     private List<Order> orders = new ArrayList<>();
