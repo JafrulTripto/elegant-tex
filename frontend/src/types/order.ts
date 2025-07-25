@@ -112,6 +112,7 @@ export interface OrderFilterParams {
   isDirectMerchant?: boolean;
   customerName?: string;
   orderNumber?: string;
+  deliveryChannel?: string;
   minAmount?: number;
   maxAmount?: number;
   createdById?: number;

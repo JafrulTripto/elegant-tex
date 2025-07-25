@@ -122,13 +122,19 @@ const OrdersPage: React.FC = () => {
           }
           break;
           
-        case 'customer':
-          if (item.value && typeof item.value === 'string') {
-            params.customerName = item.value;
-          }
-          break;
-          
-        case 'totalAmount':
+          case 'customer':
+            if (item.value && typeof item.value === 'string') {
+              params.customerName = item.value;
+            }
+            break;
+            
+          case 'deliveryChannel':
+            if (item.value && typeof item.value === 'string') {
+              params.deliveryChannel = item.value;
+            }
+            break;
+            
+          case 'totalAmount':
           if (item.value !== null && item.value !== undefined) {
             const amount = Number(item.value);
             if (!isNaN(amount)) {
@@ -397,6 +403,45 @@ const OrdersPage: React.FC = () => {
             return '';
           }
           return row.customer.name;
+        }
+      },
+      { 
+        field: 'deliveryChannel', 
+        headerName: 'Delivery Channel', 
+        flex: 1.2,
+        minWidth: 140,
+        filterable: true,
+        type: 'singleSelect',
+        valueOptions: [
+          'GCC Home Delivery',
+          'DCC Home Delivery',
+          'SteadFast Home Delivery (Without Fitting)',
+          'RedX Home Delivery (Without Fitting)',
+          'Pathao Home Delivery (Without Fitting)',
+          'S A Paribahan (Office Pickup)',
+          'Sundarban Courier Service (Office Pickup)',
+          'Janani Courier Service (Office Pickup)',
+          'Korotoa Courier Service (Office Pickup)',
+        ],
+        renderCell: (params: GridRenderCellParams) => {
+          if (!params || params.value === undefined || params.value === null) {
+            return null;
+          }
+          return (
+            <Tooltip title={params.value as string}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%'
+                }}
+              >
+                {params.value as string}
+              </Typography>
+            </Tooltip>
+          );
         }
       },
       { 

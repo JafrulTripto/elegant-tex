@@ -4,9 +4,14 @@ import {
   TextField,
   Grid,
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText
 } from '@mui/material';
-import { CustomerRequest } from '../../types/customer';
+import { CustomerRequest, CustomerType } from '../../types/customer';
 import { AddressFormData } from '../../types/geographical';
 import AddressSelector from '../common/AddressSelector';
 
@@ -178,6 +183,24 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             required
             disabled={isSubmitting}
           />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth disabled={isSubmitting}>
+            <InputLabel id="customer-type-label">Customer Type</InputLabel>
+            <Select
+              labelId="customer-type-label"
+              value={formData.customerType || CustomerType.MARKETPLACE}
+              onChange={(e) => handleChange('customerType', e.target.value as CustomerType)}
+              label="Customer Type"
+            >
+              <MenuItem value={CustomerType.MARKETPLACE}>Marketplace</MenuItem>
+              <MenuItem value={CustomerType.MERCHANT}>Merchant</MenuItem>
+            </Select>
+            <FormHelperText>
+              Select the type of customer (defaults to Marketplace)
+            </FormHelperText>
+          </FormControl>
         </Grid>
 
         {/* Address Input - Always use AddressSelector */}

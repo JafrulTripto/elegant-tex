@@ -1,5 +1,6 @@
 package com.tripzin.eleganttex.dto.request;
 
+import com.tripzin.eleganttex.entity.CustomerType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -43,4 +44,7 @@ public class CustomerRequest {
     
     @Size(max = 255, message = "Customer Facebook ID must be less than 255 characters")
     private String facebookId;
+    
+    // Optional customer type - if not provided, will be determined by order type
+    private CustomerType customerType;
 }

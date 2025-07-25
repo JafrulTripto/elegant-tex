@@ -22,11 +22,12 @@ import {
 } from '@mui/icons-material';
 import { Customer, CustomerRequest } from '../types/customer';
 import * as customerService from '../services/customer.service';
-import { useCustomerFilters } from '../hooks/useCustomerFilters';
+import { useCustomerFilters, CustomerFilterParams } from '../hooks/useCustomerFilters';
 import { FilterChips, ConfirmationDialog, Pagination } from '../components/common';
 import CustomerSearch from '../components/customers/CustomerSearch';
 import CustomerTable from '../components/customers/CustomerTable';
 import CustomerForm from '../components/customers/CustomerForm';
+import CustomerFilterDialog from '../components/customers/CustomerFilterDialog';
 
 const CustomersPage: React.FC = () => {
   const theme = useTheme();
@@ -60,6 +61,9 @@ const CustomersPage: React.FC = () => {
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState<boolean>(false);
 
+  // Filter dialog
+  const [filterDialogOpen, setFilterDialogOpen] = useState<boolean>(false);
+
   // Use the customer filters hook
   const {
     filterParams,
@@ -69,6 +73,7 @@ const CustomersPage: React.FC = () => {
     handlePageChange,
     handlePageSizeChange,
     handleSortChange,
+    handleFilterApply,
     handleRemoveFilter,
     handleClearAllFilters,
     activeFilterChips,
@@ -106,12 +111,14 @@ const CustomersPage: React.FC = () => {
         result = await customerService.searchCustomers(
           filterParams.search,
           filterParams.page || 0,
-          filterParams.size || 10
+          filterParams.size || 10,
+          filterParams.customerType
         );
       } else {
         result = await customerService.getCustomers(
           filterParams.page || 0,
-          filterParams.size || 10
+          filterParams.size || 10,
+          filterParams.customerType
         );
       }
       
@@ -126,6 +133,12 @@ const CustomersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle filter apply
+  const handleFilterApplyWrapper = (filters: Partial<CustomerFilterParams>) => {
+    handleFilterApply(filters);
+    setFilterDialogOpen(false);
   };
 
   // Open create dialog
@@ -293,6 +306,7 @@ const CustomersPage: React.FC = () => {
             searchTerm={searchTerm}
             onSearchChange={(e) => setSearchTerm(e.target.value)}
             onSearchSubmit={handleSearchSubmit}
+            onFilterClick={() => setFilterDialogOpen(true)}
             activeFilterCount={activeFilterCount}
           />
           
@@ -401,6 +415,14 @@ const CustomersPage: React.FC = () => {
           cancelText="Cancel"
           confirmColor="error"
           loading={deleting}
+        />
+
+        {/* Customer Filter Dialog */}
+        <CustomerFilterDialog
+          open={filterDialogOpen}
+          onClose={() => setFilterDialogOpen(false)}
+          onApply={handleFilterApplyWrapper}
+          currentFilters={filterParams}
         />
       </Box>
     </Container>

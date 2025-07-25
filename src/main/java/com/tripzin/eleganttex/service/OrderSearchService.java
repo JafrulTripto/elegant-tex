@@ -71,6 +71,7 @@ public interface OrderSearchService {
      * @param isDirectMerchant filter for direct merchant orders
      * @param customerName customer name
      * @param orderNumber order number
+     * @param deliveryChannel delivery channel
      * @param minAmount minimum total amount
      * @param maxAmount maximum total amount
      * @param currentUserId ID of the current user
@@ -89,6 +90,7 @@ public interface OrderSearchService {
             Boolean isDirectMerchant,
             String customerName,
             String orderNumber,
+            String deliveryChannel,
             Double minAmount,
             Double maxAmount,
             Long currentUserId,
