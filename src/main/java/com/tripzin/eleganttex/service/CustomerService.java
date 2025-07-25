@@ -3,6 +3,8 @@ package com.tripzin.eleganttex.service;
 import com.tripzin.eleganttex.dto.request.CustomerRequest;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
 import com.tripzin.eleganttex.entity.Customer;
+import com.tripzin.eleganttex.entity.CustomerType;
+import com.tripzin.eleganttex.entity.OrderType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -60,6 +62,31 @@ public interface CustomerService {
      * @return The existing or newly created customer
      */
     CustomerResponse findOrCreateCustomer(CustomerRequest customerRequest);
+    
+    /**
+     * Find or create a customer by phone number with order type for customer type assignment
+     * @param customerRequest The customer data
+     * @param orderType The order type to determine customer type for new customers
+     * @return The existing or newly created customer
+     */
+    CustomerResponse findOrCreateCustomer(CustomerRequest customerRequest, OrderType orderType);
+    
+    /**
+     * Get all customers with pagination and optional customer type filter
+     * @param customerType Optional customer type filter
+     * @param pageable Pagination information
+     * @return Page of customers
+     */
+    Page<CustomerResponse> getAllCustomers(CustomerType customerType, Pageable pageable);
+    
+    /**
+     * Search customers by name or phone with optional customer type filter
+     * @param searchTerm The term to search for
+     * @param customerType Optional customer type filter
+     * @param pageable Pagination information
+     * @return Page of customers
+     */
+    Page<CustomerResponse> searchCustomers(String searchTerm, CustomerType customerType, Pageable pageable);
     
     /**
      * Delete a customer

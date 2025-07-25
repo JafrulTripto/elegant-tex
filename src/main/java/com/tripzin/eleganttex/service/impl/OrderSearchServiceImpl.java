@@ -139,13 +139,14 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             Boolean isDirectMerchant,
             String customerName,
             String orderNumber,
+            String deliveryChannel,
             Double minAmount,
             Double maxAmount,
             Long currentUserId,
             boolean hasReadAllPermission,
             Pageable pageable) {
-        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, createdStartDate={}, createdEndDate={}, marketplaceId={}, isDirectMerchant={}, customerName={}, orderNumber={}, minAmount={}, maxAmount={}, userId={}, hasReadAllPermission={}",
-                orderTypeStr, statusStr, startDate, endDate, createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, minAmount, maxAmount, currentUserId, hasReadAllPermission);
+        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, createdStartDate={}, createdEndDate={}, marketplaceId={}, isDirectMerchant={}, customerName={}, orderNumber={}, deliveryChannel={}, minAmount={}, maxAmount={}, userId={}, hasReadAllPermission={}",
+                orderTypeStr, statusStr, startDate, endDate, createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, currentUserId, hasReadAllPermission);
         
         OrderStatus status = statusStr != null ? OrderStatus.fromString(statusStr) : null;
         OrderType orderType = orderTypeStr != null ? OrderType.valueOf(orderTypeStr) : null;
@@ -158,14 +159,14 @@ public class OrderSearchServiceImpl implements OrderSearchService {
         if (hasReadAllPermission) {
             if (orderType != null) {
                 // If order type is provided, use the repository method that filters by order type
-                return orderRepository.findByOrderTypeAndFilters(orderType, status, startDate, endDate, marketplaceId, customerName, orderNumber, minAmount, maxAmount, pageable)
+                return orderRepository.findByOrderTypeAndFilters(orderType, status, startDate, endDate, marketplaceId, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, pageable)
                         .map(orderMapper::mapOrderToResponse);
             } else {
                 // Use delivery date filtering if provided, otherwise use created date filtering
                 LocalDate filterStartDate = startDate != null ? startDate : createdStartDate;
                 LocalDate filterEndDate = endDate != null ? endDate : createdEndDate;
                 
-                return orderRepository.findByFilters(status, filterStartDate, filterEndDate, marketplaceId, customerName, orderNumber, minAmount, maxAmount, pageable)
+                return orderRepository.findByFilters(status, filterStartDate, filterEndDate, marketplaceId, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, pageable)
                         .map(orderMapper::mapOrderToResponse);
             }
         } else {

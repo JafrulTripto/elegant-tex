@@ -33,7 +33,7 @@ public interface OrderService {
     
     Page<OrderResponse> getOrdersByCreatedById(Long userId, Pageable pageable);
     
-    Page<OrderResponse> getOrdersByFilters(String orderType, String status, LocalDate startDate, LocalDate endDate, LocalDate createdStartDate, LocalDate createdEndDate, Long marketplaceId, Boolean isDirectMerchant, String customerName, String orderNumber, Double minAmount, Double maxAmount, Pageable pageable);
+    Page<OrderResponse> getOrdersByFilters(String orderType, String status, LocalDate startDate, LocalDate endDate, LocalDate createdStartDate, LocalDate createdEndDate, Long marketplaceId, Boolean isDirectMerchant, String customerName, String orderNumber, String deliveryChannel, Double minAmount, Double maxAmount, Pageable pageable);
     
     OrderResponse updateOrderStatus(Long id, String status, String notes, Long userId);
     

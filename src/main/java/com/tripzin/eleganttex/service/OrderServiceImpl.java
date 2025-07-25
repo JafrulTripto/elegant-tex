@@ -152,6 +152,7 @@ public class OrderServiceImpl implements OrderService {
             Boolean isDirectMerchant,
             String customerName,
             String orderNumber,
+            String deliveryChannel,
             Double minAmount,
             Double maxAmount,
             Pageable pageable) {
@@ -159,8 +160,8 @@ public class OrderServiceImpl implements OrderService {
         boolean hasReadAllPermission = hasReadAllOrdersPermission();
         
         return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, createdStartDate, 
-                createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, minAmount, maxAmount, 
-                currentUserId, hasReadAllPermission, pageable);
+                createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, deliveryChannel, 
+                minAmount, maxAmount, currentUserId, hasReadAllPermission, pageable);
     }
 
     @Override

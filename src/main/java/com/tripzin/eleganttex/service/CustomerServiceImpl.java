@@ -4,8 +4,10 @@ import com.tripzin.eleganttex.dto.request.CustomerRequest;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
 import com.tripzin.eleganttex.entity.Address;
 import com.tripzin.eleganttex.entity.Customer;
+import com.tripzin.eleganttex.entity.CustomerType;
 import com.tripzin.eleganttex.entity.Division;
 import com.tripzin.eleganttex.entity.District;
+import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.entity.Upazila;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.mapper.AddressResponseMapper;
@@ -49,6 +51,11 @@ public class CustomerServiceImpl implements CustomerService {
         // Create address first
         Address address = createAddressFromRequest(customerRequest);
         
+        // Determine customer type - use provided type or default to MARKETPLACE
+        CustomerType customerType = customerRequest.getCustomerType() != null 
+                ? customerRequest.getCustomerType() 
+                : CustomerType.MARKETPLACE;
+        
         // Create new customer
         Customer customer = Customer.builder()
                 .name(customerRequest.getName())
@@ -56,6 +63,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .address(address)
                 .alternativePhone(customerRequest.getAlternativePhone())
                 .facebookId(customerRequest.getFacebookId())
+                .customerType(customerType)
                 .build();
         
         Customer savedCustomer = customerRepository.save(customer);
@@ -157,6 +165,59 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
+    public CustomerResponse findOrCreateCustomer(CustomerRequest customerRequest, OrderType orderType) {
+        log.info("Finding or creating customer with phone: {} for order type: {}", customerRequest.getPhone(), orderType);
+        
+        // Try to find existing customer by phone
+        Optional<Customer> existingCustomer = customerRepository.findByPhone(customerRequest.getPhone());
+        
+        if (existingCustomer.isPresent()) {
+            log.info("Found existing customer with ID: {}", existingCustomer.get().getId());
+            return mapCustomerToResponse(existingCustomer.get());
+        } else {
+            log.info("No existing customer found, creating new customer with type based on order type");
+            
+            // Set customer type based on order type if not already provided
+            if (customerRequest.getCustomerType() == null) {
+                CustomerType customerType = orderType == OrderType.MARKETPLACE 
+                        ? CustomerType.MARKETPLACE 
+                        : CustomerType.MERCHANT;
+                customerRequest.setCustomerType(customerType);
+                log.info("Set customer type to: {} based on order type: {}", customerType, orderType);
+            }
+            
+            return createCustomer(customerRequest);
+        }
+    }
+
+    @Override
+    public Page<CustomerResponse> getAllCustomers(CustomerType customerType, Pageable pageable) {
+        log.info("Getting all customers with pagination and customer type filter: {}", customerType);
+        
+        if (customerType != null) {
+            return customerRepository.findByCustomerType(customerType, pageable)
+                    .map(this::mapCustomerToResponse);
+        } else {
+            return customerRepository.findAll(pageable)
+                    .map(this::mapCustomerToResponse);
+        }
+    }
+
+    @Override
+    public Page<CustomerResponse> searchCustomers(String searchTerm, CustomerType customerType, Pageable pageable) {
+        log.info("Searching customers with term: {} and customer type filter: {}", searchTerm, customerType);
+        
+        if (customerType != null) {
+            return customerRepository.searchByNameOrPhoneAndCustomerType(searchTerm, customerType, pageable)
+                    .map(this::mapCustomerToResponse);
+        } else {
+            return customerRepository.searchByNameOrPhone(searchTerm, pageable)
+                    .map(this::mapCustomerToResponse);
+        }
+    }
+
+    @Override
+    @Transactional
     public void deleteCustomer(Long id) {
         log.info("Deleting customer with ID: {}", id);
         
@@ -220,6 +281,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .address(AddressResponseMapper.mapToAddressResponse(customer.getAddress()))
                 .alternativePhone(customer.getAlternativePhone())
                 .facebookId(customer.getFacebookId())
+                .customerType(customer.getCustomerType())
                 .createdAt(customer.getCreatedAt())
                 .updatedAt(customer.getUpdatedAt())
                 .build();
