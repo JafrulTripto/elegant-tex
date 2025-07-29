@@ -43,6 +43,7 @@ const FabricForm: React.FC<FabricFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<FabricFormData>({
     name: initialData?.name || '',
+    fabricCode: initialData?.fabricCode || '',
     imageId: initialData?.imageId,
     active: initialData?.active !== undefined ? initialData.active : true,
     tagNames: initialData?.tagNames || [],
@@ -182,6 +183,20 @@ const FabricForm: React.FC<FabricFormProps> = ({
                 onChange={handleChange}
                 error={!!errors.name}
                 helperText={errors.name || "Enter the name of your fabric"}
+                disabled={isSubmitting}
+                margin="normal"
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                name="fabricCode"
+                label="Fabric Code"
+                fullWidth
+                value={formData.fabricCode}
+                onChange={handleChange}
+                error={!!errors.fabricCode}
+                helperText={errors.fabricCode || "Enter a unique code for your fabric (optional)"}
                 disabled={isSubmitting}
                 margin="normal"
                 variant="outlined"

@@ -18,6 +18,7 @@ public class FabricResponse {
     
     private Long id;
     private String name;
+    private String fabricCode;
     private Long imageId;
     private boolean active;
     private Set<TagDTO> tags;
@@ -28,6 +29,7 @@ public class FabricResponse {
         return FabricResponse.builder()
                 .id(fabric.getId())
                 .name(fabric.getName())
+                .fabricCode(fabric.getFabricCode())
                 .imageId(fabric.getImageId())
                 .active(fabric.getActive())
                 .tags(fabric.getTags().stream()

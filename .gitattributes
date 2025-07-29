@@ -1,2 +1,28 @@
+# Unix-style shell scripts
 /mvnw text eol=lf
+*.sh text eol=lf
+
+# Windows batch files
 *.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Source files (always LF)
+*.java text eol=lf
+*.ts text eol=lf
+*.js text eol=lf
+*.php text eol=lf
+*.py text eol=lf
+*.sql text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+
+# Text files
+*.txt text eol=lf
+*.env text eol=lf
+
+# Ensure all other text files default to LF
+* text=auto eol=lf

@@ -51,7 +51,14 @@ const FabricSelector: React.FC<FabricSelectorProps> = memo(({
               {fabric.name.charAt(0)}
             </Avatar>
           )}
-          <Typography>{fabric.name}</Typography>
+          <Box>
+            <Typography>{fabric.name}</Typography>
+            {fabric.fabricCode && (
+              <Typography variant="caption" color="text.secondary">
+                Code: {fabric.fabricCode}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </li>
     );

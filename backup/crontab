@@ -1,0 +1,15 @@
+# Database backup crontab
+# Daily backup at 2:00 AM
+0 2 * * * /backup/scripts/backup.sh >> /backup/logs/backup.log 2>&1
+
+# Weekly cleanup at 3:00 AM on Sundays
+0 3 * * 0 /backup/scripts/cleanup.sh >> /backup/logs/cleanup.log 2>&1
+
+# Monthly recovery test at 3:00 AM on the 1st of each month
+0 3 1 * * /backup/scripts/restore-test.sh >> /backup/logs/restore-test.log 2>&1
+
+# Health check every hour
+0 * * * * /backup/scripts/health-check.sh >> /backup/logs/health.log 2>&1
+
+# Log rotation daily at 4:00 AM
+0 4 * * * /usr/sbin/logrotate /etc/logrotate.d/backup
