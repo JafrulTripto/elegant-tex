@@ -2,10 +2,10 @@ import { PaletteMode } from '@mui/material';
 
 // Define all possible order statuses
 export type OrderStatusType = 
-  'ORDER_CREATED' | 'APPROVED' | 'BOOKING' | 'PRODUCTION' | 
-  'QA' | 'READY' | 'DELIVERED' | 'RETURNED' | 'CANCELLED' |
-  'Order Created' | 'Approved' | 'Booking' | 'Production' | 
-  'QA' | 'Ready' | 'Delivered' | 'Returned' | 'Cancelled';
+  'ORDER_CREATED' | 'APPROVED' | 'PRODUCTION' | 'QA' | 'READY' | 'BOOKING' | 'ON_HOLD' | 
+  'DELIVERED' | 'RETURNED' | 'CANCELLED' |
+  'Order Created' | 'Approved' | 'Production' | 'QA' | 'Ready' | 'Booking' | 'On Hold' | 
+  'Delivered' | 'Returned' | 'Cancelled';
 
 // Define color configuration for each status
 interface StatusColorConfig {
@@ -85,6 +85,16 @@ const STATUS_CONFIGS: Record<string, StatusConfig> = {
     backendValue: 'READY',
     displayValue: 'Ready'
   },
+  ON_HOLD: {
+    colors: {
+      light: '#ff7a00',
+      dark: '#d4380d',
+      contrastText: '#ffffff'
+    },
+    label: 'On Hold',
+    backendValue: 'ON_HOLD',
+    displayValue: 'On Hold'
+  },
   DELIVERED: {
     colors: {
       light: '#52c41a',
@@ -121,10 +131,11 @@ const STATUS_CONFIGS: Record<string, StatusConfig> = {
 const DISPLAY_TO_BACKEND_MAP: Record<string, string> = {
   'Order Created': 'ORDER_CREATED',
   'Approved': 'APPROVED',
-  'Booking': 'BOOKING',
   'Production': 'PRODUCTION',
   'QA': 'QA',
   'Ready': 'READY',
+  'Booking': 'BOOKING',
+  'On Hold': 'ON_HOLD',
   'Delivered': 'DELIVERED',
   'Returned': 'RETURNED',
   'Cancelled': 'CANCELLED'
@@ -161,10 +172,11 @@ export const STATUS_CONFIGS_MAP = STATUS_CONFIGS;
 export const BACKEND_STATUSES = [
   'ORDER_CREATED',
   'APPROVED',
-  'BOOKING',
   'PRODUCTION',
   'QA',
   'READY',
+  'BOOKING',
+  'ON_HOLD',
   'DELIVERED',
   'RETURNED',
   'CANCELLED'
@@ -173,10 +185,11 @@ export const BACKEND_STATUSES = [
 export const DISPLAY_STATUSES = [
   'Order Created',
   'Approved',
-  'Booking',
   'Production',
   'QA',
   'Ready',
+  'Booking',
+  'On Hold',
   'Delivered',
   'Returned',
   'Cancelled'

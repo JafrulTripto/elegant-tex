@@ -133,6 +133,7 @@ const FabricsPage: React.FC = () => {
       setSelectedFabricId(id);
       setInitialFormData({
         name: fabric.name,
+        fabricCode: fabric.fabricCode,
         imageId: fabric.imageId,
         active: fabric.active,
         tagNames: fabric.tags.map(tag => tag.name),

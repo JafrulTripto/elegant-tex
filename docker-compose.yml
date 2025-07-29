@@ -79,7 +79,55 @@ services:
       - prometheus
     restart: unless-stopped
 
+  backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      # Database connection
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DATABASE_USERNAME:-eleganttex}
+      - DB_USER=${DATABASE_USERNAME:-eleganttex}
+      - DB_PASSWORD=${DATABASE_PASSWORD:-eleganttex}
+      
+      # S3 configuration
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_REGION=${S3_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      
+      # Backup configuration
+      - BACKUP_ENABLED=${BACKUP_ENABLED:-true}
+      - BACKUP_S3_PREFIX=${BACKUP_S3_PREFIX:-db-backups}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+      - BACKUP_WEEKLY_RETENTION=${BACKUP_WEEKLY_RETENTION:-12}
+      - BACKUP_MONTHLY_RETENTION=${BACKUP_MONTHLY_RETENTION:-12}
+      
+      # Email configuration
+      - BACKUP_NOTIFICATION_EMAIL=${BACKUP_NOTIFICATION_EMAIL}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+      - MAIL_SMTP_SERVER=${MAIL_SMTP_SERVER:-smtp.gmail.com}
+      - MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-587}
+      
+      # Application configuration
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL}
+    volumes:
+      - backup_logs:/backup/logs
+      - backup_temp:/backup/temp
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - default
+
 volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  backup_logs:
+  backup_temp:
