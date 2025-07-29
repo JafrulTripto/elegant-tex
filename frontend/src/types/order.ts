@@ -127,19 +127,20 @@ export interface OrderStatusCount {
 }
 
 export type OrderStatus = 
-  'ORDER_CREATED' | 'APPROVED' | 'BOOKING' | 'PRODUCTION' | 
-  'QA' | 'READY' | 'DELIVERED' | 'RETURNED' | 'CANCELLED' |
-  'Order Created' | 'Approved' | 'Booking' | 'Production' | 
-  'QA' | 'Ready' | 'Delivered' | 'Returned' | 'Cancelled';
+  'ORDER_CREATED' | 'APPROVED' | 'PRODUCTION' | 'QA' | 'READY' | 'BOOKING' | 'ON_HOLD' | 
+  'DELIVERED' | 'RETURNED' | 'CANCELLED' |
+  'Order Created' | 'Approved' | 'Production' | 'QA' | 'Ready' | 'Booking' | 'On Hold' | 
+  'Delivered' | 'Returned' | 'Cancelled';
 
 export const ORDER_STATUSES = {
   // Backend versions
   ORDER_CREATED: 'ORDER_CREATED',
   APPROVED: 'APPROVED',
-  BOOKING: 'BOOKING',
   PRODUCTION: 'PRODUCTION',
   QA: 'QA',
   READY: 'READY',
+  BOOKING: 'BOOKING',
+  ON_HOLD: 'ON_HOLD',
   DELIVERED: 'DELIVERED',
   RETURNED: 'RETURNED',
   CANCELLED: 'CANCELLED'
@@ -149,10 +150,11 @@ export const ORDER_STATUSES = {
 export const ORDER_STATUS_DISPLAY = {
   'Order Created': 'Order Created',
   'Approved': 'Approved',
-  'Booking': 'Booking',
   'Production': 'Production',
   'QA': 'QA',
   'Ready': 'Ready',
+  'Booking': 'Booking',
+  'On Hold': 'On Hold',
   'Delivered': 'Delivered',
   'Returned': 'Returned',
   'Cancelled': 'Cancelled'
@@ -161,10 +163,11 @@ export const ORDER_STATUS_DISPLAY = {
 export const STATUS_OPTIONS = [
   'ORDER_CREATED',
   'APPROVED',
-  'BOOKING',
   'PRODUCTION',
   'QA',
   'READY',
+  'BOOKING',
+  'ON_HOLD',
   'DELIVERED',
   'RETURNED',
   'CANCELLED'
@@ -173,10 +176,11 @@ export const STATUS_OPTIONS = [
 export const STATUS_DISPLAY_OPTIONS = [
   'Order Created',
   'Approved',
-  'Booking',
   'Production',
   'QA',
   'Ready',
+  'Booking',
+  'On Hold',
   'Delivered',
   'Returned',
   'Cancelled'

@@ -61,7 +61,7 @@ const FabricList: React.FC<FabricListProps> = ({
 
   const columns: Column[] = [
     { id: 'image', label: 'Image', sortable: false, width: 80 },
-    { id: 'name', label: 'Name & ID', sortable: true },
+    { id: 'name', label: 'Name & Code', sortable: true },
     { id: 'createdAt', label: 'Created Date', sortable: true, width: 120 },
     { id: 'tags', label: 'Tags', sortable: false },
     { id: 'active', label: 'Status', sortable: true, width: 100 },
@@ -126,7 +126,7 @@ const FabricList: React.FC<FabricListProps> = ({
                 )}
               </TableCell>
               
-              {/* Name & ID Column */}
+              {/* Name & Code Column */}
               <TableCell>
                 <Typography 
                   variant="subtitle2" 
@@ -138,7 +138,7 @@ const FabricList: React.FC<FabricListProps> = ({
                   {fabric.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  ID: {fabric.id}
+                  {fabric.fabricCode ? `Code: ${fabric.fabricCode}` : `ID: ${fabric.id}`}
                 </Typography>
               </TableCell>
               
