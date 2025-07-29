@@ -93,6 +93,7 @@ public class FabricService {
     public FabricResponse createFabric(FabricRequest request) {
         Fabric fabric = new Fabric();
         fabric.setName(request.getName());
+        fabric.setFabricCode(request.getFabricCode());
         fabric.setImageId(request.getImageId());
         fabric.setActive(request.isActive());
         
@@ -119,6 +120,7 @@ public class FabricService {
                               (oldImageId == null && newImageId != null);
         
         fabric.setName(request.getName());
+        fabric.setFabricCode(request.getFabricCode());
         fabric.setImageId(newImageId);
         fabric.setActive(request.isActive());
         

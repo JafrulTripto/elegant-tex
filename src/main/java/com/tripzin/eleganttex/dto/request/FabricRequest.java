@@ -18,6 +18,8 @@ public class FabricRequest {
     @NotBlank(message = "Name is required")
     private String name;
     
+    private String fabricCode;
+    
     private Long imageId;
     
     @Builder.Default

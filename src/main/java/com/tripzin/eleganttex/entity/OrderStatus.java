@@ -6,10 +6,11 @@ package com.tripzin.eleganttex.entity;
 public enum OrderStatus {
     ORDER_CREATED("Order Created"),
     APPROVED("Approved"),
-    BOOKING("Booking"),
     PRODUCTION("Production"),
     QA("QA"),
     READY("Ready"),
+    BOOKING("Booking"),
+    ON_HOLD("On Hold"),
     DELIVERED("Delivered"),
     RETURNED("Returned"),
     CANCELLED("Cancelled");

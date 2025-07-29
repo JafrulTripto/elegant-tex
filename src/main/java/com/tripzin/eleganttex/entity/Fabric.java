@@ -28,6 +28,9 @@ public class Fabric {
     @NotBlank
     private String name;
     
+    @Column(name = "fabric_code", unique = true)
+    private String fabricCode;
+    
     @Column(name = "image_id")
     private Long imageId;
     
