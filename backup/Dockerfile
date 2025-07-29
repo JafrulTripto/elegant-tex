@@ -37,8 +37,6 @@ RUN echo "*/backup/logs/*.log {" > /etc/logrotate.d/backup && \
     echo "    notifempty" >> /etc/logrotate.d/backup && \
     echo "}" >> /etc/logrotate.d/backup
 
-# Switch to backup user
-USER backup
 WORKDIR /backup
 
 # Health check
