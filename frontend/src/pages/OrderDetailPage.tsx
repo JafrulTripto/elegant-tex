@@ -59,10 +59,10 @@ import { AddressDisplay } from '../components/common';
 const ORDER_STATUS_STEPS: string[] = [
   'Order Created',
   'Approved',
-  'Booking',
   'Production',
   'QA',
   'Ready',
+  'Booking',
   'Delivered'
 ];
 
