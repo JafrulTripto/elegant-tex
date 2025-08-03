@@ -61,3 +61,8 @@ Thumbs.db
 /frontend/.vite/
 /frontend/.env.development
 /frontend/.env.production
+
+### Terraform ###
+
+/terraform/terrafrom.tfvars
+/terraform/environments/prod/set-creds.ps1
