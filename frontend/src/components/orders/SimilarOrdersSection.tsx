@@ -38,7 +38,10 @@ import { format } from 'date-fns';
 interface SimilarOrdersSectionProps {
   orderId: number;
   currentOrderProducts?: Array<{
-    productType: string;
+    productType: {
+      id: number;
+      name: string;
+    };
     fabric: {
       id: number;
       name: string;
@@ -347,7 +350,7 @@ const SimilarOrdersSection: React.FC<SimilarOrdersSectionProps> = ({ orderId }) 
                   {order.products.map((product, idx) => (
                     <Chip
                       key={idx}
-                      label={`${product.productType} (${product.fabric.name})`}
+                      label={`${product.productType.name} (${product.fabric.name})`}
                       size="small"
                       variant="filled"
                       color="primary"
