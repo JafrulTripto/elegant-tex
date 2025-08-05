@@ -76,8 +76,9 @@ const OrderValidationSchema = Yup.object().shape({
   
   products: Yup.array().of(
     Yup.object().shape({
-      productType: Yup.string()
-        .required('Product type is required'),
+      productTypeId: Yup.number()
+        .required('Product type is required')
+        .min(1, 'Please select a product type'),
       
       fabricId: Yup.number()
         .required('Fabric is required')
@@ -112,8 +113,8 @@ const OrderFormPage: React.FC = () => {
     canViewAllOrders(authState.user.permissions) : false;
   const [accessDenied, setAccessDenied] = useState<boolean>(false);
 
-  // Initial form values
-  const initialValues: OrderFormData = {
+  // Initial form values - will be updated based on edit mode
+  const getInitialValues = (): OrderFormData => ({
     orderType: OrderType.MARKETPLACE,
     marketplaceId: 0,
     customerId: undefined,
@@ -133,7 +134,7 @@ const OrderFormPage: React.FC = () => {
     deliveryCharge: 0,
     deliveryDate: new Date().toISOString().split('T')[0],
     products: [createEmptyProduct()]
-  };
+  });
 
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
@@ -141,7 +142,7 @@ const OrderFormPage: React.FC = () => {
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
-  const [formValues, setFormValues] = useState<OrderFormData>(initialValues);
+  const [formValues, setFormValues] = useState<OrderFormData>(getInitialValues());
   
   // Fabric pagination state
   const [fabricPage, setFabricPage] = useState<number>(0);
@@ -152,7 +153,7 @@ const OrderFormPage: React.FC = () => {
   // Create empty product
   function createEmptyProduct(): OrderProductFormData {
     return {
-      productType: '',
+      productTypeId: 0,
       fabricId: 0,
       quantity: 1,
       price: 0,
@@ -205,32 +206,78 @@ const OrderFormPage: React.FC = () => {
             }
             
             // Transform order data to form data
-            const transformedProducts = orderData.products.map(product => ({
-              id: product.id, // Include the product ID for updates
-              productType: product.productType,
-              fabricId: product.fabric.id,
-              quantity: product.quantity,
-              price: product.price,
-              description: product.description || '',
-              imageIds: product.images.map(img => img.imageId),
-              tempImages: [],
-              existingImages: product.images.map(img => ({
-                id: img.id,
-                imageId: img.imageId,
-                imageUrl: getFileUrl(img.imageId) || ''
-              }))
-            }));
+            const transformedProducts = orderData.products.map(product => {
+              // Get product type ID from the product type object
+              const productTypeId = product.productType ? product.productType.id : 0;
+              const productTypeName = product.productType ? product.productType.name : '';
+              
+              // Check if this product type exists in our available product types
+              const productTypeExists = productTypesData.some(pt => pt.id === productTypeId);
+              
+              console.log(`Product ${product.id}: API productTypeId=${productTypeId}, productTypeName="${productTypeName}", exists in options: ${productTypeExists}`);
+              if (!productTypeExists) {
+                console.warn(`Product type ID ${productTypeId} (${productTypeName}) not found in available options:`, productTypesData.map(pt => ({ id: pt.id, name: pt.name })));
+              }
+              
+              return {
+                id: product.id, // Include the product ID for updates
+                productTypeId: productTypeId,
+                fabricId: product.fabric.id,
+                quantity: product.quantity,
+                price: product.price,
+                description: product.description || '',
+                imageIds: product.images.map(img => img.imageId),
+                tempImages: [],
+                existingImages: product.images.map(img => ({
+                  id: img.id,
+                  imageId: img.imageId,
+                  imageUrl: getFileUrl(img.imageId) || ''
+                }))
+              };
+            });
             
-            setFormValues({
-              orderType: orderData.orderType as OrderType,
+            // Map order type from API response to enum value
+            // API returns display labels like "Merchant", "Marketplace"
+            // We need to convert to enum values "MERCHANT", "MARKETPLACE"
+            let mappedOrderType: OrderType;
+            const orderTypeString = orderData.orderType as string;
+            if (orderTypeString === 'Merchant') {
+              mappedOrderType = OrderType.MERCHANT;
+            } else if (orderTypeString === 'Marketplace') {
+              mappedOrderType = OrderType.MARKETPLACE;
+            } else {
+              // Fallback - try direct mapping
+              mappedOrderType = orderData.orderType as OrderType;
+            }
+            
+            const editFormValues: OrderFormData = {
+              orderType: mappedOrderType,
               marketplaceId: orderData.marketplace?.id || 0,
               customerId: orderData.customer.id,
+              customerData: {
+                name: '',
+                phone: '',
+                divisionId: 0,
+                districtId: 0,
+                upazilaId: 0,
+                addressLine: '',
+                postalCode: '',
+                alternativePhone: '',
+                facebookId: ''
+              },
               customerValidation: undefined, // Added for validation purposes
               deliveryChannel: orderData.deliveryChannel,
               deliveryCharge: orderData.deliveryCharge,
               deliveryDate: orderData.deliveryDate,
               products: transformedProducts
-            });
+            };
+            
+            console.log('Setting form values for edit mode:', editFormValues);
+            console.log('Original order type from API:', orderData.orderType);
+            console.log('Mapped order type:', mappedOrderType);
+            console.log('Products with types:', transformedProducts.map(p => ({ id: p.id, productTypeId: p.productTypeId })));
+            
+            setFormValues(editFormValues);
           } catch (err: any) {
             console.error('Error loading order data:', err);
             if (err.response && err.response.status === 403) {
@@ -242,8 +289,8 @@ const OrderFormPage: React.FC = () => {
             setLoading(false);
             return;
           }
-        } else if (userMarketplaces.length > 0) {
-          // Set default marketplace if available
+        } else if (userMarketplaces.length > 0 && !isEditMode) {
+          // Set default marketplace if available (only for new orders)
           setFormValues(prev => ({
             ...prev,
             marketplaceId: userMarketplaces[0].id
