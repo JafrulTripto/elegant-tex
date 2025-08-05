@@ -39,6 +39,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -47,6 +48,7 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Component for generating PDF documents for orders
@@ -140,29 +142,15 @@ public class OrderPdfGenerator {
         if (status == null) {
             return ColorConstants.BLACK;
         }
-        
-        switch (status) {
-            case ORDER_CREATED:
-                return new DeviceRgb(243, 156, 18); // Orange
-            case APPROVED:
-                return new DeviceRgb(52, 152, 219); // Blue
-            case BOOKING:
-                return new DeviceRgb(52, 152, 219); // Blue
-            case PRODUCTION:
-                return new DeviceRgb(52, 152, 219); // Blue
-            case QA:
-                return new DeviceRgb(243, 156, 18); // Orange
-            case READY:
-                return new DeviceRgb(46, 204, 113); // Green
-            case DELIVERED:
-                return new DeviceRgb(39, 174, 96); // Dark Green
-            case RETURNED:
-                return new DeviceRgb(231, 76, 60); // Red
-            case CANCELLED:
-                return new DeviceRgb(231, 76, 60); // Red
-            default:
-                return ColorConstants.BLACK;
-        }
+
+        return switch (status) {
+            case ORDER_CREATED, QA -> new DeviceRgb(243, 156, 18); // Orange
+            case APPROVED, BOOKING, PRODUCTION -> new DeviceRgb(52, 152, 219); // Blue
+            case READY -> new DeviceRgb(46, 204, 113); // Green
+            case DELIVERED -> new DeviceRgb(39, 174, 96); // Dark Green
+            case RETURNED, CANCELLED -> new DeviceRgb(231, 76, 60); // Red
+            default -> ColorConstants.BLACK;
+        };
     }
     
     /**
@@ -172,7 +160,7 @@ public class OrderPdfGenerator {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         
         // Add company logo and name in header
-        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 2}))
+        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1}))
                 .setWidth(UnitValue.createPercentValue(100))
                 .setBorder(null);
         
@@ -183,7 +171,7 @@ public class OrderPdfGenerator {
             
             // Load logo from resources
             // Use classpath to access the resource
-            byte[] logoBytes = getClass().getResourceAsStream("/static/images/eleganttexlogo.png").readAllBytes();
+            byte[] logoBytes = Objects.requireNonNull(getClass().getResourceAsStream("/static/images/eleganttexlogo.png")).readAllBytes();
             ImageData logoData = ImageDataFactory.create(logoBytes);
             Image logo = new Image(logoData);
             logo.setWidth(80); // Reduced logo width for more compact layout
@@ -193,6 +181,8 @@ public class OrderPdfGenerator {
             // Company name cell
             Cell companyCell = new Cell().setBorder(null).setPadding(3)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE);
+            Cell orderIdCell = new Cell().setBorder(null).setPadding(3)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE).setHorizontalAlignment(HorizontalAlignment.RIGHT);
             
             Paragraph companyName = new Paragraph("Elegant tex")
                     .setFont(boldFont)
@@ -205,9 +195,16 @@ public class OrderPdfGenerator {
                     .setFontSize(11)
                     .setFontColor(SECONDARY_COLOR)
                     .setFixedLeading(13); // Control line height
+            Paragraph orderId = new Paragraph(order.getOrderNumber())
+                    .setFont(boldFont)
+                    .setFontSize(22) // Slightly smaller for compactness
+                    .setFontColor(PRIMARY_COLOR)
+                    .setFixedLeading(24); // Control line height
             
             companyCell.add(companyName).add(tagline);
             headerTable.addCell(companyCell);
+            orderIdCell.add(orderId);
+            headerTable.addCell(orderIdCell);
             
             document.add(headerTable);
             
@@ -295,7 +292,7 @@ public class OrderPdfGenerator {
         // Make order number more prominent with larger font
         Paragraph orderNumber = new Paragraph("Order #: " + order.getOrderNumber())
                 .setFont(boldFont)
-                .setFontSize(16) // Larger font size for prominence
+                .setFontSize(12) // Larger font size for prominence
                 .setFontColor(PRIMARY_COLOR)
                 .setMarginBottom(2);
         
@@ -490,7 +487,11 @@ public class OrderPdfGenerator {
                     .setBorder(null)
                     .setPadding(3)
                     .setTextAlignment(TextAlignment.CENTER);
-            
+
+            String description = imageInfo.description != null && !imageInfo.description.trim().isEmpty()
+                    ? imageInfo.description.trim()
+                    : "No description";
+
             try {
                 // Get image data from storage
                 FileStorage fileStorage = fileStorageRepository.findById(imageInfo.orderImage.getImageId())
@@ -525,9 +526,7 @@ public class OrderPdfGenerator {
                 imageCell.add(img);
                 
                 // Add description under the image
-                String description = imageInfo.description != null && !imageInfo.description.trim().isEmpty() 
-                    ? imageInfo.description.trim() 
-                    : "No description";
+
                 
                 String caption = imageInfo.productType + " - " + description;
                 
@@ -545,16 +544,11 @@ public class OrderPdfGenerator {
                         .setFontSize(10)
                         .setTextAlignment(TextAlignment.CENTER));
                 
-                // Still add the description even if image failed
-                String description = imageInfo.description != null && !imageInfo.description.trim().isEmpty() 
-                    ? imageInfo.description.trim() 
-                    : "No description";
-                
                 String caption = imageInfo.productType + " - " + description;
                 
                 imageCell.add(new Paragraph(caption)
                         .setFont(regularFont)
-                        .setFontSize(10)
+                        .setFontSize(14)
                         .setTextAlignment(TextAlignment.CENTER)
                         .setFontColor(SECONDARY_COLOR)
                         .setMarginTop(5));
