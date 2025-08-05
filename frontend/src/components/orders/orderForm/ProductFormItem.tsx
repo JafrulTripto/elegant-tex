@@ -74,39 +74,39 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
                 touched.products && 
                 Array.isArray(touched.products) &&
                 touched.products[index] && 
-                touched.products[index]?.productType && 
+                touched.products[index]?.productTypeId && 
                 Boolean(errors.products && 
                 Array.isArray(errors.products) &&
                 errors.products[index] && 
                 typeof errors.products[index] === 'object' &&
-                'productType' in errors.products[index])
+                'productTypeId' in errors.products[index])
               }
             >
               <InputLabel id={`product-type-label-${index}`}>Product Type</InputLabel>
-              <Field
-                name={`products[${index}].productType`}
-                as={Select}
+              <Select
+                value={product.productTypeId || ''}
+                onChange={(event) => setFieldValue(`products[${index}].productTypeId`, event.target.value)}
                 labelId={`product-type-label-${index}`}
                 id={`productType-${index}`}
                 label="Product Type"
                 required
               >
                 {productTypes.map((type) => (
-                  <MenuItem key={type.id} value={type.name}>
+                  <MenuItem key={type.id} value={type.id}>
                     {type.name}
                   </MenuItem>
                 ))}
-              </Field>
+              </Select>
               {touched.products && 
                Array.isArray(touched.products) &&
                touched.products[index] && 
-               touched.products[index]?.productType && 
+               touched.products[index]?.productTypeId && 
                errors.products && 
                Array.isArray(errors.products) &&
                errors.products[index] && 
                typeof errors.products[index] === 'object' &&
-               'productType' in errors.products[index] && (
-                <FormHelperText>{(errors.products[index] as any).productType}</FormHelperText>
+               'productTypeId' in errors.products[index] && (
+                <FormHelperText>{(errors.products[index] as any).productTypeId}</FormHelperText>
               )}
             </FormControl>
           </Grid>

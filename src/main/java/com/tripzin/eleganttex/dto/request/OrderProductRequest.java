@@ -22,9 +22,8 @@ public class OrderProductRequest {
 
     private Long id;
     
-    @NotBlank(message = "Product type is required")
-    @Size(max = 100, message = "Product type must be less than 100 characters")
-    private String productType;
+    @NotNull(message = "Product type ID is required")
+    private Long productTypeId;
     
     @NotNull(message = "Fabric ID is required")
     private Long fabricId;

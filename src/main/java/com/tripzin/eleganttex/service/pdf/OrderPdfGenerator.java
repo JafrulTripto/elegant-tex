@@ -39,13 +39,16 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Component for generating PDF documents for orders
@@ -73,7 +76,7 @@ public class OrderPdfGenerator {
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc, PageSize.A4);
-            document.setMargins(28, 28, 28, 28); // Reduced margins for more compact layout
+            document.setMargins(15, 15, 15, 15); // Further reduced margins for bigger images
             
             // Create fonts - using more elegant fonts
             PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.TIMES_BOLD);
@@ -83,16 +86,16 @@ public class OrderPdfGenerator {
             // First page - Order details
             createOrderDetailsPage(document, order, boldFont, regularFont, italicFont);
             
-            // Second page - Product images
-            List<OrderProductImage> allImages = getAllProductImages(order);
-            if (!allImages.isEmpty()) {
-                // Add a new page for images
+            // Second page - Product details with images and descriptions
+            if (!order.getProducts().isEmpty()) {
+                // Add a new page for product details
                 document.add(new Paragraph("\n"));
-                document.add(new Paragraph("Product Images").setFont(boldFont).setFontSize(14)
-                        .setTextAlignment(TextAlignment.CENTER));
+                document.add(new Paragraph("Product Details").setFont(boldFont).setFontSize(16)
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setFontColor(PRIMARY_COLOR));
                 document.add(new Paragraph("\n"));
                 
-                createImagesPage(document, allImages);
+                createProductDetailsPage(document, order, boldFont, regularFont, italicFont);
             }
             
             // Close document
@@ -139,29 +142,15 @@ public class OrderPdfGenerator {
         if (status == null) {
             return ColorConstants.BLACK;
         }
-        
-        switch (status) {
-            case ORDER_CREATED:
-                return new DeviceRgb(243, 156, 18); // Orange
-            case APPROVED:
-                return new DeviceRgb(52, 152, 219); // Blue
-            case BOOKING:
-                return new DeviceRgb(52, 152, 219); // Blue
-            case PRODUCTION:
-                return new DeviceRgb(52, 152, 219); // Blue
-            case QA:
-                return new DeviceRgb(243, 156, 18); // Orange
-            case READY:
-                return new DeviceRgb(46, 204, 113); // Green
-            case DELIVERED:
-                return new DeviceRgb(39, 174, 96); // Dark Green
-            case RETURNED:
-                return new DeviceRgb(231, 76, 60); // Red
-            case CANCELLED:
-                return new DeviceRgb(231, 76, 60); // Red
-            default:
-                return ColorConstants.BLACK;
-        }
+
+        return switch (status) {
+            case ORDER_CREATED, QA -> new DeviceRgb(243, 156, 18); // Orange
+            case APPROVED, BOOKING, PRODUCTION -> new DeviceRgb(52, 152, 219); // Blue
+            case READY -> new DeviceRgb(46, 204, 113); // Green
+            case DELIVERED -> new DeviceRgb(39, 174, 96); // Dark Green
+            case RETURNED, CANCELLED -> new DeviceRgb(231, 76, 60); // Red
+            default -> ColorConstants.BLACK;
+        };
     }
     
     /**
@@ -171,7 +160,7 @@ public class OrderPdfGenerator {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         
         // Add company logo and name in header
-        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 2}))
+        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1}))
                 .setWidth(UnitValue.createPercentValue(100))
                 .setBorder(null);
         
@@ -182,7 +171,7 @@ public class OrderPdfGenerator {
             
             // Load logo from resources
             // Use classpath to access the resource
-            byte[] logoBytes = getClass().getResourceAsStream("/static/images/eleganttexlogo.png").readAllBytes();
+            byte[] logoBytes = Objects.requireNonNull(getClass().getResourceAsStream("/static/images/eleganttexlogo.png")).readAllBytes();
             ImageData logoData = ImageDataFactory.create(logoBytes);
             Image logo = new Image(logoData);
             logo.setWidth(80); // Reduced logo width for more compact layout
@@ -192,6 +181,8 @@ public class OrderPdfGenerator {
             // Company name cell
             Cell companyCell = new Cell().setBorder(null).setPadding(3)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE);
+            Cell orderIdCell = new Cell().setBorder(null).setPadding(3)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE).setHorizontalAlignment(HorizontalAlignment.RIGHT);
             
             Paragraph companyName = new Paragraph("Elegant tex")
                     .setFont(boldFont)
@@ -204,9 +195,16 @@ public class OrderPdfGenerator {
                     .setFontSize(11)
                     .setFontColor(SECONDARY_COLOR)
                     .setFixedLeading(13); // Control line height
+            Paragraph orderId = new Paragraph(order.getOrderNumber())
+                    .setFont(boldFont)
+                    .setFontSize(22) // Slightly smaller for compactness
+                    .setFontColor(PRIMARY_COLOR)
+                    .setFixedLeading(24); // Control line height
             
             companyCell.add(companyName).add(tagline);
             headerTable.addCell(companyCell);
+            orderIdCell.add(orderId);
+            headerTable.addCell(orderIdCell);
             
             document.add(headerTable);
             
@@ -291,8 +289,15 @@ public class OrderPdfGenerator {
                 .setMarginBottom(3) // Reduced margin
                 .setFixedLeading(14); // Control line height
         
+        // Make order number more prominent with larger font
+        Paragraph orderNumber = new Paragraph("Order #: " + order.getOrderNumber())
+                .setFont(boldFont)
+                .setFontSize(12) // Larger font size for prominence
+                .setFontColor(PRIMARY_COLOR)
+                .setMarginBottom(2);
+        
         rightCell.add(orderHeader)
-                .add(new Paragraph("Order #: " + order.getOrderNumber()).setFont(regularFont))
+                .add(orderNumber)
                 .add(new Paragraph("Date: " + order.getCreatedAt().format(dateFormatter)).setFont(regularFont))
                 .add(new Paragraph("Status: " + order.getStatus()).setFont(regularFont).setFontColor(getStatusColor(order.getStatus())))
                 .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont));
@@ -392,7 +397,7 @@ public class OrderPdfGenerator {
         for (OrderProduct product : order.getProducts()) {
             Color rowColor = alternateRow ? LIGHT_GRAY : ColorConstants.WHITE;
             
-            Cell cell1 = new Cell().add(new Paragraph(product.getProductType()).setFont(regularFont))
+            Cell cell1 = new Cell().add(new Paragraph(product.getProductType().getName()).setFont(regularFont))
                     .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
             Cell cell2 = new Cell().add(new Paragraph(product.getFabric().getName()).setFont(regularFont))
                     .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
@@ -444,32 +449,58 @@ public class OrderPdfGenerator {
     }
     
     /**
-     * Creates the second page with product images in a grid layout
+     * Creates the second page with product images in a grid layout with descriptions
      */
-    private void createImagesPage(Document document, List<OrderProductImage> images) throws IOException {
-        // Create a table for the image grid
-        // We'll use 2 columns for the grid
-        Table imageTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
-                .setWidth(UnitValue.createPercentValue(100));
+    private void createProductDetailsPage(Document document, Order order, PdfFont boldFont, PdfFont regularFont, PdfFont italicFont) throws IOException {
+        // Collect all images from all products with their associated product information
+        List<ProductImageInfo> allProductImages = new ArrayList<>();
         
-        // Calculate how many images we can fit on the page
-        // For simplicity, we'll limit to a maximum of 6 images (3 rows x 2 columns)
-        int maxImages = Math.min(images.size(), 6);
+        for (OrderProduct product : order.getProducts()) {
+            for (OrderProductImage orderImage : product.getImages()) {
+                allProductImages.add(new ProductImageInfo(
+                    orderImage,
+                    product.getProductType().getName(),
+                    product.getDescription()
+                ));
+            }
+        }
         
-        for (int i = 0; i < maxImages; i++) {
-            OrderProductImage orderImage = images.get(i);
+        if (allProductImages.isEmpty()) {
+            document.add(new Paragraph("No product images available")
+                    .setFont(regularFont)
+                    .setFontSize(12)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontColor(ColorConstants.GRAY));
+            return;
+        }
+        
+        // Create a 2-column grid layout for images
+        Table imageGrid = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
+                .setWidth(UnitValue.createPercentValue(100))
+                .setMarginBottom(5);
+        
+        for (int i = 0; i < allProductImages.size(); i++) {
+            ProductImageInfo imageInfo = allProductImages.get(i);
             
+            // Create cell for each image
+            Cell imageCell = new Cell()
+                    .setBorder(null)
+                    .setPadding(3)
+                    .setTextAlignment(TextAlignment.CENTER);
+
+            String description = imageInfo.description != null && !imageInfo.description.trim().isEmpty()
+                    ? imageInfo.description.trim()
+                    : "No description";
+
             try {
                 // Get image data from storage
-                FileStorage fileStorage = fileStorageRepository.findById(orderImage.getImageId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + orderImage.getImageId()));
+                FileStorage fileStorage = fileStorageRepository.findById(imageInfo.orderImage.getImageId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageInfo.orderImage.getImageId()));
                 
                 byte[] imageData;
                 if (fileStorageConfig.isUseS3Storage()) {
-                    // Get from S3
                     imageData = s3Service.downloadFile(fileStorage.getFilePath());
                 } else {
-                    // Get from local storage
                     java.nio.file.Path imagePath = fileStorageConfig.getUploadPath()
                             .resolve(fileStorage.getFilePath());
                     imageData = java.nio.file.Files.readAllBytes(imagePath);
@@ -479,47 +510,74 @@ public class OrderPdfGenerator {
                 ImageData data = ImageDataFactory.create(imageData);
                 Image img = new Image(data);
                 
-                // Scale image to fit in cell while maintaining aspect ratio
-                float maxWidth = 250; // Max width for the image in the cell
-                float maxHeight = 250; // Max height for the image in the cell
+                // Scale image to fit in grid cell - increased dimensions for bigger images
+                float maxWidth = 320;
+                float maxHeight = 280;
                 
-                // Calculate scaling factor to maintain aspect ratio
                 float imgWidth = img.getImageWidth();
                 float imgHeight = img.getImageHeight();
                 float widthRatio = maxWidth / imgWidth;
                 float heightRatio = maxHeight / imgHeight;
                 float scaleFactor = Math.min(widthRatio, heightRatio);
                 
-                // Scale image
                 img.scale(scaleFactor, scaleFactor);
+                img.setHorizontalAlignment(HorizontalAlignment.CENTER);
                 
-                // Center image in cell
-                Cell cell = new Cell()
-                        .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
-                        .setPadding(10)
-                        .setHorizontalAlignment(HorizontalAlignment.CENTER)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                        .add(img);
+                imageCell.add(img);
                 
-                imageTable.addCell(cell);
+                // Add description under the image
+
+                
+                String caption = imageInfo.productType + " - " + description;
+                
+                imageCell.add(new Paragraph(caption)
+                        .setFont(regularFont)
+                        .setFontSize(10)
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setFontColor(SECONDARY_COLOR)
+                        .setMarginTop(2));
+                
             } catch (Exception e) {
                 log.error("Error adding image to PDF: {}", e.getMessage());
-                // Add empty cell if image can't be loaded
-                Cell cell = new Cell()
-                        .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
-                        .setPadding(10)
-                        .add(new Paragraph("Image not available").setFontColor(ColorConstants.GRAY));
-                imageTable.addCell(cell);
+                imageCell.add(new Paragraph("Image not available")
+                        .setFontColor(ColorConstants.GRAY)
+                        .setFontSize(10)
+                        .setTextAlignment(TextAlignment.CENTER));
+                
+                String caption = imageInfo.productType + " - " + description;
+                
+                imageCell.add(new Paragraph(caption)
+                        .setFont(regularFont)
+                        .setFontSize(14)
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setFontColor(SECONDARY_COLOR)
+                        .setMarginTop(5));
+            }
+            
+            imageGrid.addCell(imageCell);
+            
+            // If we have an odd number of images and this is the last one, add an empty cell
+            if (i == allProductImages.size() - 1 && allProductImages.size() % 2 == 1) {
+                imageGrid.addCell(new Cell().setBorder(null));
             }
         }
         
-        // If we have an odd number of images, add an empty cell to complete the grid
-        if (maxImages % 2 != 0) {
-            Cell cell = new Cell().setBorder(null);
-            imageTable.addCell(cell);
-        }
+        document.add(imageGrid);
+    }
+    
+    /**
+     * Helper class to store product image information
+     */
+    private static class ProductImageInfo {
+        final OrderProductImage orderImage;
+        final String productType;
+        final String description;
         
-        document.add(imageTable);
+        ProductImageInfo(OrderProductImage orderImage, String productType, String description) {
+            this.orderImage = orderImage;
+            this.productType = productType;
+            this.description = description;
+        }
     }
     
     /**

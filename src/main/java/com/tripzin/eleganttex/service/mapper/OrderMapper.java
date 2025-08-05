@@ -122,10 +122,16 @@ public class OrderMapper {
         // Calculate subtotal
         BigDecimal subtotal = product.getPrice().multiply(new BigDecimal(product.getQuantity()));
         
+        // Map product type
+        OrderProductResponse.ProductTypeResponse productTypeResponse = OrderProductResponse.ProductTypeResponse.builder()
+                .id(product.getProductType().getId())
+                .name(product.getProductType().getName())
+                .build();
+        
         // Build response
         return OrderProductResponse.builder()
                 .id(product.getId())
-                .productType(product.getProductType())
+                .productType(productTypeResponse)
                 .fabric(fabricResponse)
                 .quantity(product.getQuantity())
                 .price(product.getPrice())

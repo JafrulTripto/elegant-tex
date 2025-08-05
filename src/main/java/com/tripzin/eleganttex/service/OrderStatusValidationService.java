@@ -16,27 +16,31 @@ public class OrderStatusValidationService {
     
     static {
         // Initialize valid transitions
-        VALID_TRANSITIONS.put(OrderStatus.ORDER_CREATED, 
-            Set.of(OrderStatus.APPROVED, OrderStatus.CANCELLED));
-        
-        VALID_TRANSITIONS.put(OrderStatus.APPROVED, 
-            Set.of(OrderStatus.BOOKING, OrderStatus.CANCELLED));
-        
-        VALID_TRANSITIONS.put(OrderStatus.BOOKING, 
-            Set.of(OrderStatus.PRODUCTION, OrderStatus.CANCELLED));
-        
-        VALID_TRANSITIONS.put(OrderStatus.PRODUCTION, 
-            Set.of(OrderStatus.QA, OrderStatus.CANCELLED));
-        
-        VALID_TRANSITIONS.put(OrderStatus.QA, 
-            Set.of(OrderStatus.READY, OrderStatus.CANCELLED));
-        
-        VALID_TRANSITIONS.put(OrderStatus.READY, 
-            Set.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED));
-        
-        VALID_TRANSITIONS.put(OrderStatus.DELIVERED, 
+        VALID_TRANSITIONS.put(OrderStatus.ORDER_CREATED,
+            Set.of(OrderStatus.APPROVED, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+
+        VALID_TRANSITIONS.put(OrderStatus.APPROVED,
+            Set.of(OrderStatus.PRODUCTION, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+
+        VALID_TRANSITIONS.put(OrderStatus.PRODUCTION,
+            Set.of(OrderStatus.QA, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+
+        VALID_TRANSITIONS.put(OrderStatus.QA,
+            Set.of(OrderStatus.READY, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+
+        VALID_TRANSITIONS.put(OrderStatus.READY,
+            Set.of(OrderStatus.BOOKING, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+
+        VALID_TRANSITIONS.put(OrderStatus.BOOKING,
+                Set.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+
+        VALID_TRANSITIONS.put(OrderStatus.DELIVERED,
             Set.of(OrderStatus.RETURNED));
-        
+
+        Set<OrderStatus> allExceptHold = EnumSet.allOf(OrderStatus.class);
+        allExceptHold.remove(OrderStatus.ON_HOLD);
+        VALID_TRANSITIONS.put(OrderStatus.ON_HOLD, allExceptHold);
+
         // Terminal states
         VALID_TRANSITIONS.put(OrderStatus.RETURNED, Collections.emptySet());
         VALID_TRANSITIONS.put(OrderStatus.CANCELLED, Collections.emptySet());

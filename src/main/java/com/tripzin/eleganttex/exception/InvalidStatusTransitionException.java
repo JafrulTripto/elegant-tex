@@ -1,10 +1,12 @@
 package com.tripzin.eleganttex.exception;
 
 import com.tripzin.eleganttex.entity.OrderStatus;
+import lombok.Getter;
 
 /**
  * Exception thrown when an invalid order status transition is attempted.
  */
+@Getter
 public class InvalidStatusTransitionException extends BadRequestException {
     
     private final OrderStatus fromStatus;
@@ -15,12 +17,5 @@ public class InvalidStatusTransitionException extends BadRequestException {
         this.fromStatus = fromStatus;
         this.toStatus = toStatus;
     }
-    
-    public OrderStatus getFromStatus() {
-        return fromStatus;
-    }
-    
-    public OrderStatus getToStatus() {
-        return toStatus;
-    }
+
 }
