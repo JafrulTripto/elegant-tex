@@ -6,11 +6,13 @@ import com.tripzin.eleganttex.entity.FileStorage;
 import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderProduct;
 import com.tripzin.eleganttex.entity.OrderProductImage;
+import com.tripzin.eleganttex.entity.ProductType;
 import com.tripzin.eleganttex.exception.ResourceNotFoundException;
 import com.tripzin.eleganttex.repository.FabricRepository;
 import com.tripzin.eleganttex.repository.FileStorageRepository;
 import com.tripzin.eleganttex.repository.OrderProductImageRepository;
 import com.tripzin.eleganttex.repository.OrderProductRepository;
+import com.tripzin.eleganttex.repository.ProductTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,7 @@ public class OrderProductHandler {
     private final OrderProductRepository orderProductRepository;
     private final OrderProductImageRepository orderProductImageRepository;
     private final FabricRepository fabricRepository;
+    private final ProductTypeRepository productTypeRepository;
     private final FileStorageRepository fileStorageRepository;
     private final FileStorageService fileStorageService;
 
@@ -47,9 +50,12 @@ public class OrderProductHandler {
         Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
                 .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
         
+        ProductType productType = productTypeRepository.findById(productRequest.getProductTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product type not found with ID: " + productRequest.getProductTypeId()));
+        
         OrderProduct product = OrderProduct.builder()
                 .order(order)
-                .productType(productRequest.getProductType())
+                .productType(productType)
                 .fabric(fabric)
                 .quantity(productRequest.getQuantity())
                 .price(productRequest.getPrice())
@@ -78,7 +84,10 @@ public class OrderProductHandler {
         Fabric fabric = fabricRepository.findById(productRequest.getFabricId())
                 .orElseThrow(() -> new ResourceNotFoundException("Fabric not found with ID: " + productRequest.getFabricId()));
         
-        existingProduct.setProductType(productRequest.getProductType());
+        ProductType productType = productTypeRepository.findById(productRequest.getProductTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product type not found with ID: " + productRequest.getProductTypeId()));
+        
+        existingProduct.setProductType(productType);
         existingProduct.setFabric(fabric);
         existingProduct.setQuantity(productRequest.getQuantity());
         existingProduct.setPrice(productRequest.getPrice());

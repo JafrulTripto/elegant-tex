@@ -198,7 +198,7 @@ public class ExcelReportGenerator implements ReportGenerator {
                 int colNum = 0;
                 row.createCell(colNum++).setCellValue(order.getId());
                 row.createCell(colNum++).setCellValue(order.getOrderNumber());
-                row.createCell(colNum++).setCellValue(product.getProductType());
+                row.createCell(colNum++).setCellValue(product.getProductType().getName());
                 row.createCell(colNum++).setCellValue(product.getFabric() != null ? product.getFabric().getName() : "");
                 row.createCell(colNum++).setCellValue(product.getQuantity());
                 

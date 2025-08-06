@@ -59,10 +59,10 @@ import { AddressDisplay } from '../components/common';
 const ORDER_STATUS_STEPS: string[] = [
   'Order Created',
   'Approved',
-  'Booking',
   'Production',
   'QA',
   'Ready',
+  'Booking',
   'Delivered'
 ];
 
@@ -792,7 +792,7 @@ const OrderDetailPage: React.FC = () => {
                   <CardContent sx={{ p: 2 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                       <Typography variant="subtitle1" fontWeight="medium">
-                        Product #{index + 1}: {product.productType}
+                        Product #{index + 1}: {product.productType.name}
                       </Typography>
                       <Chip 
                        label={

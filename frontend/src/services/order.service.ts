@@ -31,7 +31,7 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
     deliveryDate: orderData.deliveryDate,
     products: orderData.products.map(product => ({
       id: product.id,
-      productType: product.productType,
+      productTypeId: product.productTypeId,
       fabricId: product.fabricId,
       quantity: product.quantity,
       price: product.price,
@@ -92,7 +92,7 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
     deliveryDate: orderData.deliveryDate,
     products: orderData.products.map(product => ({
       id: product.id,
-      productType: product.productType,
+      productTypeId: product.productTypeId,
       fabricId: product.fabricId,
       quantity: product.quantity,
       price: product.price,

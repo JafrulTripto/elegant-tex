@@ -17,7 +17,7 @@ import java.util.List;
 public class OrderProductResponse {
 
     private Long id;
-    private String productType;
+    private ProductTypeResponse productType;
     private FabricResponse fabric;
     private Integer quantity;
     private BigDecimal price;
@@ -28,6 +28,15 @@ public class OrderProductResponse {
     
     @Builder.Default
     private List<OrderProductImageResponse> images = new ArrayList<>();
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductTypeResponse {
+        private Long id;
+        private String name;
+    }
     
     @Data
     @Builder

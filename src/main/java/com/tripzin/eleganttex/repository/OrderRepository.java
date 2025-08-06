@@ -24,7 +24,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.customer WHERE o.id = :id")
     Optional<Order> findByIdWithMarketplace(@Param("id") Long id);
     
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.products p LEFT JOIN FETCH p.fabric WHERE o.id = :id")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.marketplace LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.products p LEFT JOIN FETCH p.fabric LEFT JOIN FETCH p.productType WHERE o.id = :id")
     Optional<Order> findByIdWithProductsAndFabrics(@Param("id") Long id);
     
     Page<Order> findByMarketplaceId(Long marketplaceId, Pageable pageable);
@@ -193,7 +193,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
            "WHERE o.id <> :orderId " +
            "AND (o.status = 'RETURNED' OR o.status = 'CANCELLED') " +
            "AND EXISTS (SELECT 1 FROM OrderProduct op WHERE op.order = o " +
-           "            AND op.productType IN :productTypes " +
+           "            AND op.productType.name IN :productTypes " +
            "            AND op.fabric.id IN :fabricIds) " +
            "ORDER BY o.createdAt DESC")
     List<Order> findSimilarOrders(

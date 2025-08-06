@@ -194,7 +194,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
         
         // Extract product types and fabric IDs from the order
         List<String> productTypes = order.getProducts().stream()
-                .map(OrderProduct::getProductType)
+                .map(product -> product.getProductType().getName())
                 .collect(Collectors.toList());
         
         List<Long> fabricIds = order.getProducts().stream()
@@ -204,7 +204,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
         // Create a map of product descriptions from the original order
         Map<String, String> originalProductDescriptions = new HashMap<>();
         for (OrderProduct product : order.getProducts()) {
-            String key = product.getProductType() + "-" + product.getFabric().getId();
+            String key = product.getProductType().getName() + "-" + product.getFabric().getId();
             originalProductDescriptions.put(key, product.getDescription());
         }
         
@@ -229,7 +229,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             boolean hasMatchingProduct = false;
             
             for (OrderProduct product : similarOrder.getProducts()) {
-                String key = product.getProductType() + "-" + product.getFabric().getId();
+                String key = product.getProductType().getName() + "-" + product.getFabric().getId();
                 String originalDescription = originalProductDescriptions.get(key);
                 
                 if (originalDescription != null && product.getDescription() != null) {

@@ -28,7 +28,10 @@ export interface Order {
 
 export interface OrderProduct {
   id?: number;
-  productType: string;
+  productType: {
+    id: number;
+    name: string;
+  };
   fabric: Fabric;
   fabricId: number;
   quantity: number;
@@ -89,7 +92,7 @@ export interface OrderFormData {
 
 export interface OrderProductFormData {
   id?: number;
-  productType: string;
+  productTypeId: number;
   fabricId: number;
   quantity: number;
   price: number;
@@ -225,7 +228,7 @@ export interface OrderRequest {
 
 export interface OrderProductRequest {
   id?: number;
-  productType: string;
+  productTypeId: number;
   fabricId: number;
   quantity: number;
   price: number;
