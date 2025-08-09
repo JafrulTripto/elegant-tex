@@ -107,8 +107,7 @@ runcmd:
     # Check disk space
     DISK_USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
     if [ $DISK_USAGE -gt 80 ]; then
-        echo "$(date): Disk usage is ${DISK_USAGE}%" >> /var/log/${project_name}/health.log
-        # Clean up old Docker images
+        echo "$(date): Disk usage is $${DISK_USAGE}%" >> /var/log/${project_name}/health.log
         docker image prune -f
     fi
     EOF

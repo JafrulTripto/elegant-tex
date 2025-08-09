@@ -10,7 +10,7 @@ variable "project_name" {
 variable "environment" {
   description = "Environment name (prod, staging, dev)"
   type        = string
-  default     = "prod"
+  default     = "production"
 }
 
 variable "common_tags" {
@@ -18,7 +18,7 @@ variable "common_tags" {
   type        = map(string)
   default = {
     Project     = "elegant-tex"
-    Environment = "prod"
+    Environment = "production"
     ManagedBy   = "terraform"
   }
 }

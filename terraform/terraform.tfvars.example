@@ -23,7 +23,7 @@ frontend_bucket_name = "web.elegant-tex.com"
 # CloudFront Configuration
 cloudfront_price_class = "PriceClass_100"  # US, Canada, Europe only (cost-optimized)
 ssl_certificate_arn   = ""  # Leave empty to use CloudFront default certificate
-frontend_domain       = "web.elegant-tex.com"
+    frontend_domain       = "web.elegant-tex.com"
 
 # Cloudflare Configuration (REQUIRED)
 cloudflare_zone_id = "your-cloudflare-zone-id-here"

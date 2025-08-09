@@ -2,7 +2,7 @@ terraform {
   required_providers {
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -13,105 +13,148 @@ data "cloudflare_zone" "main" {
 }
 
 # Main domain (A record for API server)
-resource "cloudflare_record" "api" {
-  zone_id = var.zone_id
-  name    = "@"
-  type    = "A"
-  content = var.api_server_ip
-  proxied = true
-  ttl     = 1
-  comment = "API server - proxied through Cloudflare for security"
-}
-
-# www subdomain redirect (CNAME to root)
-resource "cloudflare_record" "www" {
-  zone_id = var.zone_id
-  name    = "www"
-  type    = "CNAME"
-  content = var.domain_name
-  proxied = true
-  ttl     = 1
-  comment = "WWW redirect to main domain"
-}
+# resource "cloudflare_dns_record" "api" {
+#   zone_id = var.zone_id
+#   name    = "api"
+#   type    = "A"
+#   content = var.api_server_ip
+#   proxied = true
+#   ttl     = 1
+#   comment = "API server - proxied through Cloudflare for security"
+#   settings = {
+#     ipv4_only = true
+#     ipv6_only = true
+#   }
+#   tags = ["owner:dns-team"]
+# }
 
 # Web frontend - points to CloudFront (DNS only)
-resource "cloudflare_record" "frontend" {
-  zone_id = var.zone_id
-  name    = "web"
-  type    = "CNAME"
-  content = var.cloudfront_domain
-  proxied = false
-  ttl     = 300
-  comment = "Frontend - DNS-only pointing to CloudFront"
-}
+# resource "cloudflare_dns_record" "frontend" {
+#   zone_id = var.zone_id
+#   name    = "web"
+#   type    = "CNAME"
+#   content = var.cloudfront_domain
+#   proxied = false
+#   ttl     = 300
+#   comment = "Frontend - DNS-only pointing to CloudFront"
+# }
 
 # Zone-wide security & performance settings
-resource "cloudflare_zone_settings_override" "main" {
-  zone_id = var.zone_id
+resource "cloudflare_zone_setting" "ssl" {
+  zone_id     = var.zone_id
+  setting_id  = "ssl"
+  value       = "full"
+}
 
-  settings {
-    ssl                  = "full"
-    security_level       = "medium"
-    challenge_ttl        = 1800
-    browser_cache_ttl    = 14400
-    always_online        = "on"
-    brotli               = "on"
-    http3                = "on"
-    zero_rtt             = "on"
-    early_hints          = "on"
+resource "cloudflare_zone_setting" "security_level" {
+  zone_id     = var.zone_id
+  setting_id  = "security_level"
+  value       = "medium"
+}
 
-    minify {
-      css  = "on"
-      js   = "on"
-      html = "on"
-    }
+resource "cloudflare_zone_setting" "challenge_ttl" {
+  zone_id     = var.zone_id
+  setting_id  = "challenge_ttl"
+  value       = "1800"
+}
+
+resource "cloudflare_zone_setting" "browser_cache_ttl" {
+  zone_id     = var.zone_id
+  setting_id  = "browser_cache_ttl"
+  value       = 14400
+}
+
+resource "cloudflare_zone_setting" "always_online" {
+  zone_id     = var.zone_id
+  setting_id  = "always_online"
+  value       = "on"
+}
+
+resource "cloudflare_zone_setting" "brotli" {
+  zone_id     = var.zone_id
+  setting_id  = "brotli"
+  value       = "on"
+}
+
+resource "cloudflare_zone_setting" "http3" {
+  zone_id     = var.zone_id
+  setting_id  = "http3"
+  value       = "on"
+}
+
+resource "cloudflare_zone_setting" "early_hints" {
+  zone_id     = var.zone_id
+  setting_id  = "early_hints"
+  value       = "on"
+}
+
+resource "cloudflare_zone_setting" "minify" {
+  zone_id    = var.zone_id
+  setting_id = "minify"
+  value = {
+    css  = "on"
+    js   = "on"
+    html = "on"
   }
 }
 
-# Page rule: redirect www -> root domain
-resource "cloudflare_page_rule" "www_redirect" {
+
+resource "cloudflare_page_rule" "https_to_www" {
   zone_id  = var.zone_id
-  target   = "www.${var.domain_name}/*"
+  target   = "https://${var.domain_name}/*"
   priority = 1
   status   = "active"
 
-  actions {
-    forwarding_url {
-      url         = "https://${var.domain_name}/$1"
+  actions = {
+    forwarding_url = {
+      url         = "https://www.${var.domain_name}/$1"
       status_code = 301
     }
   }
 }
 
-# Page rule: cache static assets (only if enabled)
-resource "cloudflare_page_rule" "api_cache" {
-  count    = var.enable_api_caching ? 1 : 0
+resource "cloudflare_page_rule" "http_to_www" {
   zone_id  = var.zone_id
-  target   = "${var.domain_name}/static/*"
+  target   = "http://${var.domain_name}/*"
   priority = 2
   status   = "active"
 
-  actions {
+  actions = {
+    forwarding_url = {
+      url         = "https://www.${var.domain_name}/$1"
+      status_code = 301
+    }
+  }
+}
+
+resource "cloudflare_page_rule" "cache_static" {
+  zone_id  = var.zone_id
+  target   = "${var.domain_name}/static/*"
+  priority = 3
+  status   = "active"
+
+  actions = {
     cache_level = "cache_everything"
   }
 }
 
+
+
 # Ruleset: block bad bots using Cloudflare's new ruleset API
-resource "cloudflare_ruleset" "block_bad_bots" {
-  count   = var.enable_security_rules ? 1 : 0
-
-  name    = "Block bad bots"
-  kind    = "zone"
-  phase   = "http_request_firewall_custom"
-  zone_id = var.zone_id
-
-  rules {
-    enabled     = true
-    action      = "block"
-    description = "Block known bad bots"
-    expression  = "(cf.client.bot and not cf.verified_bot_category in {\"Search Engine Crawler\", \"Social Media Agent\", \"Monitoring & Analytics\"})"
-  }
-}
+# resource "cloudflare_ruleset" "block_bad_bots" {
+#   count   = var.enable_security_rules ? 1 : 0
+#   name    = "Block bad bots"
+#   kind    = "zone"
+#   phase   = "http_request_firewall_custom"
+#   zone_id = var.zone_id
+#
+#   rules = [{
+#     enabled     = true
+#     action      = "block"
+#     description = "Block known bad bots"
+#     expression  = "(cf.client.bot and not cf.verified_bot_category in {\"Search Engine Crawler\", \"Social Media Agent\", \"Monitoring & Analytics\"})"
+#   }]
+# }
 
 
 # Optional: Origin CA cert (if needed)

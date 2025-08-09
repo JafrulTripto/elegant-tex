@@ -60,22 +60,24 @@ output "cloudfront_hosted_zone_id" {
 # Cloudflare Outputs
 output "cloudflare_zone_id" {
   description = "Cloudflare zone ID"
+  sensitive   = true
   value       = module.cloudflare.zone_id
 }
 
-output "api_dns_record_id" {
-  description = "ID of the API DNS record"
-  value       = module.cloudflare.api_dns_record_id
-}
-
-output "frontend_dns_record_id" {
-  description = "ID of the frontend DNS record"
-  value       = module.cloudflare.frontend_dns_record_id
-}
+# output "api_dns_record_id" {
+#   description = "ID of the API DNS record"
+#   value       = module.cloudflare.api_dns_record_id
+# }
+#
+# output "frontend_dns_record_id" {
+#   description = "ID of the frontend DNS record"
+#   value       = module.cloudflare.frontend_dns_record_id
+# }
 
 # Infrastructure Summary
 output "infrastructure_summary" {
   description = "Summary of deployed infrastructure"
+  sensitive   = true
   value = {
     droplet = {
       ip     = module.digitalocean.droplet_ip

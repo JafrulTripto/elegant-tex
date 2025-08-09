@@ -64,5 +64,5 @@ Thumbs.db
 
 ### Terraform ###
 
-/terraform/terrafrom.tfvars
-/terraform/environments/prod/set-creds.ps1
+/terraform/terraform.tfvars
+/terraform/set-creds.ps1

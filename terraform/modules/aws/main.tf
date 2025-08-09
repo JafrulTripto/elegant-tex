@@ -177,11 +177,11 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   # SSL certificate configuration
   viewer_certificate {
-    cloudfront_default_certificate = var.ssl_certificate_arn == ""
-    acm_certificate_arn           = var.ssl_certificate_arn != "" ? var.ssl_certificate_arn : null
-    ssl_support_method            = var.ssl_certificate_arn != "" ? "sni-only" : null
-    minimum_protocol_version      = var.ssl_certificate_arn != "" ? "TLSv1.2_2021" : null
+    acm_certificate_arn            = "arn:aws:acm:us-east-1:981360964035:certificate/ba59f9a6-851b-40d0-bec8-d9e090c9a0c8"
+    ssl_support_method             = "sni-only"
+    minimum_protocol_version       = "TLSv1.2_2021"
   }
+
 
   tags = merge(var.tags, {
     Name        = "${var.frontend_domain}-cloudfront"
@@ -189,7 +189,6 @@ resource "aws_cloudfront_distribution" "frontend" {
   })
 }
 
-# S3 Lifecycle configuration for storage bucket (cost optimization)
 resource "aws_s3_bucket_lifecycle_configuration" "storage" {
   count  = var.enable_lifecycle_policy ? 1 : 0
   bucket = aws_s3_bucket.storage.id
@@ -198,18 +197,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage" {
     id     = "storage_lifecycle"
     status = "Enabled"
 
-    # Transition to Intelligent-Tiering after 0 days
+    filter {
+      prefix = ""
+    }
+
     transition {
       days          = 0
       storage_class = "INTELLIGENT_TIERING"
     }
 
-    # Delete incomplete multipart uploads after 7 days
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
 
-    # Delete old versions after 90 days
     noncurrent_version_expiration {
       noncurrent_days = 90
     }

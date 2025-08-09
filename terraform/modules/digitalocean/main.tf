@@ -40,9 +40,9 @@ resource "digitalocean_droplet" "app_server" {
   )
   
   # Prevent accidental destruction
-  lifecycle {
-    prevent_destroy = true
-  }
+#   lifecycle {
+#     prevent_destroy = true
+#   }
 }
 
 # Firewall for security
@@ -96,8 +96,8 @@ resource "digitalocean_project" "main" {
   name        = var.project_name
   description = "Infrastructure for ${var.project_name} ${var.environment} environment"
   purpose     = "Web Application"
-  environment = title(var.environment)
-  
+  environment = lower(var.environment)  # must be one of: development, staging, production
+
   resources = [
     digitalocean_droplet.app_server.urn
   ]
