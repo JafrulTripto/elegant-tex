@@ -61,3 +61,28 @@ Thumbs.db
 /frontend/.vite/
 /frontend/.env.development
 /frontend/.env.production
+
+
+# Ignore Terraform state files
+terraform/*.tfstate
+terraform/*.tfstate.backup
+/*.tfstate
+# Ignore Terraform variable files that might contain secrets
+terraform/*.tfvars
+terraform/*.auto.tfvars
+
+# Ignore local override files
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+
+# Ignore Terraform cache and plugins
+terraform/.terraform/
+
+# Ignore crash logs
+crash.log
+
+# Ignore Terraform CLI config files
+terraform.rc
+.terraformrc
