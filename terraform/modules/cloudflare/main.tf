@@ -17,7 +17,7 @@ resource "cloudflare_record" "api" {
   zone_id = var.zone_id
   name    = "api"
   type    = "A"
-  content   = var.api_server_ip
+  content = var.api_server_ip
   proxied = true
   ttl     = 1
   comment = "API server - proxied through Cloudflare for security"

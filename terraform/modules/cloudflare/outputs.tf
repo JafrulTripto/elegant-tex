@@ -82,11 +82,11 @@ output "dns_configuration" {
       proxied  = cloudflare_record.api.proxied
       type     = cloudflare_record.api.type
     }
-#     frontend_domain = {
-#       hostname = cloudflare_dns_record.frontend.name
-#       proxied  = cloudflare_dns_record.frontend.proxied
-#       type     = cloudflare_dns_record.frontend.type
-#     }
+    #     frontend_domain = {
+    #       hostname = cloudflare_dns_record.frontend.name
+    #       proxied  = cloudflare_dns_record.frontend.proxied
+    #       type     = cloudflare_dns_record.frontend.type
+    #     }
   }
 }
 
@@ -129,10 +129,10 @@ output "access_urls" {
 output "configuration_status" {
   description = "Status of various configuration options"
   value = {
-    dns_records_created    = 3
-    security_rules_active  = var.enable_security_rules
-    performance_optimized  = true
-    ssl_configured         = true
-    caching_optimized      = var.enable_api_caching
+    dns_records_created   = 3
+    security_rules_active = var.enable_security_rules
+    performance_optimized = true
+    ssl_configured        = true
+    caching_optimized     = var.enable_api_caching
   }
 }

@@ -9,7 +9,7 @@ terraform {
     region = "ap-southeast-1"
 
     # DynamoDB table for state locking
-    encrypt      = true
+    encrypt = true
   }
 }
 
