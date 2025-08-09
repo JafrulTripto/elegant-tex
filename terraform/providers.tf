@@ -9,7 +9,7 @@ provider "digitalocean" {
 provider "aws" {
   region = var.aws_region
   # Credentials will be provided via AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
-  
+
   default_tags {
     tags = var.common_tags
   }

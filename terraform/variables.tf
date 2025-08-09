@@ -88,7 +88,7 @@ variable "frontend_bucket_name" {
 variable "cloudfront_price_class" {
   description = "CloudFront price class for cost optimization"
   type        = string
-  default     = "PriceClass_100"  # US, Canada, Europe only
+  default     = "PriceClass_100" # US, Canada, Europe only
 }
 
 variable "ssl_certificate_arn" {
@@ -176,7 +176,7 @@ variable "enable_compression" {
 variable "cache_ttl_seconds" {
   description = "Default cache TTL in seconds"
   type        = number
-  default     = 86400  # 24 hours
+  default     = 86400 # 24 hours
 }
 
 # Additional AWS Variables

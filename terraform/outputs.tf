@@ -94,9 +94,9 @@ output "infrastructure_summary" {
       custom_domain  = var.frontend_domain
     }
     dns = {
-      domain     = var.domain_name
-      zone_id    = var.cloudflare_zone_id
-      api_ip     = module.digitalocean.droplet_ip
+      domain  = var.domain_name
+      zone_id = var.cloudflare_zone_id
+      api_ip  = module.digitalocean.droplet_ip
     }
   }
 }
@@ -118,9 +118,9 @@ output "security_features" {
   value = {
     cloudflare_security_rules = var.enable_security_rules
     cloudflare_rate_limiting  = var.enable_rate_limiting
-    droplet_firewall         = true
-    s3_bucket_encryption     = true
-    cloudfront_ssl           = true
+    droplet_firewall          = true
+    s3_bucket_encryption      = true
+    cloudfront_ssl            = true
   }
 }
 
@@ -129,8 +129,8 @@ output "monitoring_features" {
   description = "Enabled monitoring features"
   value = {
     digitalocean_monitoring = var.enable_monitoring
-    automated_backups      = var.enable_backups
-    cost_alerts           = var.enable_cost_alerts
-    monthly_budget_limit  = var.monthly_budget_limit
+    automated_backups       = var.enable_backups
+    cost_alerts             = var.enable_cost_alerts
+    monthly_budget_limit    = var.monthly_budget_limit
   }
 }

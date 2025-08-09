@@ -176,11 +176,11 @@ output "configuration_summary" {
   description = "Summary of AWS module configuration"
   value = {
     storage_bucket = {
-      name                    = aws_s3_bucket.storage.bucket
-      versioning_enabled      = true
-      encryption_enabled      = true
-      intelligent_tiering     = var.enable_intelligent_tiering
-      lifecycle_policy        = var.enable_lifecycle_policy
+      name                = aws_s3_bucket.storage.bucket
+      versioning_enabled  = true
+      encryption_enabled  = true
+      intelligent_tiering = var.enable_intelligent_tiering
+      lifecycle_policy    = var.enable_lifecycle_policy
     }
     frontend_bucket = {
       name                    = aws_s3_bucket.frontend.bucket
@@ -188,11 +188,11 @@ output "configuration_summary" {
       cloudfront_enabled      = true
     }
     cloudfront = {
-      distribution_id   = aws_cloudfront_distribution.frontend.id
-      custom_domain     = var.frontend_domain
-      price_class       = var.cloudfront_price_class
-      compression       = var.enable_compression
-      ssl_certificate   = var.ssl_certificate_arn != "" ? "Custom" : "CloudFront Default"
+      distribution_id = aws_cloudfront_distribution.frontend.id
+      custom_domain   = var.frontend_domain
+      price_class     = var.cloudfront_price_class
+      compression     = var.enable_compression
+      ssl_certificate = var.ssl_certificate_arn != "" ? "Custom" : "CloudFront Default"
     }
   }
 }
