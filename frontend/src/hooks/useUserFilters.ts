@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { useFilters, FilterParams } from './useFilters';
 import { FilterChip } from '../components/common';
 
-// Extend the base FilterParams for user-specific filters
 export interface UserFilterParams extends FilterParams {
   emailVerified?: boolean;
   accountVerified?: boolean;
