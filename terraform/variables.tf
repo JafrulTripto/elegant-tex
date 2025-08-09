@@ -82,7 +82,7 @@ variable "storage_bucket_name" {
 variable "frontend_bucket_name" {
   description = "S3 bucket name for frontend hosting"
   type        = string
-  default     = "web.elegant-tex.com"
+  default     = "www.elegant-tex.com"
 }
 
 variable "cloudfront_price_class" {
@@ -100,7 +100,7 @@ variable "ssl_certificate_arn" {
 variable "frontend_domain" {
   description = "Frontend domain name"
   type        = string
-  default     = "web.elegant-tex.com"
+  default     = "www.elegant-tex.com"
 }
 
 # Cloudflare Configuration

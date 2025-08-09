@@ -10,15 +10,15 @@ output "zone_name" {
 }
 
 # DNS Record Information
-# output "api_dns_record_id" {
-#   description = "ID of the API DNS record"
-#   value       = cloudflare_dns_record.api.id
-# }
-#
-# output "api_dns_record_hostname" {
-#   description = "Hostname of the API DNS record"
-#   value       = cloudflare_dns_record.api.name
-# }
+output "api_dns_record_id" {
+  description = "ID of the API DNS record"
+  value       = cloudflare_record.api.id
+}
+
+output "api_dns_record_hostname" {
+  description = "Hostname of the API DNS record"
+  value       = cloudflare_record.api.name
+}
 
 
 # output "frontend_dns_record_id" {
@@ -74,21 +74,21 @@ output "cache_static_rule_id" {
 }
 
 # DNS Configuration Summary
-# output "dns_configuration" {
-#   description = "Summary of DNS configuration"
-#   value = {
-#     api_domain = {
-#       hostname = cloudflare_dns_record.api.name
-#       proxied  = cloudflare_dns_record.api.proxied
-#       type     = cloudflare_dns_record.api.type
-#     }
+output "dns_configuration" {
+  description = "Summary of DNS configuration"
+  value = {
+    api_domain = {
+      hostname = cloudflare_record.api.name
+      proxied  = cloudflare_record.api.proxied
+      type     = cloudflare_record.api.type
+    }
 #     frontend_domain = {
 #       hostname = cloudflare_dns_record.frontend.name
 #       proxied  = cloudflare_dns_record.frontend.proxied
 #       type     = cloudflare_dns_record.frontend.type
 #     }
-#   }
-# }
+  }
+}
 
 # Security Configuration Summary
 output "security_configuration" {

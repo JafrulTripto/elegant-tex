@@ -177,7 +177,7 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   # SSL certificate configuration
   viewer_certificate {
-    acm_certificate_arn            = "arn:aws:acm:us-east-1:981360964035:certificate/ba59f9a6-851b-40d0-bec8-d9e090c9a0c8"
+    acm_certificate_arn            = "arn:aws:acm:us-east-1:981360964035:certificate/f13e0021-67e5-44b5-9745-043ad598a7d8"
     ssl_support_method             = "sni-only"
     minimum_protocol_version       = "TLSv1.2_2021"
   }
