@@ -63,6 +63,5 @@ Thumbs.db
 /frontend/.env.production
 
 ### Terraform ###
-
-/terraform/terraform.tfvars
 /terraform/set-creds.ps1
+/terraform/.terraform
