@@ -17,6 +17,8 @@ permissions:
   issues: write
   pull-requests: write
   actions: write
+  # Note: GITHUB_TOKEN still cannot create commit comments or update secrets
+  # You'll need a PAT (Personal Access Token) for those operations
 
 jobs:
   terraform-apply:
@@ -78,10 +80,12 @@ jobs:
           echo "STORAGE_BUCKET=$(terraform output -raw storage_bucket_name)" >> $GITHUB_OUTPUT
         continue-on-error: true
 
+      # This step will likely fail with GITHUB_TOKEN - consider using a PAT
       - name: Update GitHub Secrets
         uses: actions/github-script@v7
+        continue-on-error: true  # Don't fail the workflow if this fails
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}  # Use PAT if available
           script: |
             const dropletIp = '${{ steps.outputs.outputs.DROPLET_IP }}';
             if (dropletIp && dropletIp !== '') {
@@ -95,6 +99,7 @@ jobs:
                 console.log('✅ Updated DIGITAL_OCEAN_IP secret');
               } catch (error) {
                 console.log('⚠️ Could not update DIGITAL_OCEAN_IP secret:', error.message);
+                core.warning(`Failed to update secret: ${error.message}`);
               }
             }
 
@@ -150,18 +155,45 @@ jobs:
           *Infrastructure managed by Terraform*
           EOF
 
-      - name: Comment on Commit
+      # Alternative: Create a PR comment instead of commit comment
+      - name: Create PR Comment (if PR exists)
         uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
         with:
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const summary = fs.readFileSync('terraform/infrastructure-summary.md', 'utf8');
-            await github.rest.repos.createCommitComment({
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              commit_sha: context.sha,
               body: summary
             });
+
+      # Alternative: Create an issue with the summary
+      - name: Create Infrastructure Issue
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('terraform/infrastructure-summary.md', 'utf8');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Infrastructure Deployment - ${new Date().toISOString().split('T')[0]}`,
+              body: summary,
+              labels: ['infrastructure', 'terraform']
+            });
+
+      # Fallback: Just output to workflow summary
+      - name: Add to Workflow Summary
+        run: |
+          echo "## Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          cat terraform/infrastructure-summary.md >> $GITHUB_STEP_SUMMARY
 
       - name: Slack Notification (Optional)
         if: always()
