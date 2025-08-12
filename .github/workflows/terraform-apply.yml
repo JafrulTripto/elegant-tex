@@ -14,9 +14,6 @@ env:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
-  actions: write
 
 jobs:
   terraform-apply:
@@ -76,129 +73,14 @@ jobs:
           echo "CLOUDFRONT_URL=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_OUTPUT
           echo "FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name)" >> $GITHUB_OUTPUT
           echo "STORAGE_BUCKET=$(terraform output -raw storage_bucket_name)" >> $GITHUB_OUTPUT
-        continue-on-error: true
 
-      - name: Update GitHub Secrets
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
-          script: |
-            const dropletIp = '${{ steps.outputs.outputs.DROPLET_IP }}';
-            if (dropletIp && dropletIp !== '') {
-              try {
-                await github.rest.actions.createOrUpdateRepoSecret({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  secret_name: 'DIGITAL_OCEAN_IP',
-                  encrypted_value: dropletIp
-                });
-                console.log('✅ Updated DIGITAL_OCEAN_IP secret');
-              } catch (error) {
-                console.log('⚠️ Could not update DIGITAL_OCEAN_IP secret:', error.message);
-                core.warning(`Failed to update secret: ${error.message}`);
-              }
-            }
-
-      - name: Create Infrastructure Summary
+      - name: Display Results
         run: |
-          cat > infrastructure-summary.md << 'EOF'
-          # 🚀 Infrastructure Deployment Summary
-          
-          ## ✅ Successfully Deployed Resources
-          
-          ### 🖥️ DigitalOcean
-          - **Droplet IP**: `${{ steps.outputs.outputs.DROPLET_IP }}`
-          - **Region**: Singapore (sgp1)
-          - **Size**: 1vCPU, 2GB RAM
-          - **Features**: Monitoring, Backups, Firewall
-          
-          ### ☁️ AWS
-          - **Frontend Bucket**: `${{ steps.outputs.outputs.FRONTEND_BUCKET }}`
-          - **Storage Bucket**: `${{ steps.outputs.outputs.STORAGE_BUCKET }}`
-          - **CloudFront URL**: `https://${{ steps.outputs.outputs.CLOUDFRONT_URL }}`
-          - **Features**: S3 Intelligent-Tiering, Lifecycle Policies
-          
-          ### 🔒 Cloudflare
-          - **DNS Management**: Active
-          - **Security Rules**: Enabled
-          - **SSL/TLS**: Full (Strict)
-          - **Performance**: Optimized
-          
-          ## 🔗 Access URLs
-          - **API**: https://elegant-tex.com
-          - **Frontend**: https://web.elegant-tex.com
-          - **Admin**: https://elegant-tex.com/admin
-          
-          ## 💰 Cost Optimization
-          - S3 Intelligent-Tiering: ✅ Enabled
-          - CloudFront Price Class: PriceClass_100 (US/EU)
-          - DynamoDB On-Demand: ✅ Enabled
-          - Automated Cleanup: ✅ Enabled
-          - **Estimated Monthly Cost**: $14-15
-          
-          ## 🔧 Next Steps
-          1. Your existing deployment workflows will continue to work
-          2. SSH to server: `ssh root@${{ steps.outputs.outputs.DROPLET_IP }}`
-          3. Deploy your application using existing GitHub Actions
-          4. Monitor costs in AWS/DigitalOcean dashboards
-          
-          ## 📊 Monitoring
-          - DigitalOcean: Monitoring enabled
-          - AWS CloudWatch: Alarms configured
-          - Cloudflare: Analytics available
-          
-          ---
-          *Infrastructure managed by Terraform*
-          EOF
-
-      - name: Create PR Comment (if PR exists)
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const summary = fs.readFileSync('infrastructure-summary.md', 'utf8');
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary
-            });
-
-      - name: Create Infrastructure Issue
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const summary = fs.readFileSync('infrastructure-summary.md', 'utf8');
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Infrastructure Deployment - ${new Date().toISOString().split('T')[0]}`,
-              body: summary,
-              labels: ['infrastructure', 'terraform']
-            });
-
-      - name: Add to Workflow Summary
-        run: |
-          echo "## Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          cat infrastructure-summary.md >> $GITHUB_STEP_SUMMARY
-
-      - name: Slack Notification (Optional)
-        if: always()
-        run: |
-          if [ "${{ steps.apply.outcome }}" == "success" ]; then
-            echo "✅ Infrastructure deployment successful!"
-            echo "Droplet IP: ${{ steps.outputs.outputs.DROPLET_IP }}"
-            echo "CloudFront URL: https://${{ steps.outputs.outputs.CLOUDFRONT_URL }}"
-          else
-            echo "❌ Infrastructure deployment failed!"
-          fi
+          echo "✅ Infrastructure deployment successful!"
+          echo "Droplet IP: ${{ steps.outputs.outputs.DROPLET_IP }}"
+          echo "CloudFront URL: https://${{ steps.outputs.outputs.CLOUDFRONT_URL }}"
+          echo "Frontend Bucket: ${{ steps.outputs.outputs.FRONTEND_BUCKET }}"
+          echo "Storage Bucket: ${{ steps.outputs.outputs.STORAGE_BUCKET }}"
 
       - name: Save Terraform State Info
         run: |
