@@ -11,15 +11,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 public interface OrderService {
 
-    OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files);
+    OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files, HttpServletRequest request);
     
-    OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files);
+    OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files, HttpServletRequest request);
     
     OrderResponse getOrderById(Long id);
     

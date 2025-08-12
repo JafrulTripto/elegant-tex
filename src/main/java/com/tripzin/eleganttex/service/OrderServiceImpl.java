@@ -6,6 +6,7 @@ import com.tripzin.eleganttex.entity.OrderStatus;
 import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.security.services.UserDetailsImpl;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -74,8 +75,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
-        return orderCoreService.createOrder(orderRequest, userId, files);
+    public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files, HttpServletRequest request) {
+        return orderCoreService.createOrder(orderRequest, userId, files, request);
     }
 
     @Override
@@ -87,11 +88,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
+    public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files, HttpServletRequest request) {
         Long currentUserId = getCurrentUserId(null);
         boolean hasReadAllPermission = hasReadAllOrdersPermission();
         
-        return orderCoreService.updateOrder(id, orderRequest, userId, files, currentUserId, hasReadAllPermission);
+        return orderCoreService.updateOrder(id, orderRequest, userId, files, currentUserId, hasReadAllPermission, request);
     }
 
     @Override

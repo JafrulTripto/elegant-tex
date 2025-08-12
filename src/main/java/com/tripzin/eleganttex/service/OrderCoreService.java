@@ -4,6 +4,7 @@ import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.OrderResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ public interface OrderCoreService {
     /**
      * Create a new order
      */
-    OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files);
+    OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files, HttpServletRequest request);
     
     /**
      * Update an existing order
@@ -23,10 +24,11 @@ public interface OrderCoreService {
      * @param files the files to upload
      * @param currentUserId the current user ID (optional)
      * @param hasReadAllPermission whether the user has permission to update all orders
+     * @param request the HTTP servlet request for extracting product-specific files
      * @return the updated order response
      */
     OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files, 
-                             Long currentUserId, boolean hasReadAllPermission);
+                             Long currentUserId, boolean hasReadAllPermission, HttpServletRequest request);
     
     /**
      * Get order by ID

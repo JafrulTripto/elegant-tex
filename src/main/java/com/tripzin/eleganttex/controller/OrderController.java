@@ -6,6 +6,7 @@ import com.tripzin.eleganttex.entity.OrderStatus;
 import com.tripzin.eleganttex.entity.OrderType;
 import com.tripzin.eleganttex.security.UserSecurity;
 import com.tripzin.eleganttex.service.OrderService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -39,9 +40,10 @@ public class OrderController {
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestPart("orderRequest") OrderRequest orderRequest,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request) {
         Long userId = userSecurity.getUserIdFromUserDetails(userDetails);
-        OrderResponse order = orderService.createOrder(orderRequest, userId, files);
+        OrderResponse order = orderService.createOrder(orderRequest, userId, files, request);
         return ResponseEntity.ok(order);
     }
 
@@ -51,9 +53,10 @@ public class OrderController {
             @PathVariable Long id,
             @Valid @RequestPart("orderRequest") OrderRequest orderRequest,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request) {
         Long userId = userSecurity.getUserIdFromUserDetails(userDetails);
-        OrderResponse order = orderService.updateOrder(id, orderRequest, userId, files);
+        OrderResponse order = orderService.updateOrder(id, orderRequest, userId, files, request);
         return ResponseEntity.ok(order);
     }
 
