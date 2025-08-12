@@ -23,6 +23,7 @@ import com.tripzin.eleganttex.service.OrderCalculationService;
 import com.tripzin.eleganttex.service.OrderCoreService;
 import com.tripzin.eleganttex.service.OrderProductHandler;
 import com.tripzin.eleganttex.service.mapper.OrderMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +62,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
      */
     @Override
     @Transactional
-    public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files) {
+    public OrderResponse createOrder(OrderRequest orderRequest, Long userId, List<MultipartFile> files, HttpServletRequest request) {
         log.info("Creating new order - Type: {}, MarketplaceId: {}, CustomerId: {}", 
                 orderRequest.getOrderType(), 
                 orderRequest.getMarketplaceId(), 
@@ -95,8 +97,8 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         // Create initial status history
         createInitialStatusHistory(order, currentUser);
         
-        // Create products
-        createOrderProducts(order, orderRequest.getProducts(), files);
+        // Create products with product-specific files
+        createOrderProducts(order, orderRequest.getProducts(), files, request);
         
         return orderMapper.mapOrderToResponse(order);
     }
@@ -127,7 +129,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     @Override
     @Transactional
     public OrderResponse updateOrder(Long id, OrderRequest orderRequest, Long userId, List<MultipartFile> files,
-                                    Long currentUserId, boolean hasReadAllPermission) {
+                                    Long currentUserId, boolean hasReadAllPermission, HttpServletRequest request) {
         log.info("Updating order with ID: {} - Type: {}, MarketplaceId: {}, CustomerId: {}", 
                 id, orderRequest.getOrderType(), orderRequest.getMarketplaceId(), orderRequest.getCustomerId());
         
@@ -158,7 +160,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         BigDecimal totalAmount = calculationService.calculateTotalFromRequests(orderRequest.getProducts())
                 .add(orderRequest.getDeliveryCharge());
         updateOrderFields(order, marketplace, customer, orderRequest, totalAmount);
-        updateOrderProducts(order, orderRequest.getProducts(), files);
+        updateOrderProducts(order, orderRequest.getProducts(), files, request);
         return orderMapper.mapOrderToResponse(order);
     }
 
@@ -353,12 +355,41 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     }
     
     /**
-     * Create order products
+     * Create order products with product-specific files
      */
-    private void createOrderProducts(Order order, List<OrderProductRequest> productRequests, List<MultipartFile> files) {
-        for (OrderProductRequest productRequest : productRequests) {
-            productHandler.createOrderProduct(productRequest, order, files);
+    private void createOrderProducts(Order order, List<OrderProductRequest> productRequests, List<MultipartFile> files, HttpServletRequest request) {
+        for (int i = 0; i < productRequests.size(); i++) {
+            OrderProductRequest productRequest = productRequests.get(i);
+            
+            // Extract files for this specific product
+            List<MultipartFile> productFiles = getFilesForProduct(request, i);
+            
+            // Create the product with its specific files
+            productHandler.createOrderProduct(productRequest, order, productFiles);
         }
+    }
+    
+    /**
+     * Extract files for a specific product index from the request
+     */
+    private List<MultipartFile> getFilesForProduct(HttpServletRequest request, int productIndex) {
+        List<MultipartFile> productFiles = new ArrayList<>();
+        
+        if (request instanceof org.springframework.web.multipart.MultipartHttpServletRequest) {
+            org.springframework.web.multipart.MultipartHttpServletRequest multipartRequest = 
+                (org.springframework.web.multipart.MultipartHttpServletRequest) request;
+            
+            // Get files with the product-specific key
+            String fileKey = "files_" + productIndex;
+            List<MultipartFile> files = multipartRequest.getFiles(fileKey);
+            
+            if (files != null && !files.isEmpty()) {
+                productFiles.addAll(files);
+                log.info("Found {} files for product index {}", files.size(), productIndex);
+            }
+        }
+        
+        return productFiles;
     }
     
     /**
@@ -377,9 +408,9 @@ public class OrderCoreServiceImpl implements OrderCoreService {
     }
     
     /**
-     * Update order products
+     * Update order products with product-specific files
      */
-    private void updateOrderProducts(Order order, List<OrderProductRequest> productRequests, List<MultipartFile> files) {
+    private void updateOrderProducts(Order order, List<OrderProductRequest> productRequests, List<MultipartFile> files, HttpServletRequest request) {
         // Get existing products
         List<OrderProduct> existingProducts = orderProductRepository.findByOrderId(order.getId());
         Map<Long, OrderProduct> existingProductMap = new HashMap<>();
@@ -393,16 +424,21 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         Set<Long> productsToKeep = new HashSet<>();
         
         // Update or create products
-        for (OrderProductRequest productRequest : productRequests) {
+        for (int i = 0; i < productRequests.size(); i++) {
+            OrderProductRequest productRequest = productRequests.get(i);
+            
+            // Extract files for this specific product
+            List<MultipartFile> productFiles = getFilesForProduct(request, i);
+            
             if (productRequest.getId() != null && existingProductMap.containsKey(productRequest.getId())) {
                 // Update existing product
                 OrderProduct existingProduct = existingProductMap.get(productRequest.getId());
                 productsToKeep.add(existingProduct.getId());
                 
-                productHandler.updateOrderProduct(existingProduct, productRequest, files);
+                productHandler.updateOrderProduct(existingProduct, productRequest, productFiles);
             } else {
                 // Create new product
-                productHandler.createOrderProduct(productRequest, order, files);
+                productHandler.createOrderProduct(productRequest, order, productFiles);
             }
         }
         

@@ -45,12 +45,12 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
     type: 'application/json'
   }));
   
-  // Append any temporary image files
+  // Append any temporary image files with product-specific keys
   if (orderData.products) {
-    orderData.products.forEach((product) => {
+    orderData.products.forEach((product, productIndex) => {
       if (product.tempImages && product.tempImages.length > 0) {
         product.tempImages.forEach((file) => {
-          formData.append('files', file);
+          formData.append(`files_${productIndex}`, file);
         });
       }
     });
@@ -106,12 +106,12 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
     type: 'application/json'
   }));
   
-  // Append any temporary image files
+  // Append any temporary image files with product-specific keys
   if (orderData.products) {
-    orderData.products.forEach((product) => {
+    orderData.products.forEach((product, productIndex) => {
       if (product.tempImages && product.tempImages.length > 0) {
         product.tempImages.forEach((file) => {
-          formData.append('files', file);
+          formData.append(`files_${productIndex}`, file);
         });
       }
     });
