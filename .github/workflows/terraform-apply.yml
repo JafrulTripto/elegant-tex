@@ -105,7 +105,7 @@ jobs:
 
       - name: Create Infrastructure Summary
         run: |
-          cat > infrastructure-summary.md << 'EOF'
+          cat > ../infrastructure-summary.md << 'EOF'
           # 🚀 Infrastructure Deployment Summary
           
           ## ✅ Successfully Deployed Resources
@@ -164,7 +164,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const summary = fs.readFileSync('terraform/infrastructure-summary.md', 'utf8');
+            const summary = fs.readFileSync('infrastructure-summary.md', 'utf8');
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -180,7 +180,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const summary = fs.readFileSync('terraform/infrastructure-summary.md', 'utf8');
+            const summary = fs.readFileSync('infrastructure-summary.md', 'utf8');
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -193,7 +193,7 @@ jobs:
       - name: Add to Workflow Summary
         run: |
           echo "## Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          cat terraform/infrastructure-summary.md >> $GITHUB_STEP_SUMMARY
+          cat infrastructure-summary.md >> $GITHUB_STEP_SUMMARY
 
       - name: Slack Notification (Optional)
         if: always()
