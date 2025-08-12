@@ -17,8 +17,6 @@ permissions:
   issues: write
   pull-requests: write
   actions: write
-  # Note: GITHUB_TOKEN still cannot create commit comments or update secrets
-  # You'll need a PAT (Personal Access Token) for those operations
 
 jobs:
   terraform-apply:
@@ -80,12 +78,11 @@ jobs:
           echo "STORAGE_BUCKET=$(terraform output -raw storage_bucket_name)" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      # This step will likely fail with GITHUB_TOKEN - consider using a PAT
       - name: Update GitHub Secrets
         uses: actions/github-script@v7
-        continue-on-error: true  # Don't fail the workflow if this fails
+        continue-on-error: true
         with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}  # Use PAT if available
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const dropletIp = '${{ steps.outputs.outputs.DROPLET_IP }}';
             if (dropletIp && dropletIp !== '') {
@@ -105,7 +102,7 @@ jobs:
 
       - name: Create Infrastructure Summary
         run: |
-          cat > ../infrastructure-summary.md << 'EOF'
+          cat > infrastructure-summary.md << 'EOF'
           # 🚀 Infrastructure Deployment Summary
           
           ## ✅ Successfully Deployed Resources
@@ -155,10 +152,9 @@ jobs:
           *Infrastructure managed by Terraform*
           EOF
 
-      # Alternative: Create a PR comment instead of commit comment
       - name: Create PR Comment (if PR exists)
-        uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         continue-on-error: true
         with:
           github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -172,7 +168,6 @@ jobs:
               body: summary
             });
 
-      # Alternative: Create an issue with the summary
       - name: Create Infrastructure Issue
         uses: actions/github-script@v7
         continue-on-error: true
@@ -189,7 +184,6 @@ jobs:
               labels: ['infrastructure', 'terraform']
             });
 
-      # Fallback: Just output to workflow summary
       - name: Add to Workflow Summary
         run: |
           echo "## Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
