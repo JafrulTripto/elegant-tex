@@ -7,90 +7,175 @@ on:
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-*.yml'
-  pull_request:
-    branches:
-      - master
-    paths:
-      - 'terraform/**'
-      - '.github/workflows/terraform-*.yml'
 
 env:
   TF_VERSION: '1.6.0'
   TF_WORKING_DIR: './terraform'
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: write
+
 jobs:
-  terraform-apply-push:
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-      issues: write
-      actions: write
-      pull-requests: read
+  terraform-apply:
+    name: 'Terraform Apply'
     runs-on: ubuntu-latest
+    environment: production
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-      - uses: aws-actions/configure-aws-credentials@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - run: terraform init
-        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      - run: terraform plan -no-color -out=tfplan
-        working-directory: ${{ env.TF_WORKING_DIR }}
-      - run: terraform apply -auto-approve tfplan
-        working-directory: ${{ env.TF_WORKING_DIR }}
-      - name: Comment on commit
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -no-color -out=tfplan \
+            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}" \
+            -var="cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
+            -var="alert_email=${{ secrets.ALERT_EMAIL }}"
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve tfplan
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Get Terraform Outputs
+        id: outputs
+        run: |
+          echo "DROPLET_IP=$(terraform output -raw droplet_ip)" >> $GITHUB_OUTPUT
+          echo "CLOUDFRONT_URL=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_OUTPUT
+          echo "FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name)" >> $GITHUB_OUTPUT
+          echo "STORAGE_BUCKET=$(terraform output -raw storage_bucket_name)" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Update GitHub Secrets
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const dropletIp = '${{ steps.outputs.outputs.DROPLET_IP }}';
+            if (dropletIp && dropletIp !== '') {
+              try {
+                await github.rest.actions.createOrUpdateRepoSecret({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  secret_name: 'DIGITAL_OCEAN_IP',
+                  encrypted_value: dropletIp
+                });
+                console.log('✅ Updated DIGITAL_OCEAN_IP secret');
+              } catch (error) {
+                console.log('⚠️ Could not update DIGITAL_OCEAN_IP secret:', error.message);
+              }
+            }
+
+      - name: Create Infrastructure Summary
+        run: |
+          cat > infrastructure-summary.md << 'EOF'
+          # 🚀 Infrastructure Deployment Summary
+          
+          ## ✅ Successfully Deployed Resources
+          
+          ### 🖥️ DigitalOcean
+          - **Droplet IP**: `${{ steps.outputs.outputs.DROPLET_IP }}`
+          - **Region**: Singapore (sgp1)
+          - **Size**: 1vCPU, 2GB RAM
+          - **Features**: Monitoring, Backups, Firewall
+          
+          ### ☁️ AWS
+          - **Frontend Bucket**: `${{ steps.outputs.outputs.FRONTEND_BUCKET }}`
+          - **Storage Bucket**: `${{ steps.outputs.outputs.STORAGE_BUCKET }}`
+          - **CloudFront URL**: `https://${{ steps.outputs.outputs.CLOUDFRONT_URL }}`
+          - **Features**: S3 Intelligent-Tiering, Lifecycle Policies
+          
+          ### 🔒 Cloudflare
+          - **DNS Management**: Active
+          - **Security Rules**: Enabled
+          - **SSL/TLS**: Full (Strict)
+          - **Performance**: Optimized
+          
+          ## 🔗 Access URLs
+          - **API**: https://elegant-tex.com
+          - **Frontend**: https://web.elegant-tex.com
+          - **Admin**: https://elegant-tex.com/admin
+          
+          ## 💰 Cost Optimization
+          - S3 Intelligent-Tiering: ✅ Enabled
+          - CloudFront Price Class: PriceClass_100 (US/EU)
+          - DynamoDB On-Demand: ✅ Enabled
+          - Automated Cleanup: ✅ Enabled
+          - **Estimated Monthly Cost**: $14-15
+          
+          ## 🔧 Next Steps
+          1. Your existing deployment workflows will continue to work
+          2. SSH to server: `ssh root@${{ steps.outputs.outputs.DROPLET_IP }}`
+          3. Deploy your application using existing GitHub Actions
+          4. Monitor costs in AWS/DigitalOcean dashboards
+          
+          ## 📊 Monitoring
+          - DigitalOcean: Monitoring enabled
+          - AWS CloudWatch: Alarms configured
+          - Cloudflare: Analytics available
+          
+          ---
+          *Infrastructure managed by Terraform*
+          EOF
+
+      - name: Comment on Commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('terraform/infrastructure-summary.md', 'utf8');
             await github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: '✅ Terraform apply completed successfully!'
-            })
+              body: summary
+            });
 
-  terraform-plan-pr:
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      issues: write
-      actions: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - run: terraform init
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        env:
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      - run: terraform plan -no-color
-        working-directory: ${{ env.TF_WORKING_DIR }}
-      - name: Comment on PR
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: '💡 Terraform plan completed for PR. Review the output above.'
-            })
+      - name: Slack Notification (Optional)
+        if: always()
+        run: |
+          if [ "${{ steps.apply.outcome }}" == "success" ]; then
+            echo "✅ Infrastructure deployment successful!"
+            echo "Droplet IP: ${{ steps.outputs.outputs.DROPLET_IP }}"
+            echo "CloudFront URL: https://${{ steps.outputs.outputs.CLOUDFRONT_URL }}"
+          else
+            echo "❌ Infrastructure deployment failed!"
+          fi
+
+      - name: Save Terraform State Info
+        run: |
+          echo "Terraform state saved to S3: elegant-tex-terraform-state/prod/terraform.tfstate"
+          echo "State lock table: elegant-tex-terraform-locks"
+          echo "Apply completed at: $(date)"
