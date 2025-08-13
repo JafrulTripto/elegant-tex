@@ -3,6 +3,7 @@ package com.tripzin.eleganttex.controller;
 import com.tripzin.eleganttex.dto.request.FabricRequest;
 import com.tripzin.eleganttex.dto.response.FabricResponse;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
+import com.tripzin.eleganttex.dto.response.TagDTO;
 import com.tripzin.eleganttex.entity.FileStorage;
 import com.tripzin.eleganttex.service.FabricService;
 import com.tripzin.eleganttex.service.FileStorageService;
@@ -120,8 +121,9 @@ public class FabricController {
         FabricRequest updateRequest = new FabricRequest();
         updateRequest.setName(fabric.getName());
         updateRequest.setImageId(storedFile.getId());
+        updateRequest.setFabricCode(fabric.getFabricCode());
         updateRequest.setTagNames(fabric.getTags().stream()
-                .map(tag -> tag.getName())
+                .map(TagDTO::getName)
                 .collect(Collectors.toSet()));
         
         // Update fabric
