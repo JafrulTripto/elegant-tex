@@ -334,10 +334,6 @@ public class OrderPdfGenerator {
         String formattedAddress = formatCustomerAddress(order.getCustomer());
         customerCell.add(new Paragraph("Address: " + formattedAddress).setFont(regularFont));
 
-        if (order.getCustomer().getFacebookId() != null && !order.getCustomer().getFacebookId().isEmpty()) {
-            customerCell.add(new Paragraph("Facebook: " + order.getCustomer().getFacebookId()).setFont(regularFont));
-        }
-
         // Delivery details cell (will be placed next to customer cell)
         Cell deliveryCell = new Cell()
                 .setBorder(null)
@@ -451,16 +447,18 @@ public class OrderPdfGenerator {
     private void createProductDetailsPage(Document document, Order order, PdfFont boldFont, PdfFont regularFont, PdfFont italicFont) throws IOException {
         // Collect all images from all products with their associated product information
         List<ProductImageInfo> allProductImages = new ArrayList<>();
-
+        int number = 1;
         for (OrderProduct product : order.getProducts()) {
             for (OrderProductImage orderImage : product.getImages()) {
                 allProductImages.add(new ProductImageInfo(
+                        number,
                         orderImage,
                         product.getProductType().getName(),
                         product.getDescription(),
                         product.getFabric()
                 ));
             }
+            number++;
         }
 
         if (allProductImages.isEmpty()) {
@@ -526,7 +524,7 @@ public class OrderPdfGenerator {
                 // Add description under the image
 
 
-                String caption = "Product " + (i+1) + " : " + imageInfo.productType + " - " + description;
+                String caption = "Product " + imageInfo.productNumber + " : " + imageInfo.productType + " - " + description;
 
                 imageCell.add(new Paragraph(caption)
                         .setFont(regularFont)
@@ -542,7 +540,7 @@ public class OrderPdfGenerator {
                         .setFontSize(10)
                         .setTextAlignment(TextAlignment.CENTER));
 
-                String caption = "Product " + (i+1) + " : " + imageInfo.productType + " - " + description;
+                String caption = "Product " + imageInfo.productNumber + " : " + imageInfo.productType + " - " + description;
 
                 imageCell.add(new Paragraph(caption)
                         .setFont(regularFont)
@@ -566,7 +564,7 @@ public class OrderPdfGenerator {
     /**
      * Helper class to store product image information
      */
-    private record ProductImageInfo(OrderProductImage orderImage, String productType, String description,
+    private record ProductImageInfo(int productNumber,OrderProductImage orderImage, String productType, String description,
                                     Fabric fabric) {
     }
 
