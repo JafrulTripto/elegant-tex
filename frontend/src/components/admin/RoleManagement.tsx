@@ -101,9 +101,10 @@ const RoleManagement: React.FC = () => {
         setPermissions(Array.isArray(permissionsResponse.data) ? permissionsResponse.data : []);
       } catch (err) {
         if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Failed to fetch permissions');
+          setError(err.message || 'Failed to fetch permissions');
         } else {
-          setError('An unexpected error occurred');
+          const errorMessage = (err as Error)?.message ?? 'Failed to fetch permissions';
+          setError(errorMessage);
         }
       }
     };
@@ -154,9 +155,10 @@ const RoleManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to fetch roles');
+        setError(err.message || 'Failed to fetch role');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to fetch roles';
+        setError(errorMessage);
       }
     }
   };
@@ -291,9 +293,10 @@ const RoleManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to save role');
+        setError(err.message || 'Failed to save role');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to save role';
+        setError(errorMessage);
       }
     }
   };
@@ -328,9 +331,10 @@ const RoleManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to delete role');
+        setError(err.message || 'Failed to delete role');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to delete role';
+        setError(errorMessage);
       }
     }
   };

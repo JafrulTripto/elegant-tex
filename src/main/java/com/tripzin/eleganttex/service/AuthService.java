@@ -92,13 +92,13 @@ public class AuthService {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             throw new BadRequestException("Email is already in use!");
         }
-        
+
         // Check if phone exists
         if (userRepository.existsByPhone(signUpRequest.getPhone())) {
             throw new BadRequestException("Phone number is already in use!");
         }
-        
-        // Create new user's account
+
+        // Create new user
         User user = User.builder()
                 .firstName(signUpRequest.getFirstName())
                 .lastName(signUpRequest.getLastName())
@@ -108,39 +108,23 @@ public class AuthService {
                 .emailVerified(false)
                 .accountVerified(false)
                 .build();
-        
-        Set<String> strRoles = signUpRequest.getRoles();
+
+        // Roles
+        Set<String> requestedRoles = signUpRequest.getRoles();
         Set<Role> roles = new HashSet<>();
-        
-        if (strRoles == null || strRoles.isEmpty()) {
-            Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
-                    .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER is not found."));
+
+        if (requestedRoles == null || requestedRoles.isEmpty()) {
+            // fallback to USER
+            Role userRole = roleRepository.findByName("ROLE_USER")
+                    .orElseThrow(() -> new ResourceNotFoundException("Default role USER not found"));
             roles.add(userRole);
         } else {
-            strRoles.forEach(role -> {
-                switch (role.toLowerCase()) {
-                    case "admin":
-                        Role adminRole = roleRepository.findByName(RoleConstants.ROLE_ADMIN)
-                                .orElseThrow(() -> new ResourceNotFoundException("Error: Role ADMIN is not found."));
-                        roles.add(adminRole);
-                        break;
-                    case "mod":
-                    case "moderator":
-                        Role modRole = roleRepository.findByName(RoleConstants.ROLE_MODERATOR)
-                                .orElseThrow(() -> new ResourceNotFoundException("Error: Role MODERATOR is not found."));
-                        roles.add(modRole);
-                        break;
-                    case "manager":
-                        Role managerRole = roleRepository.findByName(RoleConstants.ROLE_MANAGER)
-                                .orElseThrow(() -> new ResourceNotFoundException("Error: Role MANAGER is not found."));
-                        roles.add(managerRole);
-                        break;
-                    default:
-                        Role userRole = roleRepository.findByName(RoleConstants.ROLE_USER)
-                                .orElseThrow(() -> new ResourceNotFoundException("Error: Role USER is not found."));
-                        roles.add(userRole);
-                }
-            });
+            // fetch dynamically from DB
+            for (String roleName : requestedRoles) {
+                Role role = roleRepository.findByName(roleName.toUpperCase())
+                        .orElseThrow(() -> new ResourceNotFoundException("Role " + roleName + " not found"));
+                roles.add(role);
+            }
         }
         
         user.setRoles(roles);
@@ -162,7 +146,7 @@ public class AuthService {
         
         return MessageResponse.success("User registered successfully! Please check your email to verify your account.");
     }
-    
+
     @Transactional
     public MessageResponse verifyEmail(String token) {
         VerificationToken verificationToken = tokenRepository.findByToken(token)

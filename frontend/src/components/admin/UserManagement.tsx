@@ -30,6 +30,7 @@ import UserTable from './UserTable';
 import UserForm from './UserForm';
 import UserSearch from './UserSearch';
 import UserFilterDialog from './UserFilterDialog';
+import {useToast} from "../../contexts/ToastContext.tsx";
 
 interface UserFormData {
   phone: string;
@@ -43,7 +44,8 @@ interface UserFormData {
 
 const UserManagement: React.FC = () => {
   const theme = useTheme();
-  
+  const { showToast } = useToast();
+
   // State
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -148,9 +150,10 @@ const UserManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to fetch users');
+        setError(err.message || 'Failed to delete role');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to delete role';
+        setError(errorMessage);
       }
     }
   };
@@ -221,7 +224,7 @@ const UserManagement: React.FC = () => {
           roles: formData.roleIds,
           password: formData.password
         });
-        setSuccess('User created successfully');
+        showToast('User created successfully', 'success');
       }
       
       // Refresh users
@@ -232,9 +235,9 @@ const UserManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to save user');
+        showToast(err.response?.data?.message || 'Failed to save user', 'error');
       } else {
-        setError('An unexpected error occurred');
+        showToast('An unexpected error occurred', 'error');
       }
     }
   };
@@ -264,11 +267,11 @@ const UserManagement: React.FC = () => {
     } catch (err) {
       setDeleting(false);
       setDeleteDialogOpen(false);
-      
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to delete user');
+        setError(err.message || 'Failed to delete role');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to delete role';
+        setError(errorMessage);
       }
     }
   };
@@ -289,9 +292,10 @@ const UserManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to activate user account');
+        setError(err.message || 'Failed to activate user account');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to activate user account';
+        setError(errorMessage);
       }
     }
   };

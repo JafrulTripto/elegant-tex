@@ -57,9 +57,10 @@ export const useUserData = (
       } catch (err) {
         setLoading(false);
         if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Failed to fetch roles');
+          setError(err.message || 'Failed to fetch roles');
         } else {
-          setError('An unexpected error occurred');
+          const errorMessage = (err as Error)?.message ?? 'Failed to fetch roles';
+          setError(errorMessage);
         }
       }
     };
@@ -98,9 +99,10 @@ export const useUserData = (
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to fetch users');
+        setError(err.message || 'Failed to fetch users');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to fetch users';
+        setError(errorMessage);
       }
     }
   }, [filterParams]);
@@ -132,9 +134,10 @@ export const useUserData = (
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to create user');
+        setError(err.message || 'Failed to create user');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to create user';
+        setError(errorMessage);
       }
       throw err;
     }
@@ -160,9 +163,10 @@ export const useUserData = (
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to update user');
+        setError(err.message || 'Failed to update user');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to update user';
+        setError(errorMessage);
       }
       throw err;
     }
@@ -181,9 +185,10 @@ export const useUserData = (
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to delete user');
+        setError(err.message || 'Failed to delete user');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to delete user';
+        setError(errorMessage);
       }
     }
   };
@@ -201,9 +206,10 @@ export const useUserData = (
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to verify user');
+        setError(err.message || 'Failed to verify user');
       } else {
-        setError('An unexpected error occurred');
+        const errorMessage = (err as Error)?.message ?? 'Failed to verify user';
+        setError(errorMessage);
       }
     }
   };
