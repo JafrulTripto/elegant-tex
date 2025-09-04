@@ -1,5 +1,6 @@
 package com.tripzin.eleganttex.repository;
 
+import com.tripzin.eleganttex.entity.BusinessUnit;
 import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderStatus;
 import com.tripzin.eleganttex.entity.OrderType;
@@ -42,6 +43,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
            "(:#{#startDate == null} = true OR o.deliveryDate >= :startDate) AND " +
            "(:#{#endDate == null} = true OR o.deliveryDate <= :endDate) AND " +
            "(:#{#marketplaceId == null} = true OR o.marketplace.id = :marketplaceId) AND " +
+           "(:#{#businessUnit == null or #businessUnit == ''} = true OR o.businessUnit = :businessUnit) AND " +
            "(:#{#customerName == null or #customerName == ''} = true OR LOWER(c.name) LIKE LOWER(CONCAT('%', :customerName, '%'))) AND " +
            "(:#{#orderNumber == null or #orderNumber == ''} = true OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :orderNumber, '%'))) AND " +
            "(:#{#deliveryChannel == null or #deliveryChannel == ''} = true OR LOWER(o.deliveryChannel) LIKE LOWER(CONCAT('%', :deliveryChannel, '%'))) AND " +
@@ -52,6 +54,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("marketplaceId") Long marketplaceId,
+            @Param("businessUnit") BusinessUnit businessUnit,
             @Param("customerName") String customerName,
             @Param("orderNumber") String orderNumber,
             @Param("deliveryChannel") String deliveryChannel,

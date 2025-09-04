@@ -30,7 +30,6 @@ import UserTable from './UserTable';
 import UserForm from './UserForm';
 import UserSearch from './UserSearch';
 import UserFilterDialog from './UserFilterDialog';
-import {useToast} from "../../contexts/ToastContext.tsx";
 
 interface UserFormData {
   phone: string;
@@ -44,8 +43,7 @@ interface UserFormData {
 
 const UserManagement: React.FC = () => {
   const theme = useTheme();
-  const { showToast } = useToast();
-
+  
   // State
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -224,7 +222,7 @@ const UserManagement: React.FC = () => {
           roles: formData.roleIds,
           password: formData.password
         });
-        showToast('User created successfully', 'success');
+        setSuccess('User created successfully');
       }
       
       // Refresh users
@@ -235,9 +233,10 @@ const UserManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        showToast(err.response?.data?.message || 'Failed to save user', 'error');
+        setError(err.message || 'Failed to save user');
       } else {
-        showToast('An unexpected error occurred', 'error');
+        const errorMessage = (err as Error)?.message ?? 'Failed to save user';
+        setError(errorMessage);
       }
     }
   };

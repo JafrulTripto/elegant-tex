@@ -33,6 +33,10 @@ public class Order {
     @Column(name = "order_type", nullable = false)
     private OrderType orderType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_unit", nullable = false)
+    private BusinessUnit businessUnit;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "marketplace_id")
     private Marketplace marketplace;

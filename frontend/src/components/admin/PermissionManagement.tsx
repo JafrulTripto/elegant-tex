@@ -50,10 +50,9 @@ const PermissionManagement: React.FC = () => {
       } catch (err) {
         setLoading(false);
         if (axios.isAxiosError(err)) {
-          setError(err.message || 'Failed to fetch permissions');
+          setError(err.response?.data?.message || 'Failed to fetch permissions');
         } else {
-          const errorMessage = (err as Error)?.message ?? 'Failed to fetch permissions';
-          setError(errorMessage);
+          setError('An unexpected error occurred');
         }
       }
     };
@@ -116,10 +115,9 @@ const PermissionManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.message || 'Failed to save permissions');
+        setError(err.response?.data?.message || 'Failed to save permission');
       } else {
-        const errorMessage = (err as Error)?.message ?? 'Failed to save permissions';
-        setError(errorMessage);
+        setError('An unexpected error occurred');
       }
     }
   };
@@ -144,10 +142,9 @@ const PermissionManagement: React.FC = () => {
     } catch (err) {
       setLoading(false);
       if (axios.isAxiosError(err)) {
-        setError(err.message || 'Failed to delete permission');
+        setError(err.response?.data?.message || 'Failed to delete permission');
       } else {
-        const errorMessage = (err as Error)?.message ?? 'Failed to delete permission';
-        setError(errorMessage);
+        setError('An unexpected error occurred');
       }
     }
   };

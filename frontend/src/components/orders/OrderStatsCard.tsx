@@ -24,6 +24,7 @@ import {
 import { getStatusColor, getDisplayStatus } from '../../utils/statusConfig';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 import orderService from '../../services/order.service';
 
 interface OrderStatusCount {
@@ -49,6 +50,7 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ onStatusClick }) => {
   const theme = useTheme();
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [orderStatusCounts, setOrderStatusCounts] = useState<OrderStatusCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -56,7 +58,7 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ onStatusClick }) => {
 
   useEffect(() => {
     fetchOrderStatusCounts();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
 
   const fetchOrderStatusCounts = async () => {
     try {
@@ -72,7 +74,8 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ onStatusClick }) => {
         false, // not current month only
         startDate,
         endDate,
-        currentOrderType === 'all' ? undefined : currentOrderType
+        currentOrderType === 'all' ? undefined : currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       setOrderStatusCounts(data || []);
@@ -192,6 +195,7 @@ const OrderStatsCard: React.FC<OrderStatsCardProps> = ({ onStatusClick }) => {
         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
           {currentRange.label} • {currentOrderType === 'all' ? 'All Orders' : 
            currentOrderType === 'marketplace' ? 'Marketplace' : 'Merchant'}
+          {selectedBusinessUnit && ` • ${selectedBusinessUnit}`}
         </Typography>
       </Box>
       

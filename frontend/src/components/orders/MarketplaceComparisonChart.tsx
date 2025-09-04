@@ -20,6 +20,7 @@ import { Bar } from 'react-chartjs-2';
 import orderService from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -40,13 +41,14 @@ const MarketplaceComparisonChart: React.FC = () => {
   const theme = useTheme();
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceOrderStatistics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMarketplaceOrderStatistics();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
 
   const fetchMarketplaceOrderStatistics = async () => {
     try {
@@ -62,7 +64,8 @@ const MarketplaceComparisonChart: React.FC = () => {
         false, // currentMonth - not used when we provide date range
         startDate,
         endDate,
-        currentOrderType
+        currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       setMarketplaceStats(data);

@@ -22,6 +22,7 @@ import { Line } from 'react-chartjs-2';
 import orderService, { MonthlyOrderData } from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -39,13 +40,14 @@ const LastMonthOrdersChart: React.FC = () => {
   const theme = useTheme();
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   const [orderData, setOrderData] = useState<MonthlyOrderData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrderData();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
 
   const fetchOrderData = async () => {
     try {
@@ -63,7 +65,8 @@ const LastMonthOrdersChart: React.FC = () => {
         false, // currentMonth - not used when we provide date range
         startDate,
         endDate,
-        currentOrderType
+        currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       // Convert to the expected format for this chart

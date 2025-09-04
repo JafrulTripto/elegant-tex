@@ -25,6 +25,7 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
     marketplaceId: orderData.marketplaceId,
     customerId: orderData.customerId,
     customerData: orderData.customerData,
+    businessUnit: orderData.businessUnit,
     // customerValidation is only used for frontend validation and doesn't need to be sent to the backend
     deliveryChannel: orderData.deliveryChannel,
     deliveryCharge: orderData.deliveryCharge,
@@ -86,6 +87,7 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
     marketplaceId: orderData.marketplaceId,
     customerId: orderData.customerId,
     customerData: orderData.customerData,
+    businessUnit: orderData.businessUnit,
     // customerValidation is only used for frontend validation and doesn't need to be sent to the backend
     deliveryChannel: orderData.deliveryChannel,
     deliveryCharge: orderData.deliveryCharge,
@@ -186,12 +188,14 @@ export const getOrderStatusCounts = async (
   currentMonth = true,
   startDate?: string,
   endDate?: string,
-  orderType?: string
+  orderType?: string,
+  businessUnit?: string
 ): Promise<OrderStatusCount[]> => {
   const params: any = { currentMonth };
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (orderType) params.orderType = orderType;
+  if (businessUnit) params.businessUnit = businessUnit;
   
   const response = await api.get(`${BASE_URL}/status-counts`, { params });
   return response.data;
@@ -227,12 +231,14 @@ export const getUserOrderStatistics = async (
   currentMonth = true,
   startDate?: string,
   endDate?: string,
-  orderType?: string
+  orderType?: string,
+  businessUnit?: string
 ): Promise<any[]> => {
   const params: any = { currentMonth };
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (orderType) params.orderType = orderType;
+  if (businessUnit) params.businessUnit = businessUnit;
   
   const response = await api.get(`${BASE_URL}/user-statistics`, { params });
   return response.data;
@@ -254,12 +260,14 @@ export const getMarketplaceOrderStatistics = async (
   currentMonth = true,
   startDate?: string,
   endDate?: string,
-  orderType?: string
+  orderType?: string,
+  businessUnit?: string
 ): Promise<any[]> => {
   const params: any = { currentMonth };
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (orderType) params.orderType = orderType;
+  if (businessUnit) params.businessUnit = businessUnit;
   
   const response = await api.get(`${BASE_URL}/marketplace-statistics`, { params });
   return response.data;
@@ -268,10 +276,12 @@ export const getMarketplaceOrderStatistics = async (
 export const getMarketplaceOrderStatisticsByMonth = async (
   month: number, 
   year: number,
-  orderType?: string
+  orderType?: string,
+  businessUnit?: string
 ): Promise<any[]> => {
   const params: any = { month, year };
   if (orderType) params.orderType = orderType;
+  if (businessUnit) params.businessUnit = businessUnit;
   
   const response = await api.get(`${BASE_URL}/marketplace-statistics`, { params });
   return response.data;
@@ -315,12 +325,14 @@ export const getMonthlyOrderCountAndAmount = async (
   currentMonth: boolean = true,
   startDate?: string,
   endDate?: string,
-  orderType?: string
+  orderType?: string,
+  businessUnit?: string
 ): Promise<MonthlyOrderCountAmount[]> => {
   const params: any = { month, year, currentMonth };
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (orderType) params.orderType = orderType;
+  if (businessUnit) params.businessUnit = businessUnit;
   
   const response = await api.get(`${BASE_URL}/monthly-count-amount`, { params });
   
@@ -358,16 +370,21 @@ export const getSalesData = async (
  * @param startDate start date in YYYY-MM-DD format
  * @param endDate end date in YYYY-MM-DD format
  * @param orderType order type filter (marketplace/merchant/all)
+ * @param businessUnit business unit filter (MIRPUR/TONGI)
  * @returns Object with totalOrders, totalSales, and deliveredOrders
  */
 export const getOrderStatisticsByDateRange = async (
   startDate: string,
   endDate: string,
-  orderType: string
+  orderType: string,
+  businessUnit?: string
 ): Promise<{ totalOrders: number; totalSales: number; deliveredOrders: number }> => {
   const params: any = { startDate, endDate };
   if (orderType && orderType !== 'all') {
     params.orderType = orderType;
+  }
+  if (businessUnit) {
+    params.businessUnit = businessUnit;
   }
   
   const response = await api.get(`${BASE_URL}/statistics-summary`, { params });

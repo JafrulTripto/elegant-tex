@@ -25,6 +25,7 @@ import { Bar } from 'react-chartjs-2';
 import orderService, { MonthlyOrderCountAmount } from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -253,6 +254,7 @@ const OrderCountAmountChart: React.FC = () => {
   const theme = useTheme();
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   const [chartData, setChartData] = useState<MonthlyOrderCountAmount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -275,7 +277,8 @@ const OrderCountAmountChart: React.FC = () => {
         false, // currentMonth - not used when we provide date range
         startDate,
         endDate,
-        currentOrderType
+        currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       setChartData(data);
@@ -288,7 +291,7 @@ const OrderCountAmountChart: React.FC = () => {
   
   useEffect(() => {
     fetchData();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
   
   // Format date for display
   const formatDate = (dateString: string) => {

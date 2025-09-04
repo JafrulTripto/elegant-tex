@@ -18,6 +18,7 @@ import {
 import orderService from '../../services/order.service';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 import TakaSymble from '../common/TakaSymble';
 
 interface UserOrderStatistics {
@@ -37,6 +38,7 @@ const UserOrdersTable: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   
   const [userStats, setUserStats] = useState<UserOrderStatistics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -48,7 +50,7 @@ const UserOrdersTable: React.FC = () => {
 
   useEffect(() => {
     fetchUserOrderStatistics();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
 
   const fetchUserOrderStatistics = async () => {
     try {
@@ -59,12 +61,13 @@ const UserOrdersTable: React.FC = () => {
       const startDate = currentRange.startDate.toISOString().split('T')[0];
       const endDate = currentRange.endDate.toISOString().split('T')[0];
       
-      // Use the enhanced API with date range and order type filtering
+      // Use the enhanced API with date range, order type, and business unit filtering
       const data = await orderService.getUserOrderStatistics(
         false, // currentMonth - not used when we provide date range
         startDate,
         endDate,
-        currentOrderType
+        currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       setUserStats(data);

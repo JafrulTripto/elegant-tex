@@ -156,13 +156,14 @@ public class OrderServiceImpl implements OrderService {
             String deliveryChannel,
             Double minAmount,
             Double maxAmount,
+            String businessUnit,
             Pageable pageable) {
         Long currentUserId = getCurrentUserId(null);
         boolean hasReadAllPermission = hasReadAllOrdersPermission();
         
         return orderSearchService.getOrdersByFilters(orderType, status, startDate, endDate, createdStartDate, 
                 createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, deliveryChannel, 
-                minAmount, maxAmount, currentUserId, hasReadAllPermission, pageable);
+                minAmount, maxAmount, businessUnit, currentUserId, hasReadAllPermission, pageable);
     }
 
     @Override

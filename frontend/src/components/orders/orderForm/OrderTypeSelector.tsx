@@ -5,9 +5,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Typography,
-  Paper,
-  Box
 } from '@mui/material';
 import { Field, FieldProps } from 'formik';
 import { OrderType, ORDER_TYPE_OPTIONS } from '../../../types/orderType';
@@ -24,12 +21,9 @@ const OrderTypeSelector: React.FC<OrderTypeSelectorProps> = ({
   setFieldValue
 }) => {
   return (
-    <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Order Type
-      </Typography>
+
       
-      <Box sx={{ mt: 2 }}>
+
         <Field name="orderType">
           {({ field }: FieldProps) => (
             <FormControl 
@@ -64,8 +58,6 @@ const OrderTypeSelector: React.FC<OrderTypeSelectorProps> = ({
             </FormControl>
           )}
         </Field>
-      </Box>
-    </Paper>
   );
 };
 

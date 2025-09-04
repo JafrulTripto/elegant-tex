@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 import orderService from '../../services/order.service';
 import TakaSymble from '../common/TakaSymble';
 
@@ -27,12 +28,13 @@ interface OrderStatistics {
 const ReactiveOrderStats: React.FC = () => {
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   const [stats, setStats] = useState<OrderStatistics>({ totalOrders: 0, totalSales: 0, deliveredOrders: 0 });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetchOrderStatistics();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
 
   const fetchOrderStatistics = async () => {
     try {
@@ -45,7 +47,8 @@ const ReactiveOrderStats: React.FC = () => {
       const data = await orderService.getOrderStatisticsByDateRange(
         startDate,
         endDate,
-        currentOrderType
+        currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       setStats({
@@ -82,6 +85,7 @@ const ReactiveOrderStats: React.FC = () => {
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                       {currentRange.label} • {currentOrderType === 'all' ? 'All Orders' : 
                        currentOrderType === 'marketplace' ? 'Marketplace' : 'Merchant'}
+                      {selectedBusinessUnit && ` • ${selectedBusinessUnit}`}
                     </Typography>
                   </>
                 )}
@@ -113,6 +117,7 @@ const ReactiveOrderStats: React.FC = () => {
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                       {currentRange.label} • {currentOrderType === 'all' ? 'All Orders' : 
                        currentOrderType === 'marketplace' ? 'Marketplace' : 'Merchant'}
+                      {selectedBusinessUnit && ` • ${selectedBusinessUnit}`}
                     </Typography>
                   </>
                 )}
@@ -144,6 +149,7 @@ const ReactiveOrderStats: React.FC = () => {
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                       {currentRange.label} • {currentOrderType === 'all' ? 'All Orders' : 
                        currentOrderType === 'marketplace' ? 'Marketplace' : 'Merchant'}
+                      {selectedBusinessUnit && ` • ${selectedBusinessUnit}`}
                     </Typography>
                   </>
                 )}

@@ -130,12 +130,13 @@ public class OrderController {
             @RequestParam(required = false) String deliveryChannel,
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String businessUnit,
             @PageableDefault(size = 10) Pageable pageable,
             @AuthenticationPrincipal UserDetails userDetails) {
         // The user ID will be extracted in the service layer from the security context
         Page<OrderResponse> orders = orderService.getOrdersByFilters(orderType, status, startDate, endDate, 
                 createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, 
-                deliveryChannel, minAmount, maxAmount, pageable);
+                deliveryChannel, minAmount, maxAmount, businessUnit, pageable);
         return ResponseEntity.ok(orders);
     }
 

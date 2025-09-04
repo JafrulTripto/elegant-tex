@@ -19,6 +19,7 @@ import { OrderStatusCount, ORDER_STATUS_DISPLAY } from '../../types/order';
 import { getStatusColor } from '../../utils/statusConfig';
 import { useTimeline } from '../../contexts/TimelineContext';
 import { useOrderType } from '../../contexts/OrderTypeContext';
+import { useBusinessUnit } from '../../contexts/BusinessUnitContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -31,13 +32,14 @@ const OrderStatusDistributionChart: React.FC = () => {
   const theme = useTheme();
   const { currentRange } = useTimeline();
   const { currentOrderType } = useOrderType();
+  const { selectedBusinessUnit } = useBusinessUnit();
   const [statusCounts, setStatusCounts] = useState<OrderStatusCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrderStatusCounts();
-  }, [currentRange, currentOrderType]);
+  }, [currentRange, currentOrderType, selectedBusinessUnit]);
 
   const fetchOrderStatusCounts = async () => {
     try {
@@ -53,7 +55,8 @@ const OrderStatusDistributionChart: React.FC = () => {
         false, // currentMonth - not used when we provide date range
         startDate,
         endDate,
-        currentOrderType
+        currentOrderType,
+        selectedBusinessUnit || undefined
       );
       
       setStatusCounts(data);

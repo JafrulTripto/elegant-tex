@@ -1,5 +1,6 @@
 package com.tripzin.eleganttex.dto.request;
 
+import com.tripzin.eleganttex.entity.BusinessUnit;
 import com.tripzin.eleganttex.entity.OrderType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
@@ -25,6 +26,9 @@ public class OrderRequest {
 
     @NotNull(message = "Order type is required")
     private OrderType orderType;
+    
+    @NotNull(message = "Business unit is required")
+    private BusinessUnit businessUnit;
     
     // Marketplace ID is only required for marketplace orders
     private Long marketplaceId;

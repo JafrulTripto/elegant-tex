@@ -1,6 +1,7 @@
 package com.tripzin.eleganttex.service.impl;
 
 import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.entity.BusinessUnit;
 import com.tripzin.eleganttex.entity.Order;
 import com.tripzin.eleganttex.entity.OrderProduct;
 import com.tripzin.eleganttex.entity.OrderStatus;
@@ -142,14 +143,16 @@ public class OrderSearchServiceImpl implements OrderSearchService {
             String deliveryChannel,
             Double minAmount,
             Double maxAmount,
+            String businessUnit,
             Long currentUserId,
             boolean hasReadAllPermission,
             Pageable pageable) {
-        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, createdStartDate={}, createdEndDate={}, marketplaceId={}, isDirectMerchant={}, customerName={}, orderNumber={}, deliveryChannel={}, minAmount={}, maxAmount={}, userId={}, hasReadAllPermission={}",
-                orderTypeStr, statusStr, startDate, endDate, createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, currentUserId, hasReadAllPermission);
+        log.info("Getting orders by filters: orderType={}, status={}, startDate={}, endDate={}, createdStartDate={}, createdEndDate={}, marketplaceId={}, isDirectMerchant={}, customerName={}, orderNumber={}, deliveryChannel={}, minAmount={}, maxAmount={}, businessUnit={}, userId={}, hasReadAllPermission={}",
+                orderTypeStr, statusStr, startDate, endDate, createdStartDate, createdEndDate, marketplaceId, isDirectMerchant, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, businessUnit, currentUserId, hasReadAllPermission);
         
         OrderStatus status = statusStr != null ? OrderStatus.fromString(statusStr) : null;
         OrderType orderType = orderTypeStr != null ? OrderType.valueOf(orderTypeStr) : null;
+        BusinessUnit businessUnitEnum = businessUnit != null ? BusinessUnit.fromString(businessUnit) : null;
         
         // Handle direct merchant filtering
         if (isDirectMerchant != null && isDirectMerchant) {
@@ -166,7 +169,7 @@ public class OrderSearchServiceImpl implements OrderSearchService {
                 LocalDate filterStartDate = startDate != null ? startDate : createdStartDate;
                 LocalDate filterEndDate = endDate != null ? endDate : createdEndDate;
                 
-                return orderRepository.findByFilters(status, filterStartDate, filterEndDate, marketplaceId, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, pageable)
+                return orderRepository.findByFilters(status, filterStartDate, filterEndDate, marketplaceId, businessUnitEnum, customerName, orderNumber, deliveryChannel, minAmount, maxAmount, pageable)
                         .map(orderMapper::mapOrderToResponse);
             }
         } else {

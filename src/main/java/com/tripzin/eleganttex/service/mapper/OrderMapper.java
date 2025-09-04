@@ -86,6 +86,7 @@ public class OrderMapper {
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
                 .orderType(order.getOrderType().getDisplayName())
+                .businessUnit(order.getBusinessUnit().toString())
                 .marketplace(marketplaceResponse)
                 .customer(customerResponse)
                 .deliveryChannel(order.getDeliveryChannel())

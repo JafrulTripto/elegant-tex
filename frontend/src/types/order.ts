@@ -2,11 +2,13 @@ import { Marketplace } from './marketplace';
 import { Fabric } from './fabric';
 import { Customer } from './customer';
 import { OrderType } from './orderType';
+import { BusinessUnit } from './businessUnit';
 
 export interface Order {
   id: number;
   orderNumber: string;
   orderType: OrderType;
+  businessUnit: string;
   marketplace?: Marketplace;
   customer: Customer;
   deliveryChannel: string;
@@ -70,6 +72,7 @@ export interface OrderStatusHistory {
 
 export interface OrderFormData {
   orderType: OrderType;
+  businessUnit: BusinessUnit;
   marketplaceId?: number;
   customerId?: number;
   customerData?: {
@@ -106,6 +109,7 @@ export interface OrderProductFormData {
 
 export interface OrderFilterParams {
   orderType?: OrderType;
+  businessUnit?: string;
   status?: string;
   startDate?: string;
   endDate?: string;
@@ -206,6 +210,7 @@ export const DELIVERY_CHANNELS = [
 
 export interface OrderRequest {
   orderType: OrderType;
+  businessUnit: BusinessUnit;
   marketplaceId?: number;
   customerId?: number;
   customerData?: {

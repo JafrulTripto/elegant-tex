@@ -6,7 +6,7 @@ import {
   Container,
   Alert,
   CircularProgress,
-  Typography
+  Typography, Paper
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -16,6 +16,7 @@ import { OrderFormData, OrderProductFormData } from '../types/order';
 import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
 import { OrderType } from '../types/orderType';
+import { BusinessUnit } from '../types/businessUnit';
 import { Fabric } from '../types/fabric';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
@@ -27,6 +28,7 @@ import { canViewAllOrders } from '../utils/permissionUtils';
 import CustomerSelection from '../components/customers/CustomerSelection';
 import MarketplaceSelector from '../components/orders/orderForm/MarketplaceSelector';
 import OrderTypeSelector from '../components/orders/orderForm/OrderTypeSelector';
+import BusinessUnitSelector from '../components/common/BusinessUnitSelector';
 import DeliveryInformationSection from '../components/orders/orderForm/DeliveryInformationSection';
 import ProductFormSection from '../components/orders/orderForm/ProductFormSection';
 import OrderSummarySection from '../components/orders/orderForm/OrderSummarySection';
@@ -35,6 +37,9 @@ import OrderSummarySection from '../components/orders/orderForm/OrderSummarySect
 const OrderValidationSchema = Yup.object().shape({
   orderType: Yup.string()
     .required('Order type is required'),
+    
+  businessUnit: Yup.string()
+    .required('Business unit is required'),
     
   marketplaceId: Yup.number()
     .when('orderType', {
@@ -116,6 +121,7 @@ const OrderFormPage: React.FC = () => {
   // Initial form values - will be updated based on edit mode
   const getInitialValues = (): OrderFormData => ({
     orderType: OrderType.MARKETPLACE,
+    businessUnit: BusinessUnit.TONGI, // Default to TONGI as per requirements
     marketplaceId: 0,
     customerId: undefined,
     customerData: {
@@ -250,8 +256,23 @@ const OrderFormPage: React.FC = () => {
               mappedOrderType = orderData.orderType as OrderType;
             }
             
+            // Map business unit from API response to enum value
+            // API returns display labels like "Mirpur", "Tongi"
+            // We need to convert to enum values "MIRPUR", "TONGI"
+            let mappedBusinessUnit: BusinessUnit;
+            const businessUnitString = orderData.businessUnit as string;
+            if (businessUnitString === 'Mirpur') {
+              mappedBusinessUnit = BusinessUnit.MIRPUR;
+            } else if (businessUnitString === 'Tongi') {
+              mappedBusinessUnit = BusinessUnit.TONGI;
+            } else {
+              // Fallback - default to TONGI for existing orders
+              mappedBusinessUnit = BusinessUnit.TONGI;
+            }
+            
             const editFormValues: OrderFormData = {
               orderType: mappedOrderType,
+              businessUnit: mappedBusinessUnit,
               marketplaceId: orderData.marketplace?.id || 0,
               customerId: orderData.customer.id,
               customerData: {
@@ -448,22 +469,42 @@ const OrderFormPage: React.FC = () => {
           {({ values, errors, touched, setFieldValue, isSubmitting }) => (
             <Form noValidate>
               <Grid container spacing={3}>
-                {/* Order Type Selection */}
+                {/* Order Type, Marketplace, and Business Unit in the same row */}
                 <Grid size={{xs:12}}>
-                  <OrderTypeSelector
-                    touched={touched}
-                    errors={errors}
-                    setFieldValue={setFieldValue}
-                  />
-                </Grid>
-                
-                {/* Marketplace Selection */}
-                <Grid size={{xs:12}}>
-                  <MarketplaceSelector 
-                    marketplaces={marketplaces}
-                    touched={touched}
-                    errors={errors}
-                  />
+                  <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Order Information
+                    </Typography>
+                    <Box sx={{ mt: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{xs:12, md:4}}>
+                          <OrderTypeSelector
+                              touched={touched}
+                              errors={errors}
+                              setFieldValue={setFieldValue}
+                          />
+                        </Grid>
+
+                        <Grid size={{xs:12, md:4}}>
+                          <MarketplaceSelector
+                              marketplaces={marketplaces}
+                              touched={touched}
+                              errors={errors}
+                          />
+                        </Grid>
+
+                        <Grid size={{xs:12, md:4}}>
+                          <BusinessUnitSelector
+                              value={values.businessUnit}
+                              onChange={(value) => setFieldValue('businessUnit', value)}
+                              error={touched.businessUnit && Boolean(errors.businessUnit)}
+                              helperText={touched.businessUnit && errors.businessUnit ? String(errors.businessUnit) : undefined}
+                              required
+                          />
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Paper>
                 </Grid>
 
                 {/* Customer Selection */}

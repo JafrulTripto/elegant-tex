@@ -74,6 +74,7 @@ public interface OrderSearchService {
      * @param deliveryChannel delivery channel
      * @param minAmount minimum total amount
      * @param maxAmount maximum total amount
+     * @param businessUnit business unit (MIRPUR or TONGI)
      * @param currentUserId ID of the current user
      * @param hasReadAllPermission whether the user has permission to view all orders
      * @param pageable pagination information
@@ -93,6 +94,7 @@ public interface OrderSearchService {
             String deliveryChannel,
             Double minAmount,
             Double maxAmount,
+            String businessUnit,
             Long currentUserId,
             boolean hasReadAllPermission,
             Pageable pageable);

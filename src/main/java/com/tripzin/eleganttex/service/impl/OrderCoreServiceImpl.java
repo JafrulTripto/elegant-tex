@@ -4,6 +4,7 @@ import com.tripzin.eleganttex.dto.request.OrderProductRequest;
 import com.tripzin.eleganttex.dto.request.OrderRequest;
 import com.tripzin.eleganttex.dto.response.CustomerResponse;
 import com.tripzin.eleganttex.dto.response.OrderResponse;
+import com.tripzin.eleganttex.entity.BusinessUnit;
 import com.tripzin.eleganttex.entity.Customer;
 import com.tripzin.eleganttex.entity.Marketplace;
 import com.tripzin.eleganttex.entity.Order;
@@ -320,6 +321,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
                 .marketplace(marketplace)
                 .customer(customer)
                 .orderType(orderRequest.getOrderType())
+                .businessUnit(orderRequest.getBusinessUnit())
                 .deliveryChannel(orderRequest.getDeliveryChannel())
                 .deliveryCharge(orderRequest.getDeliveryCharge())
                 .deliveryDate(orderRequest.getDeliveryDate())
@@ -399,6 +401,7 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         order.setMarketplace(marketplace);
         order.setCustomer(customer);
         order.setOrderType(orderRequest.getOrderType());
+        order.setBusinessUnit(orderRequest.getBusinessUnit());
         order.setDeliveryChannel(orderRequest.getDeliveryChannel());
         order.setDeliveryCharge(orderRequest.getDeliveryCharge());
         order.setDeliveryDate(orderRequest.getDeliveryDate());

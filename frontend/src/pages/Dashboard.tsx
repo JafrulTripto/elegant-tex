@@ -40,20 +40,23 @@ import LastMonthOrdersChart from '../components/orders/LastMonthOrdersChart';
 import OrderCountAmountChart from '../components/orders/OrderCountAmountChart';
 import GlobalTimelineSelector from '../components/common/GlobalTimelineSelector';
 import GlobalOrderTypeToggle from '../components/common/GlobalOrderTypeToggle';
+import GlobalBusinessUnitSelector from '../components/common/GlobalBusinessUnitSelector';
 import ReactiveOrderStats from '../components/orders/ReactiveOrderStats';
 import { TimelineProvider } from '../contexts/TimelineContext';
 import { OrderTypeProvider } from '../contexts/OrderTypeContext';
+import { BusinessUnitProvider, useBusinessUnit } from '../contexts/BusinessUnitContext';
 import orderService from '../services/order.service';
 import marketplaceService from '../services/marketplace.service';
 import { Order } from '../types/order';
 import { getStatusColor } from '../utils/statusConfig';
 import { Marketplace } from '../types/marketplace';
 
-const Dashboard: React.FC = () => {
+const DashboardContent: React.FC = () => {
   const { authState } = useAuth();
   const { user } = authState;
   const navigate = useNavigate();
   const theme = useTheme();
+  const { selectedBusinessUnit, setSelectedBusinessUnit } = useBusinessUnit();
   
   // State for loading and error handling
   const [loading, setLoading] = useState(false);
@@ -144,7 +147,8 @@ const Dashboard: React.FC = () => {
   return (
     <TimelineProvider>
       <OrderTypeProvider>
-        <Box sx={{ flexGrow: 1 }}>
+        <BusinessUnitProvider>
+          <Box sx={{ flexGrow: 1 }}>
           <Box 
             display="flex" 
             justifyContent="space-between" 
@@ -200,6 +204,10 @@ const Dashboard: React.FC = () => {
                 Global Filters:
               </Typography>
               <GlobalOrderTypeToggle />
+              <GlobalBusinessUnitSelector 
+                value={selectedBusinessUnit || undefined}
+                onChange={(value) => setSelectedBusinessUnit(value ? value as any : null)}
+              />
             </Box>
             <GlobalTimelineSelector />
           </Box>
@@ -566,8 +574,17 @@ const Dashboard: React.FC = () => {
         </Grid>
       )}
         </Box>
+        </BusinessUnitProvider>
       </OrderTypeProvider>
     </TimelineProvider>
+  );
+};
+
+const Dashboard: React.FC = () => {
+  return (
+    <BusinessUnitProvider>
+      <DashboardContent />
+    </BusinessUnitProvider>
   );
 };
 
