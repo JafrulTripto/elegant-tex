@@ -38,8 +38,8 @@ const OrderFileUpload: React.FC<OrderFileUploadProps> = ({
   onFileSelect,
   selectedFiles,
   onRemoveFile,
-  maxFiles = 10,
-  maxFileSize = 5, // Default max file size: 5MB
+  maxFiles = 15,
+  maxFileSize = 15, // Default max file size: 5MB
   accept = 'image/*',
   multiple = true,
   disabled = false,
