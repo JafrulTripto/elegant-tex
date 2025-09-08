@@ -34,7 +34,7 @@ const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({
   onFileSelected,
   onImageRemove,
   accept = 'image/*',
-  maxSize = 5 * 1024 * 1024, // 5MB default
+  maxSize = 15 * 1024 * 1024, // 15MB default
   isLoading = false,
   error = null,
   previewUrl = null,
