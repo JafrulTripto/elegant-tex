@@ -5,7 +5,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 50MB
-      max-request-size: 50MB  
+      max-request-size: 50MB
   application:
     name: elegant-tex
   datasource:
@@ -39,6 +39,9 @@ spring:
           starttls:
             enable: true
 
+  jackson:
+    time-zone: Asia/Dhaka   # ✅ enforce GMT+6
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 900000
@@ -65,7 +68,7 @@ app:
   file-storage:
     upload-dir: ${FILE_UPLOAD_DIR:uploads}
     allowed-file-types: jpg,jpeg,png,gif
-    max-file-size: 52428800  # 50MB in bytes
+    max-file-size: 52428800
     use-s3-storage: ${USE_S3_STORAGE:false}
     s3-bucket-name: ${S3_BUCKET_NAME:}
     s3-region: ${S3_REGION:us-east-1}
