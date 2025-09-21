@@ -56,9 +56,9 @@ public class ExcelReportGenerator implements ReportGenerator {
     public ResponseEntity<Resource> generateReport(List<Order> orders, Map<String, Object> parameters) {
         log.info("Exporting {} orders to Excel", orders.size());
         
-        // Extract parameters
-        String status = (String) parameters.get("status");
-        String orderType = (String) parameters.get("orderType");
+        // Extract parameters with null safety
+        String status = parameters.get("status") != null ? (String) parameters.get("status") : null;
+        String orderType = parameters.get("orderType") != null ? (String) parameters.get("orderType") : null;
         LocalDate startDate = (LocalDate) parameters.get("startDate");
         LocalDate endDate = (LocalDate) parameters.get("endDate");
         

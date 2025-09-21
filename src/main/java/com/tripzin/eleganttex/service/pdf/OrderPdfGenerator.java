@@ -78,20 +78,8 @@ public class OrderPdfGenerator {
             PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
             PdfFont italicFont = PdfFontFactory.createFont(StandardFonts.TIMES_ITALIC);
 
-            // First page - Order details
+            // First page - Order details with product images
             createOrderDetailsPage(document, order, boldFont, regularFont, italicFont);
-
-            // Second page - Product details with images and descriptions
-            if (!order.getProducts().isEmpty()) {
-                // Add a new page for product details
-                document.add(new Paragraph("\n"));
-                document.add(new Paragraph("Product Details").setFont(boldFont).setFontSize(16)
-                        .setTextAlignment(TextAlignment.CENTER)
-                        .setFontColor(PRIMARY_COLOR));
-                document.add(new Paragraph("\n"));
-
-                createProductDetailsPage(document, order, boldFont, regularFont, italicFont);
-            }
 
             // Close document
             document.close();
@@ -437,128 +425,169 @@ public class OrderPdfGenerator {
 
         document.add(totalsTable);
 
-        // Add page break for images
-        document.add(new AreaBreak());
+        // Add product images starting from first page (8 images per page in 4x2 grid)
+        addProductImagesGrid(document, order, boldFont, regularFont, true);
     }
 
     /**
-     * Creates the second page with product images in a grid layout with descriptions
+     * Add product images in a 4x2 grid layout (8 images per page)
+     * 
+     * @param document The PDF document
+     * @param order The order containing products and images
+     * @param boldFont Bold font for headers
+     * @param regularFont Regular font for captions
+     * @param isFirstPage Whether this is being added to the first page
      */
-    private void createProductDetailsPage(Document document, Order order, PdfFont boldFont, PdfFont regularFont, PdfFont italicFont) throws IOException {
-        // Collect all images from all products with their associated product information
+    private void addProductImagesGrid(Document document, Order order, PdfFont boldFont, PdfFont regularFont, boolean isFirstPage) {
+        // Collect all images from all products
         List<ProductImageInfo> allProductImages = new ArrayList<>();
-        int number = 1;
+        int productNumber = 1;
+        
         for (OrderProduct product : order.getProducts()) {
             for (OrderProductImage orderImage : product.getImages()) {
                 allProductImages.add(new ProductImageInfo(
-                        number,
+                        productNumber,
                         orderImage,
                         product.getProductType().getName(),
                         product.getDescription(),
                         product.getFabric()
                 ));
             }
-            number++;
+            productNumber++;
         }
 
         if (allProductImages.isEmpty()) {
-            document.add(new Paragraph("No product images available")
-                    .setFont(regularFont)
-                    .setFontSize(12)
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setFontColor(ColorConstants.GRAY));
-            return;
+            return; // No images to display
         }
 
-        // Create a 2-column grid layout for images
-        Table imageGrid = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
-                .setWidth(UnitValue.createPercentValue(100))
-                .setMarginBottom(5);
-
-        for (int i = 0; i < allProductImages.size(); i++) {
-            ProductImageInfo imageInfo = allProductImages.get(i);
-
-            // Create cell for each image
-            Cell imageCell = new Cell()
-                    .setBorder(null)
-                    .setPadding(3)
-                    .setTextAlignment(TextAlignment.CENTER);
-
-            String description = (imageInfo.description != null && !imageInfo.description.isBlank())
-                    ? imageInfo.fabric.getName()+ " - " +imageInfo.description.trim()
-                    : "No description";
-
-            try {
-                // Get image data from storage
-                FileStorage fileStorage = fileStorageRepository.findById(imageInfo.orderImage.getImageId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageInfo.orderImage.getImageId()));
-
-                byte[] imageData;
-                if (fileStorageConfig.isUseS3Storage()) {
-                    imageData = s3Service.downloadFile(fileStorage.getFilePath());
-                } else {
-                    java.nio.file.Path imagePath = fileStorageConfig.getUploadPath()
-                            .resolve(fileStorage.getFilePath());
-                    imageData = java.nio.file.Files.readAllBytes(imagePath);
-                }
-
-                // Create image
-                ImageData data = ImageDataFactory.create(imageData);
-                Image img = new Image(data);
-
-                // Scale image to fit in grid cell - increased dimensions for bigger images
-                float maxWidth = 320;
-                float maxHeight = 280;
-
-                float imgWidth = img.getImageWidth();
-                float imgHeight = img.getImageHeight();
-                float widthRatio = maxWidth / imgWidth;
-                float heightRatio = maxHeight / imgHeight;
-                float scaleFactor = Math.min(widthRatio, heightRatio);
-
-                img.scale(scaleFactor, scaleFactor);
-                img.setHorizontalAlignment(HorizontalAlignment.CENTER);
-
-                imageCell.add(img);
-
-                // Add description under the image
-
-
-                String caption = "Product " + imageInfo.productNumber + " : " + imageInfo.productType + " - " + description;
-
-                imageCell.add(new Paragraph(caption)
-                        .setFont(regularFont)
-                        .setFontSize(10)
-                        .setTextAlignment(TextAlignment.CENTER)
-                        .setFontColor(SECONDARY_COLOR)
-                        .setMarginTop(2));
-
-            } catch (Exception e) {
-                log.error("Error adding image to PDF: {}", e.getMessage());
-                imageCell.add(new Paragraph("Image not available")
-                        .setFontColor(ColorConstants.GRAY)
-                        .setFontSize(10)
-                        .setTextAlignment(TextAlignment.CENTER));
-
-                String caption = "Product " + imageInfo.productNumber + " : " + imageInfo.productType + " - " + description;
-
-                imageCell.add(new Paragraph(caption)
-                        .setFont(regularFont)
+        int currentImageIndex = 0;
+        int pageNumber = 1;
+        
+        while (currentImageIndex < allProductImages.size()) {
+            // Add header for images section (only on first occurrence)
+            if (currentImageIndex == 0) {
+                document.add(new Paragraph("").setMarginBottom(isFirstPage ? 4 : 8));
+                document.add(new Paragraph("Product Images")
+                        .setFont(boldFont)
                         .setFontSize(14)
                         .setTextAlignment(TextAlignment.CENTER)
-                        .setFontColor(SECONDARY_COLOR)
-                        .setMarginTop(5));
+                        .setFontColor(PRIMARY_COLOR)
+                        .setMarginBottom(4));
             }
 
-            imageGrid.addCell(imageCell);
+            // Create a 4x2 grid (8 images per page)
+            Table imageGrid = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1, 1}))
+                    .setWidth(UnitValue.createPercentValue(100))
+                    .setMarginBottom(3);
 
-            // If we have an odd number of images and this is the last one, add an empty cell
-            if (i == allProductImages.size() - 1 && allProductImages.size() % 2 == 1) {
-                imageGrid.addCell(new Cell().setBorder(null));
+            // Add up to 8 images (2 rows of 4)
+            int imagesOnThisPage = Math.min(8, allProductImages.size() - currentImageIndex);
+            
+            for (int row = 0; row < 2; row++) {
+                for (int col = 0; col < 4; col++) {
+                    int imageIndex = currentImageIndex + (row * 4) + col;
+                    
+                    Cell imageCell = new Cell()
+                            .setBorder(null)
+                            .setPadding(1) // Reduced padding for tighter spacing
+                            .setTextAlignment(TextAlignment.CENTER);
+
+                    if (imageIndex < allProductImages.size() && imageIndex < currentImageIndex + imagesOnThisPage) {
+                        ProductImageInfo imageInfo = allProductImages.get(imageIndex);
+                        
+                        try {
+                            // Get image data from storage
+                            FileStorage fileStorage = fileStorageRepository.findById(imageInfo.orderImage.getImageId())
+                                    .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageInfo.orderImage.getImageId()));
+
+                            byte[] imageData;
+                            if (fileStorageConfig.isUseS3Storage()) {
+                                imageData = s3Service.downloadFile(fileStorage.getFilePath());
+                            } else {
+                                java.nio.file.Path imagePath = fileStorageConfig.getUploadPath()
+                                        .resolve(fileStorage.getFilePath());
+                                imageData = java.nio.file.Files.readAllBytes(imagePath);
+                            }
+
+                            // Create image
+                            ImageData data = ImageDataFactory.create(imageData);
+                            Image img = new Image(data);
+
+                            // Optimized image size for 4x2 grid - larger than previous 4x1 layout
+                            float maxWidth = 140;
+                            float maxHeight = 120;
+
+                            float imgWidth = img.getImageWidth();
+                            float imgHeight = img.getImageHeight();
+                            float widthRatio = maxWidth / imgWidth;
+                            float heightRatio = maxHeight / imgHeight;
+                            float scaleFactor = Math.min(widthRatio, heightRatio);
+
+                            img.scale(scaleFactor, scaleFactor);
+                            img.setHorizontalAlignment(HorizontalAlignment.CENTER);
+
+                            imageCell.add(img);
+
+                            // Add product information caption in format: "Product 1 : Oven Cover - Purple velvet - This is desc"
+                            String description = (imageInfo.description != null && !imageInfo.description.isBlank())
+                                    ? imageInfo.description.trim()
+                                    : "No description";
+                            
+                            // Build full caption with product type, fabric, and description
+                            StringBuilder captionBuilder = new StringBuilder();
+                            captionBuilder.append("Product ").append(imageInfo.productNumber).append(" : ");
+                            captionBuilder.append(imageInfo.productType).append(" - ");
+                            captionBuilder.append(imageInfo.fabric.getName()).append(" - ");
+                            captionBuilder.append(description);
+                            
+                            String caption = captionBuilder.toString();
+                            
+                            // Truncate if too long for display (keep reasonable length)
+                            if (caption.length() > 50) {
+                                caption = caption.substring(0, 47) + "...";
+                            }
+                            
+                            imageCell.add(new Paragraph(caption)
+                                    .setFont(regularFont)
+                                    .setFontSize(8) // Slightly larger font since we removed product details page
+                                    .setTextAlignment(TextAlignment.CENTER)
+                                    .setFontColor(SECONDARY_COLOR)
+                                    .setMarginTop(1));
+
+                        } catch (Exception e) {
+                            log.error("Error adding image to PDF grid: {}", e.getMessage());
+                            imageCell.add(new Paragraph("Image\nnot available")
+                                    .setFontColor(ColorConstants.GRAY)
+                                    .setFontSize(7)
+                                    .setTextAlignment(TextAlignment.CENTER));
+                            
+                            String caption = "P" + imageInfo.productNumber;
+                            imageCell.add(new Paragraph(caption)
+                                    .setFont(regularFont)
+                                    .setFontSize(7)
+                                    .setTextAlignment(TextAlignment.CENTER)
+                                    .setFontColor(SECONDARY_COLOR)
+                                    .setMarginTop(1));
+                        }
+                    } else {
+                        // Empty cell for remaining slots
+                        imageCell.add(new Paragraph(""));
+                    }
+
+                    imageGrid.addCell(imageCell);
+                }
+            }
+
+            document.add(imageGrid);
+            currentImageIndex += imagesOnThisPage;
+
+            // Add page break if there are more images and we're not on the last batch
+            if (currentImageIndex < allProductImages.size()) {
+                document.add(new AreaBreak());
+                pageNumber++;
+                isFirstPage = false; // Subsequent pages are not first page
             }
         }
-
-        document.add(imageGrid);
     }
 
     /**
