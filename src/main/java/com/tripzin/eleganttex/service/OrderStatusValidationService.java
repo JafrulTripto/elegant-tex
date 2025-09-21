@@ -32,7 +32,7 @@ public class OrderStatusValidationService {
             Set.of(OrderStatus.BOOKING, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
 
         VALID_TRANSITIONS.put(OrderStatus.BOOKING,
-                Set.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
+                Set.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED, OrderStatus.ON_HOLD, OrderStatus.RETURNED));
 
         VALID_TRANSITIONS.put(OrderStatus.DELIVERED,
             Set.of(OrderStatus.RETURNED));

@@ -90,7 +90,7 @@ public class OrderReportServiceImpl implements OrderReportService {
         orders = orderRepository.findByFiltersForExcel(statusStr, orderType, startDate, endDate);
         // Create parameters map
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("status", statusStr);
+        parameters.put("status", statusStr != null ? statusStr.name() : null);
         parameters.put("orderType", orderType != null ? orderType.name() : null);
         parameters.put("startDate", startDate);
         parameters.put("endDate", endDate);
