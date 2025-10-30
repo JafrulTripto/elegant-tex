@@ -33,7 +33,7 @@ variable "droplet_name" {
 variable "droplet_size" {
   description = "Size of the DigitalOcean droplet"
   type        = string
-  default     = "s-1vcpu-2gb"
+  default     = "s-1vcpu-1gb"
 }
 
 variable "droplet_region" {

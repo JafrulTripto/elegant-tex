@@ -60,7 +60,7 @@ variable "enable_monitoring" {
 variable "enable_backups" {
   description = "Enable automated backups"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "alert_email" {
