@@ -22,6 +22,7 @@ public class OrderProductResponse {
     private Integer quantity;
     private BigDecimal price;
     private String description;
+    private String styleCode;
     private BigDecimal subtotal;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -45,6 +46,7 @@ public class OrderProductResponse {
     public static class FabricResponse {
         private Long id;
         private String name;
+        private String fabricCode;
         private Long imageId;
     }
 }

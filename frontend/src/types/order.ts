@@ -37,6 +37,7 @@ export interface OrderProduct {
   quantity: number;
   price: number;
   description?: string;
+  styleCode?: string;
   subtotal?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -97,6 +98,7 @@ export interface OrderProductFormData {
   quantity: number;
   price: number;
   description?: string;
+  styleCode?: string;
   imageIds?: number[];
   tempImageBase64?: string[];
   tempImages?: File[];
@@ -233,6 +235,7 @@ export interface OrderProductRequest {
   quantity: number;
   price: number;
   description?: string;
+  styleCode?: string;
   imageIds?: number[];
   tempImageBase64?: string[];
 }

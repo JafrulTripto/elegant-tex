@@ -11,12 +11,14 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { OrderProductFormData } from '../../../types/order';
 import { ProductType } from '../../../types/productType';
 import { Fabric } from '../../../types/fabric';
+import { StyleCode } from '../../../types/styleCode';
 import ProductFormItem from './ProductFormItem';
 
 interface ProductFormSectionProps {
   products: OrderProductFormData[];
   productTypes: ProductType[];
   fabrics: Fabric[];
+  styleCodes: StyleCode[];
   handleFabricListScroll: (event: React.UIEvent<HTMLUListElement>) => void;
   loadingFabrics: boolean;
   touched: any;
@@ -29,6 +31,7 @@ const ProductFormSection: React.FC<ProductFormSectionProps> = memo(({
   products,
   productTypes,
   fabrics,
+  styleCodes,
   handleFabricListScroll,
   loadingFabrics,
   touched,
@@ -60,6 +63,7 @@ const ProductFormSection: React.FC<ProductFormSectionProps> = memo(({
           index={index}
           productTypes={productTypes}
           fabrics={fabrics}
+          styleCodes={styleCodes}
           handleFabricListScroll={handleFabricListScroll}
           loadingFabrics={loadingFabrics}
           canDelete={products.length > 1}

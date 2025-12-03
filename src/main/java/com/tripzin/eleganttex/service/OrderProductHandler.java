@@ -60,6 +60,7 @@ public class OrderProductHandler {
                 .quantity(productRequest.getQuantity())
                 .price(productRequest.getPrice())
                 .description(productRequest.getDescription())
+            .styleCode(productRequest.getStyleCode())
                 .build();
         
         OrderProduct savedProduct = orderProductRepository.save(product);
@@ -92,6 +93,7 @@ public class OrderProductHandler {
         existingProduct.setQuantity(productRequest.getQuantity());
         existingProduct.setPrice(productRequest.getPrice());
         existingProduct.setDescription(productRequest.getDescription());
+        existingProduct.setStyleCode(productRequest.getStyleCode());
         
         OrderProduct savedProduct = orderProductRepository.save(existingProduct);
         

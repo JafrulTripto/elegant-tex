@@ -12,13 +12,15 @@ import {
   MenuItem,
   Select,
   TextField,
-  Typography
+  Typography,
+  Autocomplete
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { Field, FieldProps } from 'formik';
 import { OrderProductFormData } from '../../../types/order';
 import { ProductType } from '../../../types/productType';
 import { Fabric } from '../../../types/fabric';
+import { StyleCode } from '../../../types/styleCode';
 import OrderFileUpload from '../OrderFileUpload';
 import OrderImagePreview from '../OrderImagePreview';
 import FabricSelector from './FabricSelector';
@@ -29,6 +31,7 @@ interface ProductFormItemProps {
   index: number;
   productTypes: ProductType[];
   fabrics: Fabric[];
+  styleCodes: StyleCode[];
   handleFabricListScroll: (event: React.UIEvent<HTMLUListElement>) => void;
   loadingFabrics: boolean;
   canDelete: boolean;
@@ -43,6 +46,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
   index,
   productTypes,
   fabrics,
+  styleCodes,
   handleFabricListScroll,
   loadingFabrics,
   canDelete,
@@ -177,6 +181,32 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
                   required
                 />
               )}
+            </Field>
+          </Grid>
+          <Grid item xs={12}>
+            <Field name={`products[${index}].styleCode`}>
+              {({ field, meta }: FieldProps) => {
+                const selectedStyleCode = styleCodes.find(sc => sc.code === field.value);
+                return (
+                  <Autocomplete
+                    value={selectedStyleCode || null}
+                    onChange={(_, newValue) => {
+                      setFieldValue(field.name, newValue?.code || '');
+                    }}
+                    options={styleCodes}
+                    getOptionLabel={(option) => `${option.code} - ${option.name}`}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Style Code (Optional)"
+                        error={meta.touched && Boolean(meta.error)}
+                        helperText={meta.touched && meta.error}
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.code === value.code}
+                  />
+                );
+              }}
             </Field>
           </Grid>
           <Grid item xs={12}>

@@ -17,10 +17,12 @@ import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
 import { OrderType } from '../types/orderType';
 import { Fabric } from '../types/fabric';
+import { StyleCode } from '../types/styleCode';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
 import * as fabricService from '../services/fabric.service';
 import * as productTypeService from '../services/productType.service';
+import * as styleCodeService from '../services/styleCode.service';
 import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
@@ -142,6 +144,7 @@ const OrderFormPage: React.FC = () => {
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [styleCodes, setStyleCodes] = useState<StyleCode[]>([]);
   const [formValues, setFormValues] = useState<OrderFormData>(getInitialValues());
   
   // Fabric pagination state
@@ -189,6 +192,10 @@ const OrderFormPage: React.FC = () => {
         // Load active product types
         const productTypesData = await productTypeService.getActiveProductTypes();
         setProductTypes(productTypesData);
+        
+        // Load active style codes
+        const styleCodesData = await styleCodeService.getActiveStyleCodes();
+        setStyleCodes(styleCodesData);
         
         // If edit mode, load order data
         if (isEditMode && id) {
@@ -508,6 +515,7 @@ const OrderFormPage: React.FC = () => {
                     products={values.products}
                     productTypes={productTypes}
                     fabrics={fabrics}
+                    styleCodes={styleCodes}
                     handleFabricListScroll={handleFabricListScroll}
                     loadingFabrics={loadingFabrics}
                     touched={touched}

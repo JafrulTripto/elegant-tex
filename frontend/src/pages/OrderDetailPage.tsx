@@ -808,7 +808,7 @@ const OrderDetailPage: React.FC = () => {
                     
                     <Divider sx={{ mb: 2 }} />
                     
-                    {/* Fabric with image - horizontal layout */}
+                    {/* Fabric with image and codes - horizontal layout */}
                     <Box 
                       sx={{ 
                         display: 'flex',
@@ -849,6 +849,18 @@ const OrderDetailPage: React.FC = () => {
                         <Typography variant="body1" fontWeight="medium">
                           {product.fabric.name}
                         </Typography>
+                        <Box display="flex" gap={2} mt={0.5}>
+                          {product.fabric.fabricCode && (
+                            <Typography variant="body2" color="textSecondary">
+                              Code: {product.fabric.fabricCode}
+                            </Typography>
+                          )}
+                          {product.styleCode && (
+                            <Typography variant="body2" color="textSecondary">
+                              Style: {product.styleCode}
+                            </Typography>
+                          )}
+                        </Box>
                         {product.fabric.tags && product.fabric.tags.length > 0 && (
                           <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {product.fabric.tags.map(tag => (

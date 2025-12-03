@@ -46,6 +46,9 @@ public class OrderProduct {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "style_code")
+    private String styleCode;
+
     @Column(name = "subtotal", nullable = false)
     private BigDecimal subtotal;
 
