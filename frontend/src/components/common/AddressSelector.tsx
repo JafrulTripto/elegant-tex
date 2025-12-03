@@ -146,15 +146,16 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="subtitle2" fontWeight={600} gutterBottom>
         Address Information
       </Typography>
       
-      <Grid container spacing={2}>
+      <Grid container spacing={1.5}>
         {/* Address Line - Always full width at the top */}
         <Grid item xs={12}>
           <TextField
             fullWidth
+            size="small"
             label={`Address Line ${required ? '*' : ''}`}
             value={value.addressLine}
             onChange={handleAddressLineChange}
@@ -169,7 +170,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
 
         {/* Division Selector - Responsive grid */}
         <Grid item xs={12} sm={6} md={6} lg={3}>
-          <FormControl fullWidth error={!!error?.divisionId} disabled={disabled}>
+          <FormControl fullWidth size="small" error={!!error?.divisionId} disabled={disabled}>
             <InputLabel>Division {required && '*'}</InputLabel>
             <Select
               value={value.divisionId || ''}
@@ -197,6 +198,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
         <Grid item xs={12} sm={6} md={6} lg={3}>
           <FormControl 
             fullWidth 
+            size="small"
             error={!!error?.districtId} 
             disabled={disabled || !value.divisionId || loading.districts}
           >
@@ -227,6 +229,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
         <Grid item xs={12} sm={6} md={6} lg={3}>
           <FormControl 
             fullWidth 
+            size="small"
             error={!!error?.upazilaId} 
             disabled={disabled || !value.districtId || loading.upazilas}
           >
@@ -257,6 +260,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
         <Grid item xs={12} sm={6} md={6} lg={3}>
           <TextField
             fullWidth
+            size="small"
             label="Postal Code"
             value={value.postalCode || ''}
             onChange={handlePostalCodeChange}

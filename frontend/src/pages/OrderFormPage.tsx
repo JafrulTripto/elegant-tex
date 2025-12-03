@@ -6,7 +6,9 @@ import {
   Container,
   Alert,
   CircularProgress,
-  Typography
+  Typography,
+  Paper,
+  Divider
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -454,23 +456,31 @@ const OrderFormPage: React.FC = () => {
         >
           {({ values, errors, touched, setFieldValue, isSubmitting }) => (
             <Form noValidate>
-              <Grid container spacing={3}>
-                {/* Order Type Selection */}
+              <Grid container spacing={2.5}>
+                {/* Order Configuration Section */}
                 <Grid size={{xs:12}}>
-                  <OrderTypeSelector
-                    touched={touched}
-                    errors={errors}
-                    setFieldValue={setFieldValue}
-                  />
-                </Grid>
-                
-                {/* Marketplace Selection */}
-                <Grid size={{xs:12}}>
-                  <MarketplaceSelector 
-                    marketplaces={marketplaces}
-                    touched={touched}
-                    errors={errors}
-                  />
+                  <Paper sx={{ p: 2.5 }}>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      Order Configuration
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Grid container spacing={1.5}>
+                      <Grid size={{xs:12, sm:6}}>
+                        <OrderTypeSelector
+                          touched={touched}
+                          errors={errors}
+                          setFieldValue={setFieldValue}
+                        />
+                      </Grid>
+                      <Grid size={{xs:12, sm:6}}>
+                        <MarketplaceSelector 
+                          marketplaces={marketplaces}
+                          touched={touched}
+                          errors={errors}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
                 </Grid>
 
                 {/* Customer Selection */}
@@ -525,21 +535,24 @@ const OrderFormPage: React.FC = () => {
                   />
                   
                   {/* Order Summary */}
-                  <OrderSummarySection
-                    products={values.products}
-                    deliveryCharge={values.deliveryCharge}
-                  />
+                  <Box sx={{ mt: 2 }}>
+                    <OrderSummarySection
+                      products={values.products}
+                      deliveryCharge={values.deliveryCharge}
+                    />
+                  </Box>
                 </Grid>
 
                 {/* Submit Button */}
                 <Grid size={{xs:12}}>
-                  <Box display="flex" justifyContent="flex-end">
+                  <Box display="flex" justifyContent="flex-end" sx={{ mt: 1 }}>
                     <Button
                       variant="contained"
                       color="primary"
                       size="large"
                       type="submit"
                       disabled={isSubmitting}
+                      sx={{ minWidth: 200 }}
                     >
                       {isSubmitting ? 'Saving...' : isEditMode ? 'Update Order' : 'Create Order'}
                     </Button>

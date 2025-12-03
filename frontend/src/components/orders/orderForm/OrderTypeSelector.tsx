@@ -1,13 +1,11 @@
 import React from 'react';
 import {
+  Box,
   FormControl,
   FormHelperText,
   InputLabel,
   MenuItem,
-  Select,
-  Typography,
-  Paper,
-  Box
+  Select
 } from '@mui/material';
 import { Field, FieldProps } from 'formik';
 import { OrderType, ORDER_TYPE_OPTIONS } from '../../../types/orderType';
@@ -24,48 +22,43 @@ const OrderTypeSelector: React.FC<OrderTypeSelectorProps> = ({
   setFieldValue
 }) => {
   return (
-    <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Order Type
-      </Typography>
-      
-      <Box sx={{ mt: 2 }}>
-        <Field name="orderType">
-          {({ field }: FieldProps) => (
-            <FormControl 
-              fullWidth 
-              error={touched.orderType && Boolean(errors.orderType)}
+    <Box sx={{ mb: 0 }}>
+      <Field name="orderType">
+        {({ field }: FieldProps) => (
+          <FormControl 
+            fullWidth
+            size="small"
+            error={touched.orderType && Boolean(errors.orderType)}
+          >
+            <InputLabel id="order-type-label">Order Type</InputLabel>
+            <Select
+              {...field}
+              labelId="order-type-label"
+              id="orderType"
+              label="Order Type"
+              onChange={(e) => {
+                // Update the orderType field
+                setFieldValue('orderType', e.target.value);
+                
+                // If changing to MERCHANT, clear the marketplaceId
+                if (e.target.value === OrderType.MERCHANT) {
+                  setFieldValue('marketplaceId', undefined);
+                }
+              }}
             >
-              <InputLabel id="order-type-label">Order Type</InputLabel>
-              <Select
-                {...field}
-                labelId="order-type-label"
-                id="orderType"
-                label="Order Type"
-                onChange={(e) => {
-                  // Update the orderType field
-                  setFieldValue('orderType', e.target.value);
-                  
-                  // If changing to MERCHANT, clear the marketplaceId
-                  if (e.target.value === OrderType.MERCHANT) {
-                    setFieldValue('marketplaceId', undefined);
-                  }
-                }}
-              >
-                {ORDER_TYPE_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              {touched.orderType && errors.orderType && (
-                <FormHelperText error>{errors.orderType}</FormHelperText>
-              )}
-            </FormControl>
-          )}
-        </Field>
-      </Box>
-    </Paper>
+              {ORDER_TYPE_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            {touched.orderType && errors.orderType && (
+              <FormHelperText error>{errors.orderType}</FormHelperText>
+            )}
+          </FormControl>
+        )}
+      </Field>
+    </Box>
   );
 };
 

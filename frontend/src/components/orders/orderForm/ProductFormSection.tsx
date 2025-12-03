@@ -40,11 +40,12 @@ const ProductFormSection: React.FC<ProductFormSectionProps> = memo(({
   createEmptyProduct
 }) => {
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Products</Typography>
+    <Paper sx={{ p: 2.5 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="subtitle1" fontWeight={600}>Products</Typography>
         <Button
-          variant="outlined"
+          variant="contained"
+          size="small"
           startIcon={<AddIcon />}
           onClick={() => {
             const updatedProducts = [...products, createEmptyProduct()];

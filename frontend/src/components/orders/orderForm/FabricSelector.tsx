@@ -66,6 +66,7 @@ const FabricSelector: React.FC<FabricSelectorProps> = memo(({
 
   return (
     <Autocomplete
+      size="small"
       options={fabrics}
       getOptionLabel={(option) => option.name}
       isOptionEqualToValue={(option, value) => option.id === value.id}
