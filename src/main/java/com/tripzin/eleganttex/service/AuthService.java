@@ -6,7 +6,6 @@ import com.tripzin.eleganttex.dto.request.TokenRefreshRequest;
 import com.tripzin.eleganttex.dto.response.JwtResponse;
 import com.tripzin.eleganttex.dto.response.MessageResponse;
 import com.tripzin.eleganttex.dto.response.TokenRefreshResponse;
-import com.tripzin.eleganttex.constants.RoleConstants;
 import com.tripzin.eleganttex.entity.Role;
 import com.tripzin.eleganttex.entity.User;
 import com.tripzin.eleganttex.entity.VerificationToken;

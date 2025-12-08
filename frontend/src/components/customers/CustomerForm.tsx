@@ -146,23 +146,24 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   }, [addressData]);
 
   return (
-    <Box sx={{ pt: 2 }}>
+    <Box sx={{ pt: 1.5 }}>
       {submitError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 1.5 }}>
           {submitError}
         </Alert>
       )}
       
       {Object.keys(validationErrors).length > 0 && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert severity="warning" sx={{ mb: 1.5 }}>
           Please fix the validation errors before submitting.
         </Alert>
       )}
       
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+      <Grid container spacing={1.5}>
+        <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
+            size="small"
             label="Name"
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
@@ -172,9 +173,10 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             disabled={isSubmitting}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
+            size="small"
             label="Phone"
             value={formData.phone}
             onChange={(e) => handleChange('phone', e.target.value)}
@@ -185,8 +187,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={isSubmitting}>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth size="small" disabled={isSubmitting}>
             <InputLabel id="customer-type-label">Customer Type</InputLabel>
             <Select
               labelId="customer-type-label"
@@ -198,7 +200,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
               <MenuItem value={CustomerType.MERCHANT}>Merchant</MenuItem>
             </Select>
             <FormHelperText>
-              Select the type of customer (defaults to Marketplace)
+              Defaults to Marketplace
             </FormHelperText>
           </FormControl>
         </Grid>
@@ -222,6 +224,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Alternative Phone (Optional)"
             value={formData.alternativePhone || ''}
             onChange={(e) => handleChange('alternativePhone', e.target.value)}
@@ -231,6 +234,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Facebook ID (Optional)"
             value={formData.facebookId || ''}
             onChange={(e) => handleChange('facebookId', e.target.value)}
@@ -240,7 +244,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
       </Grid>
       
       {isSubmitting && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5 }}>
           <CircularProgress size={24} />
         </Box>
       )}

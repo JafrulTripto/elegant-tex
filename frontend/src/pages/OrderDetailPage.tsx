@@ -277,129 +277,258 @@ const OrderDetailPage: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
       <Box my={{ xs: 2, sm: 3, md: 4 }}>
-        <Box 
-          display="flex" 
-          flexDirection={{ xs: 'column', sm: 'row' }} 
-          justifyContent="space-between" 
-          alignItems={{ xs: 'flex-start', sm: 'center' }} 
-          mb={{ xs: 2, sm: 3 }}
-          gap={1}
+        {/* Header Section with Order Number and Status */}
+        <Paper 
+          elevation={0}
+          sx={{ 
+            mb: { xs: 2, sm: 3 },
+            p: { xs: 2, sm: 2.5, md: 3 },
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            color: 'white',
+            borderRadius: 2,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '200px',
+              height: '200px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '50%',
+              transform: 'translate(50%, -50%)'
+            }
+          }}
         >
-          <Box display="flex" alignItems="center">
+          <Box display="flex" alignItems="center" mb={1.5}>
             <IconButton
               onClick={() => navigate('/orders')}
-              sx={{ mr: { xs: 1, sm: 2 } }}
+              sx={{ 
+                mr: { xs: 1, sm: 1.5 },
+                color: 'white',
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.1)' }
+              }}
               aria-label="Back to orders"
               size={isMobile ? "small" : "medium"}
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography 
-              variant={isMobile ? "h5" : "h4"} 
-              component="h1"
-              sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}
-            >
-              Order #{order.orderNumber}
-            </Typography>
-          </Box>
-          
-          {/* Desktop action buttons */}
-          {!isMobile && (
-            <Box sx={{ display: 'flex', flexWrap: { xs: 'wrap', md: 'nowrap' }, gap: 1, justifyContent: 'flex-end' }}>
-              <Button
-                variant="outlined"
-                startIcon={<TimelineIcon />}
-                onClick={handleStatusDialogOpen}
-                size={isTablet ? "small" : "medium"}
-              >
-                Update Status
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<PdfIcon />}
-                onClick={handleGeneratePdf}
-                disabled={generatingPdf}
-                size={isTablet ? "small" : "medium"}
-              >
-                {generatingPdf ? 'Generating...' : 'Download PDF'}
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={deleting}
-                size={isTablet ? "small" : "medium"}
-              >
-                {deleting ? 'Deleting...' : 'Delete Order'}
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<EditIcon />}
-                onClick={() => navigate(`/orders/${order.id}/edit`)}
-                size={isTablet ? "small" : "medium"}
-              >
-                Edit Order
-              </Button>
-            </Box>
-          )}
-          
-          {/* Mobile action menu */}
-          {isMobile && (
-            <Box sx={{ alignSelf: 'flex-end' }}>
-              <Tooltip title="Order actions">
-                <IconButton
-                  aria-label="Order actions"
-                  aria-controls={open ? 'order-actions-menu' : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={open ? 'true' : undefined}
-                  onClick={handleMenuClick}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                id="order-actions-menu"
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleMenuClose}
-                MenuListProps={{
-                  'aria-labelledby': 'order-actions-button',
+            <Box flex={1}>
+              <Typography 
+                variant="overline" 
+                sx={{ 
+                  opacity: 0.9,
+                  fontWeight: 500,
+                  letterSpacing: 1,
+                  fontSize: { xs: '0.65rem', sm: '0.75rem' }
                 }}
               >
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  handleStatusDialogOpen();
-                }}>
-                  <TimelineIcon fontSize="small" sx={{ mr: 1 }} />
-                  Update Status
-                </MenuItem>
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  handleGeneratePdf();
-                }} disabled={generatingPdf}>
-                  <PdfIcon fontSize="small" sx={{ mr: 1 }} />
-                  {generatingPdf ? 'Generating...' : 'Download PDF'}
-                </MenuItem>
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  setDeleteDialogOpen(true);
-                }} disabled={deleting} sx={{ color: 'error.main' }}>
-                  <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-                  {deleting ? 'Deleting...' : 'Delete Order'}
-                </MenuItem>
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  navigate(`/orders/${order.id}/edit`);
-                }}>
-                  <EditIcon fontSize="small" sx={{ mr: 1 }} />
-                  Edit Order
-                </MenuItem>
-              </Menu>
+                Order Details
+              </Typography>
+              <Typography 
+                variant="h4" 
+                component="h1"
+                sx={{ 
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' },
+                  fontWeight: 700,
+                  letterSpacing: '-0.5px',
+                  mt: 0.5
+                }}
+              >
+                #{order.orderNumber}
+              </Typography>
             </Box>
-          )}
-        </Box>
+            <Box>
+              <StatusChip
+                status={order.status}
+                isOrderStatus={true}
+                sx={{ 
+                  fontWeight: 'bold',
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  bgcolor: 'white',
+                  color: theme.palette.primary.main,
+                  px: 2,
+                  height: { xs: 28, sm: 32 }
+                }}
+              />
+            </Box>
+          </Box>
+          
+          <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', mb: 2 }} />
+          
+          {/* Action Buttons */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            {!isMobile ? (
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={() => navigate(`/orders/${order.id}/edit`)}
+                    size={isTablet ? "small" : "medium"}
+                    sx={{
+                      bgcolor: 'white',
+                      color: theme.palette.primary.main,
+                      fontWeight: 600,
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                      },
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Edit Order
+                  </Button>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<TimelineIcon />}
+                    onClick={handleStatusDialogOpen}
+                    size={isTablet ? "small" : "medium"}
+                    sx={{
+                      borderColor: 'white',
+                      color: 'white',
+                      '&:hover': {
+                        borderColor: 'white',
+                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                        transform: 'translateY(-2px)'
+                      },
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Update Status
+                  </Button>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<PdfIcon />}
+                    onClick={handleGeneratePdf}
+                    disabled={generatingPdf}
+                    size={isTablet ? "small" : "medium"}
+                    sx={{
+                      borderColor: 'white',
+                      color: 'white',
+                      '&:hover': {
+                        borderColor: 'white',
+                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                        transform: 'translateY(-2px)'
+                      },
+                      '&.Mui-disabled': {
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        color: 'rgba(255, 255, 255, 0.5)'
+                      },
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {generatingPdf ? 'Generating...' : 'PDF'}
+                  </Button>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={deleting}
+                    size={isTablet ? "small" : "medium"}
+                    sx={{
+                      borderColor: 'rgba(255, 255, 255, 0.7)',
+                      color: 'white',
+                      '&:hover': {
+                        borderColor: theme.palette.error.light,
+                        bgcolor: theme.palette.error.main,
+                        color: 'white',
+                        transform: 'translateY(-2px)'
+                      },
+                      '&.Mui-disabled': {
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        color: 'rgba(255, 255, 255, 0.5)'
+                      },
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </Grid>
+              </Grid>
+            ) : (
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Button
+                  variant="contained"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate(`/orders/${order.id}/edit`)}
+                  size="small"
+                  sx={{
+                    bgcolor: 'white',
+                    color: theme.palette.primary.main,
+                    fontWeight: 600,
+                    flex: 1,
+                    mr: 1,
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.9)'
+                    }
+                  }}
+                >
+                  Edit
+                </Button>
+                <Tooltip title="More actions">
+                  <IconButton
+                    aria-label="Order actions"
+                    aria-controls={open ? 'order-actions-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={open ? 'true' : undefined}
+                    onClick={handleMenuClick}
+                    sx={{
+                      color: 'white',
+                      bgcolor: 'rgba(255, 255, 255, 0.15)',
+                      '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.25)' }
+                    }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  id="order-actions-menu"
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleMenuClose}
+                  MenuListProps={{
+                    'aria-labelledby': 'order-actions-button',
+                  }}
+                >
+                  <MenuItem onClick={() => {
+                    handleMenuClose();
+                    handleStatusDialogOpen();
+                  }}>
+                    <TimelineIcon fontSize="small" sx={{ mr: 1 }} />
+                    Update Status
+                  </MenuItem>
+                  <MenuItem onClick={() => {
+                    handleMenuClose();
+                    handleGeneratePdf();
+                  }} disabled={generatingPdf}>
+                    <PdfIcon fontSize="small" sx={{ mr: 1 }} />
+                    {generatingPdf ? 'Generating...' : 'Download PDF'}
+                  </MenuItem>
+                  <MenuItem onClick={() => {
+                    handleMenuClose();
+                    setDeleteDialogOpen(true);
+                  }} disabled={deleting} sx={{ color: 'error.main' }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                    {deleting ? 'Deleting...' : 'Delete Order'}
+                  </MenuItem>
+                </Menu>
+              </Box>
+            )}
+          </Box>
+        </Paper>
 
         {/* Order Status */}
         <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}>
@@ -808,7 +937,7 @@ const OrderDetailPage: React.FC = () => {
                     
                     <Divider sx={{ mb: 2 }} />
                     
-                    {/* Fabric with image - horizontal layout */}
+                    {/* Fabric with image and codes - horizontal layout */}
                     <Box 
                       sx={{ 
                         display: 'flex',
@@ -849,6 +978,18 @@ const OrderDetailPage: React.FC = () => {
                         <Typography variant="body1" fontWeight="medium">
                           {product.fabric.name}
                         </Typography>
+                        <Box display="flex" gap={2} mt={0.5}>
+                          {product.fabric.fabricCode && (
+                            <Typography variant="body2" color="textSecondary">
+                              Code: {product.fabric.fabricCode}
+                            </Typography>
+                          )}
+                          {product.styleCode && (
+                            <Typography variant="body2" color="textSecondary">
+                              Style: {product.styleCode}
+                            </Typography>
+                          )}
+                        </Box>
                         {product.fabric.tags && product.fabric.tags.length > 0 && (
                           <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {product.fabric.tags.map(tag => (

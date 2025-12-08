@@ -66,17 +66,17 @@ public class OrderPdfGenerator {
         log.info("Generating PDF for order with ID: {}", order.getId());
 
         try {
-            // Create PDF document
+            // Create PDF document with compact margins
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc, PageSize.A4);
-            document.setMargins(15, 15, 15, 15); // Further reduced margins for bigger images
+            document.setMargins(10, 10, 10, 10); // Compact margins
 
-            // Create fonts - using more elegant fonts
-            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.TIMES_BOLD);
-            PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
-            PdfFont italicFont = PdfFontFactory.createFont(StandardFonts.TIMES_ITALIC);
+            // Create fonts - using elegant Helvetica fonts for modern look
+            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont italicFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
 
             // First page - Order details with product images
             createOrderDetailsPage(document, order, boldFont, regularFont, italicFont);
@@ -86,11 +86,19 @@ public class OrderPdfGenerator {
 
             // Return PDF as resource
             byte[] pdfBytes = baos.toByteArray();
+            if (pdfBytes == null) {
+                throw new RuntimeException("Failed to generate PDF bytes");
+            }
             ByteArrayResource resource = new ByteArrayResource(pdfBytes);
+
+            MediaType pdfMediaType = MediaType.APPLICATION_PDF;
+            if (pdfMediaType == null) {
+                throw new RuntimeException("PDF media type not available");
+            }
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=order-" + order.getId() + ".pdf")
-                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentType(pdfMediaType)
                     .contentLength(pdfBytes.length)
                     .body(resource);
 
@@ -100,22 +108,12 @@ public class OrderPdfGenerator {
         }
     }
 
-    /**
-     * Collect all product images from an order
-     *
-     * @param order The order entity
-     * @return List of all product images
-     */
-    private List<OrderProductImage> getAllProductImages(Order order) {
-        return order.getProducts().stream()
-                .flatMap(product -> product.getImages().stream())
-                .toList();
-    }
-
-    // Define brand colors
-    private final Color PRIMARY_COLOR = new DeviceRgb(41, 128, 185); // Blue
-    private final Color SECONDARY_COLOR = new DeviceRgb(52, 73, 94); // Dark blue-gray
-    private final Color LIGHT_GRAY = new DeviceRgb(236, 240, 241); // Light gray for backgrounds
+    // Define brand colors matching theme
+    private final Color PRIMARY_COLOR = new DeviceRgb(185, 70, 126); // Magenta #B9467E
+    private final Color SECONDARY_COLOR = new DeviceRgb(30, 41, 59); // Slate gray
+    private final Color ACCENT_COLOR = new DeviceRgb(244, 143, 177); // Pink accent #F48FB1
+    private final Color LIGHT_GRAY = new DeviceRgb(250, 250, 250); // Very light gray
+    private final Color BORDER_COLOR = new DeviceRgb(230, 230, 230); // Light border
 
     /**
      * Get color based on order status
@@ -144,47 +142,51 @@ public class OrderPdfGenerator {
     private void createOrderDetailsPage(Document document, Order order, PdfFont boldFont, PdfFont regularFont, PdfFont italicFont) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // Add company logo and name in header
-        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1}))
+        // Add elegant header with gradient effect simulation
+        Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 1}))
                 .setWidth(UnitValue.createPercentValue(100))
-                .setBorder(null);
+                .setBorder(null)
+                .setBackgroundColor(PRIMARY_COLOR)
+                .setMarginBottom(4);
 
         try {
 
-            // Logo cell
-            Cell logoCell = new Cell().setBorder(null).setPadding(3);
+            // Logo cell with padding
+            Cell logoCell = new Cell().setBorder(null).setPadding(6);
 
             // Load logo from resources
             // Use classpath to access the resource
             byte[] logoBytes = Objects.requireNonNull(getClass().getResourceAsStream("/static/images/eleganttexlogo.png")).readAllBytes();
             ImageData logoData = ImageDataFactory.create(logoBytes);
             Image logo = new Image(logoData);
-            logo.setWidth(80); // Reduced logo width for more compact layout
+            logo.setWidth(60); // Compact logo
             logoCell.add(logo);
             headerTable.addCell(logoCell);
 
-            // Company name cell
-            Cell companyCell = new Cell().setBorder(null).setPadding(3)
+            // Company name cell with white text on colored background
+            Cell companyCell = new Cell().setBorder(null).setPadding(6)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE);
-            Cell orderIdCell = new Cell().setBorder(null).setPadding(3)
+            Cell orderIdCell = new Cell().setBorder(null).setPadding(6)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE).setHorizontalAlignment(HorizontalAlignment.RIGHT);
 
-            Paragraph companyName = new Paragraph("Elegant tex")
+            Paragraph companyName = new Paragraph("ELEGANT TEX")
                     .setFont(boldFont)
-                    .setFontSize(22) // Slightly smaller for compactness
-                    .setFontColor(PRIMARY_COLOR)
-                    .setFixedLeading(24); // Control line height
+                    .setFontSize(18)
+                    .setFontColor(ColorConstants.WHITE)
+                    .setFixedLeading(20)
+                    .setCharacterSpacing(1.2f);
 
             Paragraph tagline = new Paragraph("Quality Textile Solutions")
-                    .setFont(italicFont) // Using italic for the tagline
-                    .setFontSize(11)
-                    .setFontColor(SECONDARY_COLOR)
-                    .setFixedLeading(13); // Control line height
+                    .setFont(italicFont)
+                    .setFontSize(8)
+                    .setFontColor(new DeviceRgb(240, 240, 240))
+                    .setFixedLeading(10);
+            
             Paragraph orderId = new Paragraph(order.getOrderNumber())
                     .setFont(boldFont)
-                    .setFontSize(22) // Slightly smaller for compactness
-                    .setFontColor(PRIMARY_COLOR)
-                    .setFixedLeading(24); // Control line height
+                    .setFontSize(14)
+                    .setFontColor(ColorConstants.WHITE)
+                    .setFixedLeading(16);
 
             companyCell.add(companyName).add(tagline);
             headerTable.addCell(companyCell);
@@ -193,99 +195,110 @@ public class OrderPdfGenerator {
 
             document.add(headerTable);
 
-            // Add a divider
+            // Add an accent divider
             Div divider = new Div().setWidth(UnitValue.createPercentValue(100))
-                    .setHeight(1) // Thinner divider
-                    .setBackgroundColor(PRIMARY_COLOR)
-                    .setMarginTop(3)
-                    .setMarginBottom(8); // Reduced spacing
+                    .setHeight(2)
+                    .setBackgroundColor(ACCENT_COLOR)
+                    .setMarginBottom(5);
             document.add(divider);
         } catch (IOException e) {
             log.error("Error loading logo: {}", e.getMessage());
-            // If logo loading fails, just add company name without logo
-            Paragraph companyName = new Paragraph("Elegant tex")
-                    .setFont(boldFont)
-                    .setFontSize(22) // Slightly smaller
-                    .setFontColor(PRIMARY_COLOR)
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setFixedLeading(24); // Control line height
-            document.add(companyName);
-
-            Paragraph tagline = new Paragraph("Quality Textile Solutions")
-                    .setFont(italicFont) // Using italic for the tagline
-                    .setFontSize(11)
-                    .setFontColor(SECONDARY_COLOR)
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setFixedLeading(13); // Control line height
-            document.add(tagline);
-
-            // Add a divider
-            Div divider = new Div().setWidth(UnitValue.createPercentValue(100))
-                    .setHeight(1) // Thinner divider
+            // If logo loading fails, add elegant header without logo
+            Table fallbackHeader = new Table(1)
+                    .setWidth(UnitValue.createPercentValue(100))
+                    .setBorder(null)
                     .setBackgroundColor(PRIMARY_COLOR)
-                    .setMarginTop(3)
-                    .setMarginBottom(8); // Reduced spacing
+                    .setMarginBottom(8);
+            
+            Cell headerCell = new Cell().setBorder(null).setPadding(12);
+            
+            Paragraph companyName = new Paragraph("ELEGANT TEX")
+                    .setFont(boldFont)
+                    .setFontSize(18)
+                    .setFontColor(ColorConstants.WHITE)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFixedLeading(20)
+                    .setCharacterSpacing(1.5f);
+            
+            Paragraph tagline = new Paragraph("Quality Textile Solutions")
+                    .setFont(italicFont)
+                    .setFontSize(8)
+                    .setFontColor(new DeviceRgb(240, 240, 240))
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFixedLeading(10);
+            
+            headerCell.add(companyName).add(tagline);
+            fallbackHeader.addCell(headerCell);
+            document.add(fallbackHeader);
+
+            // Add accent divider
+            Div divider = new Div().setWidth(UnitValue.createPercentValue(100))
+                    .setHeight(3)
+                    .setBackgroundColor(ACCENT_COLOR)
+                    .setMarginBottom(10);
             document.add(divider);
         }
 
-        // Order details
+        // Order details with modern card design
         Table orderDetailsTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
                 .setWidth(UnitValue.createPercentValue(100))
-                .setMarginBottom(6); // Reduced margin
+                .setMarginBottom(5);
 
-        // Left column - Company/Marketplace details
+        // Left column - Company/Marketplace details with subtle border
         Cell leftCell = new Cell()
-                .setBorder(null)
-                .setPadding(6) // Reduced padding
+                .setBorder(new com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
+                .setPadding(6)
                 .setBackgroundColor(LIGHT_GRAY);
 
-        Paragraph fromHeader = new Paragraph("From:")
+        Paragraph fromHeader = new Paragraph("FROM")
                 .setFont(boldFont)
-                .setFontColor(PRIMARY_COLOR)
-                .setMarginBottom(3) // Reduced margin
-                .setFixedLeading(14); // Control line height
+                .setFontSize(9)
+                .setFontColor(SECONDARY_COLOR)
+                .setMarginBottom(3)
+                .setCharacterSpacing(0.5f);
         leftCell.add(fromHeader);
 
         // Handle case where marketplace might be null (for MERCHANT type orders)
         // MERCHANT orders don't have a marketplace associated with them
         if (order.getMarketplace() != null) {
             // For MARKETPLACE orders
-            leftCell.add(new Paragraph(order.getMarketplace().getName()).setFont(regularFont))
-                    .add(new Paragraph(order.getMarketplace().getPageUrl()).setFont(regularFont));
+            leftCell.add(new Paragraph(order.getMarketplace().getName()).setFont(regularFont).setFontSize(8))
+                    .add(new Paragraph(order.getMarketplace().getPageUrl()).setFont(regularFont).setFontSize(7));
         } else {
             // For MERCHANT orders
-            leftCell.add(new Paragraph("Direct Merchant Order").setFont(regularFont));
+            leftCell.add(new Paragraph("Direct Merchant Order").setFont(regularFont).setFontSize(8));
             // Add merchant's name if available (from created by user)
             if (order.getCreatedBy() != null) {
                 String creatorName = order.getCreatedBy().getFirstName() + " " + order.getCreatedBy().getLastName();
-                leftCell.add(new Paragraph("Created by: " + creatorName).setFont(regularFont));
+                leftCell.add(new Paragraph("Created by: " + creatorName).setFont(regularFont).setFontSize(7));
             }
         }
 
-        // Right column - Order details
+        // Right column - Order details with modern styling
         Cell rightCell = new Cell()
-                .setBorder(null)
-                .setPadding(6) // Reduced padding
+                .setBorder(new com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
+                .setPadding(6)
                 .setBackgroundColor(LIGHT_GRAY);
 
-        Paragraph orderHeader = new Paragraph("Order Details:")
+        Paragraph orderHeader = new Paragraph("ORDER DETAILS")
                 .setFont(boldFont)
-                .setFontColor(PRIMARY_COLOR)
-                .setMarginBottom(3) // Reduced margin
-                .setFixedLeading(14); // Control line height
+                .setFontSize(9)
+                .setFontColor(SECONDARY_COLOR)
+                .setMarginBottom(3)
+                .setCharacterSpacing(0.5f);
 
-        // Make order number more prominent with larger font
-        Paragraph orderNumber = new Paragraph("Order #: " + order.getOrderNumber())
+        // Make order number prominent
+        Paragraph orderNumber = new Paragraph("#" + order.getOrderNumber())
                 .setFont(boldFont)
-                .setFontSize(12) // Larger font size for prominence
+                .setFontSize(11)
                 .setFontColor(PRIMARY_COLOR)
                 .setMarginBottom(2);
 
         rightCell.add(orderHeader)
                 .add(orderNumber)
-                .add(new Paragraph("Date: " + order.getCreatedAt().format(dateFormatter)).setFont(regularFont))
-                .add(new Paragraph("Status: " + order.getStatus()).setFont(regularFont).setFontColor(getStatusColor(order.getStatus())))
-                .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont));
+                .add(new Paragraph("Date: " + order.getCreatedAt().format(dateFormatter)).setFont(regularFont).setFontSize(8))
+                .add(new Paragraph("Status: " + order.getStatus()).setFont(regularFont).setFontSize(8).setFontColor(getStatusColor(order.getStatus())))
+                .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont).setFontSize(8));
 
         orderDetailsTable.addCell(leftCell);
         orderDetailsTable.addCell(rightCell);
@@ -293,109 +306,140 @@ public class OrderPdfGenerator {
 
         document.add(new Paragraph("").setMarginBottom(4)); // Smaller spacing
 
-        // Create a combined table for customer and delivery info (side by side)
+        // Create a combined table for customer and delivery info with card design
         Table combinedInfoTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
                 .setWidth(UnitValue.createPercentValue(100))
                 .setMarginTop(4)
-                .setMarginBottom(6);
+                .setMarginBottom(5);
 
         Cell customerCell = new Cell()
-                .setBorder(null)
-                .setPadding(6) // Reduced padding
+                .setBorder(new com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
+                .setPadding(6)
                 .setBackgroundColor(LIGHT_GRAY);
 
-        Paragraph customerHeader = new Paragraph("Customer Information:")
+        Paragraph customerHeader = new Paragraph("CUSTOMER INFORMATION")
                 .setFont(boldFont)
-                .setFontColor(PRIMARY_COLOR)
-                .setMarginBottom(3) // Reduced margin
-                .setFixedLeading(14); // Control line height
+                .setFontSize(9)
+                .setFontColor(SECONDARY_COLOR)
+                .setMarginBottom(3)
+                .setCharacterSpacing(0.5f);
 
         customerCell.add(customerHeader)
-                .add(new Paragraph("Name: " + order.getCustomer().getName()).setFont(regularFont))
-                .add(new Paragraph("Phone: " + order.getCustomer().getPhone()).setFont(regularFont));
+                .add(new Paragraph("Name: " + order.getCustomer().getName()).setFont(regularFont).setFontSize(8))
+                .add(new Paragraph("Phone: " + order.getCustomer().getPhone()).setFont(regularFont).setFontSize(8));
 
         if (order.getCustomer().getAlternativePhone() != null && !order.getCustomer().getAlternativePhone().isEmpty()) {
-            customerCell.add(new Paragraph("Alternative Phone: " + order.getCustomer().getAlternativePhone()).setFont(regularFont));
+            customerCell.add(new Paragraph("Alternative Phone: " + order.getCustomer().getAlternativePhone()).setFont(regularFont).setFontSize(8));
         }
 
         // Enhanced address formatting with geographical information
         String formattedAddress = formatCustomerAddress(order.getCustomer());
-        customerCell.add(new Paragraph("Address: " + formattedAddress).setFont(regularFont));
+        customerCell.add(new Paragraph("Address: " + formattedAddress).setFont(regularFont).setFontSize(8));
 
-        // Delivery details cell (will be placed next to customer cell)
+        // Delivery details cell with card styling
         Cell deliveryCell = new Cell()
-                .setBorder(null)
-                .setPadding(6) // Reduced padding
+                .setBorder(new com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
+                .setPadding(6)
                 .setBackgroundColor(LIGHT_GRAY);
 
-        Paragraph deliveryHeader = new Paragraph("Delivery Information:")
+        Paragraph deliveryHeader = new Paragraph("DELIVERY INFORMATION")
                 .setFont(boldFont)
-                .setFontColor(PRIMARY_COLOR)
-                .setMarginBottom(3) // Reduced margin
-                .setFixedLeading(14); // Control line height
+                .setFontSize(9)
+                .setFontColor(SECONDARY_COLOR)
+                .setMarginBottom(3)
+                .setCharacterSpacing(0.5f);
 
         deliveryCell.add(deliveryHeader)
-                .add(new Paragraph("Channel: " + order.getDeliveryChannel()).setFont(regularFont))
-                .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont));
+                .add(new Paragraph("Channel: " + order.getDeliveryChannel()).setFont(regularFont).setFontSize(8))
+                .add(new Paragraph("Delivery Date: " + order.getDeliveryDate().format(dateFormatter)).setFont(regularFont).setFontSize(8));
 
         // Add both cells to the combined table
         combinedInfoTable.addCell(customerCell);
         combinedInfoTable.addCell(deliveryCell);
         document.add(combinedInfoTable);
 
-        document.add(new Paragraph("").setMarginBottom(4)); // Smaller spacing
+        document.add(new Paragraph("").setMarginBottom(2)); // Compact spacing
 
-        // Products table
-        Table productsTable = new Table(UnitValue.createPercentArray(new float[]{3, 2, 1, 2, 2}))
+        // Products table with elegant styling and description column
+        Table productsTable = new Table(UnitValue.createPercentArray(new float[]{2.5f, 2f, 3f, 0.8f, 1.5f, 1.5f}))
                 .setWidth(UnitValue.createPercentValue(100))
-                .setMarginBottom(6); // Reduced margin
+                .setMarginBottom(5);
 
-        // Table header
-        Cell headerCell1 = new Cell().add(new Paragraph("Product").setFont(boldFont))
+        // Table header with gradient-like effect
+        Cell headerCell1 = new Cell().add(new Paragraph("PRODUCT").setFont(boldFont).setFontSize(7).setCharacterSpacing(0.5f))
                 .setBackgroundColor(PRIMARY_COLOR).setFontColor(ColorConstants.WHITE)
-                .setPadding(4); // Reduced padding
-        Cell headerCell2 = new Cell().add(new Paragraph("Fabric").setFont(boldFont))
+                .setPadding(4).setTextAlignment(TextAlignment.LEFT);
+        Cell headerCell2 = new Cell().add(new Paragraph("FABRIC").setFont(boldFont).setFontSize(7).setCharacterSpacing(0.5f))
                 .setBackgroundColor(PRIMARY_COLOR).setFontColor(ColorConstants.WHITE)
-                .setPadding(4); // Reduced padding
-        Cell headerCell3 = new Cell().add(new Paragraph("Qty").setFont(boldFont))
+                .setPadding(4).setTextAlignment(TextAlignment.LEFT);
+        Cell headerCell3 = new Cell().add(new Paragraph("DESCRIPTION").setFont(boldFont).setFontSize(7).setCharacterSpacing(0.5f))
                 .setBackgroundColor(PRIMARY_COLOR).setFontColor(ColorConstants.WHITE)
-                .setPadding(4); // Reduced padding
-        Cell headerCell4 = new Cell().add(new Paragraph("Unit Price").setFont(boldFont))
+                .setPadding(4).setTextAlignment(TextAlignment.LEFT);
+        Cell headerCell4 = new Cell().add(new Paragraph("QTY").setFont(boldFont).setFontSize(7).setCharacterSpacing(0.5f))
                 .setBackgroundColor(PRIMARY_COLOR).setFontColor(ColorConstants.WHITE)
-                .setPadding(4); // Reduced padding
-        Cell headerCell5 = new Cell().add(new Paragraph("Subtotal").setFont(boldFont))
+                .setPadding(4).setTextAlignment(TextAlignment.CENTER);
+        Cell headerCell5 = new Cell().add(new Paragraph("PRICE").setFont(boldFont).setFontSize(7).setCharacterSpacing(0.5f))
                 .setBackgroundColor(PRIMARY_COLOR).setFontColor(ColorConstants.WHITE)
-                .setPadding(4); // Reduced padding
+                .setPadding(4).setTextAlignment(TextAlignment.RIGHT);
+        Cell headerCell6 = new Cell().add(new Paragraph("TOTAL").setFont(boldFont).setFontSize(7).setCharacterSpacing(0.5f))
+                .setBackgroundColor(PRIMARY_COLOR).setFontColor(ColorConstants.WHITE)
+                .setPadding(4).setTextAlignment(TextAlignment.RIGHT);
 
         productsTable.addHeaderCell(headerCell1);
         productsTable.addHeaderCell(headerCell2);
         productsTable.addHeaderCell(headerCell3);
         productsTable.addHeaderCell(headerCell4);
         productsTable.addHeaderCell(headerCell5);
+        productsTable.addHeaderCell(headerCell6);
 
-        // Table rows
+        // Table rows with improved styling and description
         boolean alternateRow = false;
         for (OrderProduct product : order.getProducts()) {
             Color rowColor = alternateRow ? LIGHT_GRAY : ColorConstants.WHITE;
 
-            Cell cell1 = new Cell().add(new Paragraph(product.getProductType().getName()).setFont(regularFont))
-                    .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
-            Cell cell2 = new Cell().add(new Paragraph(product.getFabric().getName()).setFont(regularFont))
-                    .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
-            Cell cell3 = new Cell().add(new Paragraph(String.valueOf(product.getQuantity())).setFont(regularFont))
-                    .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
-            Cell cell4 = new Cell().add(new Paragraph(product.getPrice().toString()).setFont(regularFont))
-                    .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
+            // Product name with style code if available
+            String productName = product.getProductType().getName();
+            if (product.getStyleCode() != null && !product.getStyleCode().trim().isEmpty()) {
+                productName += "\n(" + product.getStyleCode() + ")";
+            }
+            Cell cell1 = new Cell().add(new Paragraph(productName).setFont(regularFont).setFontSize(7))
+                    .setBackgroundColor(rowColor).setPadding(4).setTextAlignment(TextAlignment.LEFT);
+            
+            // Fabric with code if available
+            String fabricInfo = product.getFabric().getName();
+            if (product.getFabric().getFabricCode() != null && !product.getFabric().getFabricCode().trim().isEmpty()) {
+                fabricInfo += "\n(" + product.getFabric().getFabricCode() + ")";
+            }
+            Cell cell2 = new Cell().add(new Paragraph(fabricInfo).setFont(regularFont).setFontSize(7))
+                    .setBackgroundColor(rowColor).setPadding(4).setTextAlignment(TextAlignment.LEFT);
+            
+            // Description (new column)
+            String description = (product.getDescription() != null && !product.getDescription().trim().isEmpty()) 
+                    ? product.getDescription() 
+                    : "-";
+            Cell cell3 = new Cell().add(new Paragraph(description).setFont(regularFont).setFontSize(6).setItalic())
+                    .setBackgroundColor(rowColor).setPadding(4).setTextAlignment(TextAlignment.LEFT)
+                    .setFontColor(SECONDARY_COLOR);
+            
+            // Quantity
+            Cell cell4 = new Cell().add(new Paragraph(String.valueOf(product.getQuantity())).setFont(boldFont).setFontSize(7))
+                    .setBackgroundColor(rowColor).setPadding(4).setTextAlignment(TextAlignment.CENTER);
+            
+            // Unit price
+            Cell cell5 = new Cell().add(new Paragraph("৳ " + product.getPrice().toString()).setFont(regularFont).setFontSize(7))
+                    .setBackgroundColor(rowColor).setPadding(4).setTextAlignment(TextAlignment.RIGHT);
 
+            // Subtotal
             BigDecimal subtotal = product.getPrice().multiply(new BigDecimal(product.getQuantity()));
-            Cell cell5 = new Cell().add(new Paragraph(subtotal.toString()).setFont(regularFont))
-                    .setBackgroundColor(rowColor).setPadding(4); // Reduced padding
+            Cell cell6 = new Cell().add(new Paragraph("৳ " + subtotal.toString()).setFont(boldFont).setFontSize(7))
+                    .setBackgroundColor(rowColor).setPadding(4).setTextAlignment(TextAlignment.RIGHT);
 
             productsTable.addCell(cell1);
             productsTable.addCell(cell2);
             productsTable.addCell(cell3);
             productsTable.addCell(cell4);
             productsTable.addCell(cell5);
+            productsTable.addCell(cell6);
 
             // Toggle row color for next row
             alternateRow = !alternateRow;
@@ -403,25 +447,40 @@ public class OrderPdfGenerator {
 
         document.add(productsTable);
 
-        document.add(new Paragraph("").setMarginBottom(4)); // Smaller spacing
+        document.add(new Paragraph("").setMarginBottom(3));
 
-        // Totals
-        Table totalsTable = new Table(UnitValue.createPercentArray(new float[]{4, 1}))
-                .setWidth(UnitValue.createPercentValue(100));
+        // Totals with elegant card design
+        Table totalsTable = new Table(UnitValue.createPercentArray(new float[]{3, 1}))
+                .setWidth(UnitValue.createPercentValue(100))
+                .setBackgroundColor(LIGHT_GRAY)
+                .setBorder(new com.itextpdf.layout.borders.SolidBorder(BORDER_COLOR, 0.5f))
+                .setPadding(4);
 
         // Calculate total subtotal
         BigDecimal orderSubtotal = order.getProducts().stream()
                 .map(p -> p.getPrice().multiply(new BigDecimal(p.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Subtotal:").setFont(boldFont).setTextAlignment(TextAlignment.RIGHT)));
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph(orderSubtotal.toString()).setFont(regularFont)));
+        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Subtotal:").setFont(regularFont).setFontSize(8).setTextAlignment(TextAlignment.RIGHT)).setPadding(2));
+        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("৳ " + orderSubtotal.toString()).setFont(regularFont).setFontSize(8).setTextAlignment(TextAlignment.RIGHT)).setPadding(2));
 
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Delivery Charge:").setFont(boldFont).setTextAlignment(TextAlignment.RIGHT)));
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph(order.getDeliveryCharge().toString()).setFont(regularFont)));
+        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Delivery Charge:").setFont(regularFont).setFontSize(8).setTextAlignment(TextAlignment.RIGHT)).setPadding(2));
+        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("৳ " + order.getDeliveryCharge().toString()).setFont(regularFont).setFontSize(8).setTextAlignment(TextAlignment.RIGHT)).setPadding(2));
 
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph("Total:").setFont(boldFont).setTextAlignment(TextAlignment.RIGHT)));
-        totalsTable.addCell(new Cell().setBorder(null).add(new Paragraph(order.getTotalAmount().toString()).setFont(boldFont)));
+        // Total with accent background
+        Cell totalLabelCell = new Cell().setBorder(null)
+                .add(new Paragraph("TOTAL:").setFont(boldFont).setFontSize(9).setTextAlignment(TextAlignment.RIGHT).setCharacterSpacing(0.5f))
+                .setPadding(3)
+                .setBackgroundColor(PRIMARY_COLOR)
+                .setFontColor(ColorConstants.WHITE);
+        Cell totalValueCell = new Cell().setBorder(null)
+                .add(new Paragraph("৳ " + order.getTotalAmount().toString()).setFont(boldFont).setFontSize(9).setTextAlignment(TextAlignment.RIGHT))
+                .setPadding(3)
+                .setBackgroundColor(PRIMARY_COLOR)
+                .setFontColor(ColorConstants.WHITE);
+        
+        totalsTable.addCell(totalLabelCell);
+        totalsTable.addCell(totalValueCell);
 
         document.add(totalsTable);
 
@@ -461,121 +520,106 @@ public class OrderPdfGenerator {
         }
 
         int currentImageIndex = 0;
-        int pageNumber = 1;
         
         while (currentImageIndex < allProductImages.size()) {
-            // Add header for images section (only on first occurrence)
+            // Add compact header for images section (only on first occurrence)
             if (currentImageIndex == 0) {
-                document.add(new Paragraph("").setMarginBottom(isFirstPage ? 4 : 8));
-                document.add(new Paragraph("Product Images")
+                document.add(new Paragraph("").setMarginBottom(isFirstPage ? 3 : 6));
+                
+                // Create header with decorative line
+                Div headerLine = new Div().setWidth(UnitValue.createPercentValue(20))
+                        .setHeight(1)
+                        .setBackgroundColor(ACCENT_COLOR)
+                        .setMarginBottom(2)
+                        .setHorizontalAlignment(HorizontalAlignment.CENTER);
+                document.add(headerLine);
+                
+                document.add(new Paragraph("PRODUCT IMAGES")
                         .setFont(boldFont)
-                        .setFontSize(14)
+                        .setFontSize(9)
                         .setTextAlignment(TextAlignment.CENTER)
                         .setFontColor(PRIMARY_COLOR)
-                        .setMarginBottom(4));
+                        .setCharacterSpacing(1f)
+                        .setMarginBottom(2));
+                
+                Div bottomLine = new Div().setWidth(UnitValue.createPercentValue(20))
+                        .setHeight(1)
+                        .setBackgroundColor(ACCENT_COLOR)
+                        .setMarginBottom(3)
+                        .setHorizontalAlignment(HorizontalAlignment.CENTER);
+                document.add(bottomLine);
             }
 
-            // Create a 4x2 grid (8 images per page)
+            // Create a 4-column grid (4 images per row) - no captions
             Table imageGrid = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1, 1}))
                     .setWidth(UnitValue.createPercentValue(100))
-                    .setMarginBottom(3);
+                    .setMarginBottom(4);
 
-            // Add up to 8 images (2 rows of 4)
-            int imagesOnThisPage = Math.min(8, allProductImages.size() - currentImageIndex);
+            // Add up to 4 images per row
+            int imagesOnThisPage = Math.min(4, allProductImages.size() - currentImageIndex);
             
-            for (int row = 0; row < 2; row++) {
-                for (int col = 0; col < 4; col++) {
-                    int imageIndex = currentImageIndex + (row * 4) + col;
+            for (int col = 0; col < 4; col++) {
+                int imageIndex = currentImageIndex + col;
+                
+                Cell imageCell = new Cell()
+                        .setBorder(null)
+                        .setPadding(3) // Spacing around images
+                        .setTextAlignment(TextAlignment.CENTER);
+
+                if (imageIndex < allProductImages.size() && imageIndex < currentImageIndex + imagesOnThisPage) {
+                    ProductImageInfo imageInfo = allProductImages.get(imageIndex);
                     
-                    Cell imageCell = new Cell()
-                            .setBorder(null)
-                            .setPadding(1) // Reduced padding for tighter spacing
-                            .setTextAlignment(TextAlignment.CENTER);
-
-                    if (imageIndex < allProductImages.size() && imageIndex < currentImageIndex + imagesOnThisPage) {
-                        ProductImageInfo imageInfo = allProductImages.get(imageIndex);
-                        
-                        try {
-                            // Get image data from storage
-                            FileStorage fileStorage = fileStorageRepository.findById(imageInfo.orderImage.getImageId())
-                                    .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageInfo.orderImage.getImageId()));
-
-                            byte[] imageData;
-                            if (fileStorageConfig.isUseS3Storage()) {
-                                imageData = s3Service.downloadFile(fileStorage.getFilePath());
-                            } else {
-                                java.nio.file.Path imagePath = fileStorageConfig.getUploadPath()
-                                        .resolve(fileStorage.getFilePath());
-                                imageData = java.nio.file.Files.readAllBytes(imagePath);
-                            }
-
-                            // Create image
-                            ImageData data = ImageDataFactory.create(imageData);
-                            Image img = new Image(data);
-
-                            // Optimized image size for 4x2 grid - larger than previous 4x1 layout
-                            float maxWidth = 140;
-                            float maxHeight = 120;
-
-                            float imgWidth = img.getImageWidth();
-                            float imgHeight = img.getImageHeight();
-                            float widthRatio = maxWidth / imgWidth;
-                            float heightRatio = maxHeight / imgHeight;
-                            float scaleFactor = Math.min(widthRatio, heightRatio);
-
-                            img.scale(scaleFactor, scaleFactor);
-                            img.setHorizontalAlignment(HorizontalAlignment.CENTER);
-
-                            imageCell.add(img);
-
-                            // Add product information caption in format: "Product 1 : Oven Cover - Purple velvet - This is desc"
-                            String description = (imageInfo.description != null && !imageInfo.description.isBlank())
-                                    ? imageInfo.description.trim()
-                                    : "No description";
-                            
-                            // Build full caption with product type, fabric, and description
-                            StringBuilder captionBuilder = new StringBuilder();
-                            captionBuilder.append("Product ").append(imageInfo.productNumber).append(" : ");
-                            captionBuilder.append(imageInfo.productType).append(" - ");
-                            captionBuilder.append(imageInfo.fabric.getName()).append(" - ");
-                            captionBuilder.append(description);
-                            
-                            String caption = captionBuilder.toString();
-                            
-                            // Truncate if too long for display (keep reasonable length)
-                            if (caption.length() > 50) {
-                                caption = caption.substring(0, 47) + "...";
-                            }
-                            
-                            imageCell.add(new Paragraph(caption)
-                                    .setFont(regularFont)
-                                    .setFontSize(8) // Slightly larger font since we removed product details page
-                                    .setTextAlignment(TextAlignment.CENTER)
-                                    .setFontColor(SECONDARY_COLOR)
-                                    .setMarginTop(1));
-
-                        } catch (Exception e) {
-                            log.error("Error adding image to PDF grid: {}", e.getMessage());
-                            imageCell.add(new Paragraph("Image\nnot available")
-                                    .setFontColor(ColorConstants.GRAY)
-                                    .setFontSize(7)
-                                    .setTextAlignment(TextAlignment.CENTER));
-                            
-                            String caption = "P" + imageInfo.productNumber;
-                            imageCell.add(new Paragraph(caption)
-                                    .setFont(regularFont)
-                                    .setFontSize(7)
-                                    .setTextAlignment(TextAlignment.CENTER)
-                                    .setFontColor(SECONDARY_COLOR)
-                                    .setMarginTop(1));
+                    try {
+                        // Get image data from storage
+                        Long imageId = imageInfo.orderImage.getImageId();
+                        if (imageId == null) {
+                            throw new ResourceNotFoundException("Image ID is null");
                         }
-                    } else {
-                        // Empty cell for remaining slots
-                        imageCell.add(new Paragraph(""));
-                    }
+                        FileStorage fileStorage = fileStorageRepository.findById(imageId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Image not found with ID: " + imageId));
 
-                    imageGrid.addCell(imageCell);
+                        byte[] imageData;
+                        if (fileStorageConfig.isUseS3Storage()) {
+                            imageData = s3Service.downloadFile(fileStorage.getFilePath());
+                        } else {
+                            java.nio.file.Path imagePath = fileStorageConfig.getUploadPath()
+                                    .resolve(fileStorage.getFilePath());
+                            imageData = java.nio.file.Files.readAllBytes(imagePath);
+                        }
+
+                        // Create image
+                        ImageData data = ImageDataFactory.create(imageData);
+                        Image img = new Image(data);
+
+                        // Larger image size for 4 per row (no captions)
+                        float maxWidth = 140;
+                        float maxHeight = 140;
+
+                        float imgWidth = img.getImageWidth();
+                        float imgHeight = img.getImageHeight();
+                        float widthRatio = maxWidth / imgWidth;
+                        float heightRatio = maxHeight / imgHeight;
+                        float scaleFactor = Math.min(widthRatio, heightRatio);
+
+                        img.scale(scaleFactor, scaleFactor);
+                        img.setHorizontalAlignment(HorizontalAlignment.CENTER);
+
+                        imageCell.add(img);
+                        // No caption - just the image
+
+                    } catch (Exception e) {
+                        log.error("Error adding image to PDF grid: {}", e.getMessage());
+                        imageCell.add(new Paragraph("Image\nnot available")
+                                .setFontColor(ColorConstants.GRAY)
+                                .setFontSize(6)
+                                .setTextAlignment(TextAlignment.CENTER));
+                    }
+                } else {
+                    // Empty cell for remaining slots
+                    imageCell.add(new Paragraph(""));
                 }
+
+                imageGrid.addCell(imageCell);
             }
 
             document.add(imageGrid);
@@ -584,7 +628,6 @@ public class OrderPdfGenerator {
             // Add page break if there are more images and we're not on the last batch
             if (currentImageIndex < allProductImages.size()) {
                 document.add(new AreaBreak());
-                pageNumber++;
                 isFirstPage = false; // Subsequent pages are not first page
             }
         }

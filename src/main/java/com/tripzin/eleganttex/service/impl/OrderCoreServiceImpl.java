@@ -99,7 +99,18 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         
         // Create products with product-specific files
         createOrderProducts(order, orderRequest.getProducts(), files, request);
-        
+
+        // Set final order number using first product's fabric code and style code
+        List<OrderProduct> createdProducts = orderProductRepository.findByOrderId(order.getId());
+        if (createdProducts != null && !createdProducts.isEmpty()) {
+            OrderProduct first = createdProducts.get(0);
+            String fabricCode = first.getFabric() != null ? first.getFabric().getFabricCode() : "NA";
+            String styleCode = first.getStyleCode() != null ? first.getStyleCode() : "NA";
+            String finalOrderNumber = String.format("ET-%s-%s-%04d", fabricCode, styleCode, order.getId());
+            order.setOrderNumber(finalOrderNumber);
+            orderRepository.save(order);
+        }
+
         return orderMapper.mapOrderToResponse(order);
     }
 
@@ -223,11 +234,20 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         // Save the order first to get the ID
         Order savedOrder = orderRepository.save(newOrder);
         
-        // Generate and set the custom order number
-        String orderNumber = String.format("ET-ORD-%04d", savedOrder.getId());
+        // Set final order number using first product of source order
+        String fabricCode = "NA";
+        String styleCode = "NA";
+        if (sourceOrder.getProducts() != null && !sourceOrder.getProducts().isEmpty()) {
+            OrderProduct first = sourceOrder.getProducts().get(0);
+            if (first.getFabric() != null && first.getFabric().getFabricCode() != null) {
+                fabricCode = first.getFabric().getFabricCode();
+            }
+            if (first.getStyleCode() != null) {
+                styleCode = first.getStyleCode();
+            }
+        }
+        String orderNumber = String.format("ET-%s-%s-%04d", fabricCode, styleCode, savedOrder.getId());
         savedOrder.setOrderNumber(orderNumber);
-        
-        // Save again with the proper order number
         savedOrder = orderRepository.save(savedOrder);
         
         // Create initial status history with note about reusing the original order

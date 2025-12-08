@@ -36,6 +36,7 @@ export const createOrder = async (orderData: OrderFormData): Promise<Order> => {
       quantity: product.quantity,
       price: product.price,
       description: product.description,
+      styleCode: product.styleCode,
       imageIds: product.imageIds,
       tempImageBase64: product.tempImageBase64
     }))
@@ -97,6 +98,7 @@ export const updateOrder = async (id: number, orderData: OrderFormData): Promise
       quantity: product.quantity,
       price: product.price,
       description: product.description,
+      styleCode: product.styleCode,
       imageIds: product.imageIds,
       tempImageBase64: product.tempImageBase64
     }))

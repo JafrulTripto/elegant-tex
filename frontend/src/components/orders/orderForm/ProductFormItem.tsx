@@ -12,13 +12,15 @@ import {
   MenuItem,
   Select,
   TextField,
-  Typography
+  Typography,
+  Autocomplete
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { Field, FieldProps } from 'formik';
 import { OrderProductFormData } from '../../../types/order';
 import { ProductType } from '../../../types/productType';
 import { Fabric } from '../../../types/fabric';
+import { StyleCode } from '../../../types/styleCode';
 import OrderFileUpload from '../OrderFileUpload';
 import OrderImagePreview from '../OrderImagePreview';
 import FabricSelector from './FabricSelector';
@@ -29,6 +31,7 @@ interface ProductFormItemProps {
   index: number;
   productTypes: ProductType[];
   fabrics: Fabric[];
+  styleCodes: StyleCode[];
   handleFabricListScroll: (event: React.UIEvent<HTMLUListElement>) => void;
   loadingFabrics: boolean;
   canDelete: boolean;
@@ -43,6 +46,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
   index,
   productTypes,
   fabrics,
+  styleCodes,
   handleFabricListScroll,
   loadingFabrics,
   canDelete,
@@ -52,24 +56,27 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
   setFieldValue
 }) => {
   return (
-    <Card sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0' }}>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="subtitle1">Product #{index + 1}</Typography>
+    <Card sx={{ mb: 2, border: '1px solid #e0e0e0', boxShadow: 1 }}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+          <Typography variant="subtitle2" fontWeight={600} color="primary">Product #{index + 1}</Typography>
           {canDelete && (
             <IconButton
+              size="small"
               color="error"
               onClick={onDelete}
+              sx={{ ml: 1 }}
             >
-              <DeleteIcon />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           )}
         </Box>
 
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+        <Grid container spacing={1.5}>
+          <Grid item xs={12} sm={4}>
             <FormControl 
               fullWidth
+              size="small"
               error={
                 touched.products && 
                 Array.isArray(touched.products) &&
@@ -110,7 +117,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               )}
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <FabricSelector
               fabrics={fabrics}
               selectedFabricId={product.fabricId}
@@ -142,13 +149,14 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={6} sm={2}>
             <Field name={`products[${index}].quantity`}>
               {({ field, meta }: FieldProps) => (
                 <TextField
                   {...field}
                   fullWidth
-                  label="Quantity"
+                  size="small"
+                  label="Qty"
                   type="number"
                   InputProps={{ 
                     inputProps: { min: 0 }
@@ -160,12 +168,13 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               )}
             </Field>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={6} sm={2}>
             <Field name={`products[${index}].price`}>
               {({ field, meta }: FieldProps) => (
                 <TextField
                   {...field}
                   fullWidth
+                  size="small"
                   label="Price"
                   type="number"
                   InputProps={{
@@ -179,12 +188,40 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               )}
             </Field>
           </Grid>
+          <Grid item xs={12} sm={6}>
+            <Field name={`products[${index}].styleCode`}>
+              {({ field, meta }: FieldProps) => {
+                const selectedStyleCode = styleCodes.find(sc => sc.code === field.value);
+                return (
+                  <Autocomplete
+                    size="small"
+                    value={selectedStyleCode || null}
+                    onChange={(_, newValue) => {
+                      setFieldValue(field.name, newValue?.code || '');
+                    }}
+                    options={styleCodes}
+                    getOptionLabel={(option) => `${option.code} - ${option.name}`}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Style Code (Optional)"
+                        error={meta.touched && Boolean(meta.error)}
+                        helperText={meta.touched && meta.error}
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.code === value.code}
+                  />
+                );
+              }}
+            </Field>
+          </Grid>
           <Grid item xs={12}>
             <Field name={`products[${index}].description`}>
               {({ field, meta }: FieldProps) => (
                 <TextField
                   {...field}
                   fullWidth
+                  size="small"
                   label="Description (Optional)"
                   multiline
                   rows={2}
@@ -195,7 +232,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
             </Field>
           </Grid>
           <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
+            <Typography variant="caption" fontWeight={500} gutterBottom display="block">
               Product Images (Optional)
             </Typography>
             

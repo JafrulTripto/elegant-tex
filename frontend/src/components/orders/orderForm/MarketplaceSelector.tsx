@@ -1,13 +1,11 @@
 import React from 'react';
 import {
+  Box,
   FormControl,
   FormHelperText,
   InputLabel,
   MenuItem,
-  Paper,
-  Select,
-  Typography,
-  Divider
+  Select
 } from '@mui/material';
 import { Field, useFormikContext } from 'formik';
 import { Marketplace } from '../../../types/marketplace';
@@ -33,23 +31,19 @@ const MarketplaceSelector: React.FC<MarketplaceSelectorProps> = ({
   }
   
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Marketplace
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
-
+    <Box sx={{ mb: 0 }}>
       <FormControl 
-        fullWidth 
+        fullWidth
+        size="small"
         error={touched.marketplaceId && Boolean(errors.marketplaceId)}
       >
-        <InputLabel id="marketplace-label">Select Marketplace</InputLabel>
+        <InputLabel id="marketplace-label">Marketplace</InputLabel>
         <Field
           name="marketplaceId"
           as={Select}
           labelId="marketplace-label"
           id="marketplace"
-          label="Select Marketplace"
+          label="Marketplace"
           required
         >
           {marketplaces.map((marketplace) => (
@@ -62,7 +56,7 @@ const MarketplaceSelector: React.FC<MarketplaceSelectorProps> = ({
           <FormHelperText>{errors.marketplaceId as string}</FormHelperText>
         )}
       </FormControl>
-    </Paper>
+    </Box>
   );
 };
 

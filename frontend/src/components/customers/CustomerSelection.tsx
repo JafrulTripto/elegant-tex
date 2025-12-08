@@ -176,22 +176,23 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
   };
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+    <Paper sx={{ p: 2.5 }}>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
         Customer Information
       </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 1.5 }} />
 
       {!selectedCustomer ? (
         <>
           {/* Customer Search */}
-          <Box mb={3}>
-            <Typography variant="subtitle1" gutterBottom>
+          <Box mb={2}>
+            <Typography variant="subtitle2" fontWeight={500} gutterBottom>
               Search for Existing Customer
             </Typography>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing={1.5} alignItems="center">
               <Grid item xs={12} sm={6}>
                 <Autocomplete
+                  size="small"
                   options={customers}
                   getOptionLabel={(option) => `${option.phone} - ${option.name}`}
                   loading={loading}
@@ -228,17 +229,18 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
             </Grid>
           </Box>
 
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 1.5 }} />
 
           {/* New Customer Form */}
           <Box>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="subtitle2" fontWeight={500} gutterBottom>
               New Customer
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={1.5}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Phone Number"
                   value={customerData.phone}
                   onChange={(e) => handleCustomerDataChange('phone', e.target.value)}
@@ -261,6 +263,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Name"
                   value={customerData.name}
                   onChange={(e) => handleCustomerDataChange('name', e.target.value)}
@@ -280,6 +283,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Alternative Phone"
                   value={customerData.alternativePhone || ''}
                   onChange={(e) => handleCustomerDataChange('alternativePhone', e.target.value)}
@@ -288,6 +292,7 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Facebook ID"
                   value={customerData.facebookId || ''}
                   onChange={(e) => handleCustomerDataChange('facebookId', e.target.value)}
@@ -299,11 +304,11 @@ const CustomerSelection: React.FC<CustomerSelectionProps> = ({
       ) : (
         /* Selected Customer Display */
         <Box>
-          <Typography variant="subtitle1" gutterBottom>
+          <Typography variant="subtitle2" fontWeight={500} gutterBottom>
             Selected Customer
           </Typography>
-          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-            <Grid container spacing={2}>
+          <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'background.default' }}>
+            <Grid container spacing={1.5}>
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" color="text.secondary">
                   Name

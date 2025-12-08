@@ -6,7 +6,9 @@ import {
   Container,
   Alert,
   CircularProgress,
-  Typography
+  Typography,
+  Paper,
+  Divider
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -17,10 +19,12 @@ import { ProductType } from '../types/productType';
 import { Marketplace } from '../types/marketplace';
 import { OrderType } from '../types/orderType';
 import { Fabric } from '../types/fabric';
+import { StyleCode } from '../types/styleCode';
 import * as orderService from '../services/order.service';
 import * as marketplaceService from '../services/marketplace.service';
 import * as fabricService from '../services/fabric.service';
 import * as productTypeService from '../services/productType.service';
+import * as styleCodeService from '../services/styleCode.service';
 import { getFileUrl } from '../services/fileStorage.service';
 import useAuth from '../hooks/useAuth';
 import { canViewAllOrders } from '../utils/permissionUtils';
@@ -142,6 +146,7 @@ const OrderFormPage: React.FC = () => {
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [styleCodes, setStyleCodes] = useState<StyleCode[]>([]);
   const [formValues, setFormValues] = useState<OrderFormData>(getInitialValues());
   
   // Fabric pagination state
@@ -189,6 +194,10 @@ const OrderFormPage: React.FC = () => {
         // Load active product types
         const productTypesData = await productTypeService.getActiveProductTypes();
         setProductTypes(productTypesData);
+        
+        // Load active style codes
+        const styleCodesData = await styleCodeService.getActiveStyleCodes();
+        setStyleCodes(styleCodesData);
         
         // If edit mode, load order data
         if (isEditMode && id) {
@@ -447,23 +456,31 @@ const OrderFormPage: React.FC = () => {
         >
           {({ values, errors, touched, setFieldValue, isSubmitting }) => (
             <Form noValidate>
-              <Grid container spacing={3}>
-                {/* Order Type Selection */}
+              <Grid container spacing={2.5}>
+                {/* Order Configuration Section */}
                 <Grid size={{xs:12}}>
-                  <OrderTypeSelector
-                    touched={touched}
-                    errors={errors}
-                    setFieldValue={setFieldValue}
-                  />
-                </Grid>
-                
-                {/* Marketplace Selection */}
-                <Grid size={{xs:12}}>
-                  <MarketplaceSelector 
-                    marketplaces={marketplaces}
-                    touched={touched}
-                    errors={errors}
-                  />
+                  <Paper sx={{ p: 2.5 }}>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      Order Configuration
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Grid container spacing={1.5}>
+                      <Grid size={{xs:12, sm:6}}>
+                        <OrderTypeSelector
+                          touched={touched}
+                          errors={errors}
+                          setFieldValue={setFieldValue}
+                        />
+                      </Grid>
+                      <Grid size={{xs:12, sm:6}}>
+                        <MarketplaceSelector 
+                          marketplaces={marketplaces}
+                          touched={touched}
+                          errors={errors}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
                 </Grid>
 
                 {/* Customer Selection */}
@@ -508,6 +525,7 @@ const OrderFormPage: React.FC = () => {
                     products={values.products}
                     productTypes={productTypes}
                     fabrics={fabrics}
+                    styleCodes={styleCodes}
                     handleFabricListScroll={handleFabricListScroll}
                     loadingFabrics={loadingFabrics}
                     touched={touched}
@@ -517,21 +535,24 @@ const OrderFormPage: React.FC = () => {
                   />
                   
                   {/* Order Summary */}
-                  <OrderSummarySection
-                    products={values.products}
-                    deliveryCharge={values.deliveryCharge}
-                  />
+                  <Box sx={{ mt: 2 }}>
+                    <OrderSummarySection
+                      products={values.products}
+                      deliveryCharge={values.deliveryCharge}
+                    />
+                  </Box>
                 </Grid>
 
                 {/* Submit Button */}
                 <Grid size={{xs:12}}>
-                  <Box display="flex" justifyContent="flex-end">
+                  <Box display="flex" justifyContent="flex-end" sx={{ mt: 1 }}>
                     <Button
                       variant="contained"
                       color="primary"
                       size="large"
                       type="submit"
                       disabled={isSubmitting}
+                      sx={{ minWidth: 200 }}
                     >
                       {isSubmitting ? 'Saving...' : isEditMode ? 'Update Order' : 'Create Order'}
                     </Button>

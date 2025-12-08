@@ -109,6 +109,7 @@ public class OrderMapper {
         OrderProductResponse.FabricResponse fabricResponse = OrderProductResponse.FabricResponse.builder()
                 .id(product.getFabric().getId())
                 .name(product.getFabric().getName())
+                .fabricCode(product.getFabric().getFabricCode())
                 .imageId(product.getFabric().getImageId())
                 .build();
         
@@ -136,6 +137,7 @@ public class OrderMapper {
                 .quantity(product.getQuantity())
                 .price(product.getPrice())
                 .description(product.getDescription())
+                .styleCode(product.getStyleCode())
                 .subtotal(subtotal)
                 .images(imageResponses)
                 .createdAt(product.getCreatedAt())

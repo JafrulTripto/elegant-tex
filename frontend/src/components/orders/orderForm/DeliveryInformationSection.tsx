@@ -35,16 +35,17 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
   setFieldValue
 }) => {
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+    <Paper sx={{ p: 2.5 }}>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
         Delivery Information
       </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 1.5 }} />
 
-      <Grid container spacing={2}>
-        <Grid size={{xs:12, sm:6}}>
+      <Grid container spacing={1.5}>
+        <Grid size={{xs:12, sm:4}}>
           <FormControl 
             fullWidth
+            size="small"
             error={touched.deliveryChannel && Boolean(errors.deliveryChannel)}
           >
             <InputLabel id="delivery-channel-label">Delivery Channel</InputLabel>
@@ -67,12 +68,13 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
             )}
           </FormControl>
         </Grid>
-        <Grid size={{xs:12, sm:6}}>
+        <Grid size={{xs:12, sm:4}}>
           <Field name="deliveryCharge">
             {({ field, meta }: FieldProps) => (
               <TextField
                 {...field}
                 fullWidth
+                size="small"
                 label="Delivery Charge"
                 type="number"
                 slotProps={{
@@ -87,7 +89,7 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
             )}
           </Field>
         </Grid>
-        <Grid size={{xs:12, sm:6}}>
+        <Grid size={{xs:12, sm:4}}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Delivery Date"
@@ -99,7 +101,8 @@ const DeliveryInformationSection: React.FC<DeliveryInformationSectionProps> = ({
               }}
               slotProps={{ 
                 textField: { 
-                  fullWidth: true, 
+                  fullWidth: true,
+                  size: 'small',
                   required: true,
                   error: touched.deliveryDate && Boolean(errors.deliveryDate),
                   helperText: touched.deliveryDate && (errors.deliveryDate as string)

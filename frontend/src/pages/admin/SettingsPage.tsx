@@ -11,11 +11,13 @@ import {
 import RoleManagement from '../../components/admin/RoleManagement';
 import PermissionManagement from '../../components/admin/PermissionManagement';
 import ProductTypeManagement from '../../components/admin/ProductTypeManagement';
+import StyleCodeManagement from '../../components/admin/StyleCodeManagement';
 import { 
   Security as SecurityIcon, 
   Category as CategoryIcon,
   Settings as SettingsIcon,
-  VpnKey as PermissionIcon
+  VpnKey as PermissionIcon,
+  Style as StyleIcon
 } from '@mui/icons-material';
 
 interface TabPanelProps {
@@ -57,7 +59,8 @@ const SettingsPage: React.FC = () => {
   const tabs = [
     { label: "Roles", icon: <SecurityIcon fontSize="small" /> },
     { label: "Permissions", icon: <PermissionIcon fontSize="small" /> },
-    { label: "Product Types", icon: <CategoryIcon fontSize="small" /> }
+    { label: "Product Types", icon: <CategoryIcon fontSize="small" /> },
+    { label: "Style Codes", icon: <StyleIcon fontSize="small" /> }
   ];
 
   return (
@@ -134,6 +137,10 @@ const SettingsPage: React.FC = () => {
         
         <TabPanel value={activeTab} index={2}>
           <ProductTypeManagement />
+        </TabPanel>
+        
+        <TabPanel value={activeTab} index={3}>
+          <StyleCodeManagement />
         </TabPanel>
       </Box>
     </Container>

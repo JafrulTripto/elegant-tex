@@ -2,7 +2,6 @@ package com.tripzin.eleganttex.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -38,6 +37,9 @@ public class OrderProductRequest {
     
     @Size(max = 1000, message = "Description must be less than 1000 characters")
     private String description;
+
+    @Size(max = 64, message = "Style code must be less than 64 characters")
+    private String styleCode;
     
     @Builder.Default
     private List<Long> imageIds = new ArrayList<>();
