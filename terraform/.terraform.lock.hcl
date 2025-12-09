@@ -6,6 +6,7 @@ provider "registry.terraform.io/cloudflare/cloudflare" {
   constraints = "~> 4.0"
   hashes = [
     "h1:jnb4VdfNZ79I3yj7Q8x+JmOT+FxbfjjRfrF0dL0yCW8=",
+    "h1:wt3WBEBAeSGTlC9OlnTlAALxRiK4SQgLy0KgBIS7qzs=",
     "zh:2fb95e1d3229b9b6c704e1a413c7481c60f139780d9641f657b6eb9b633b90f2",
     "zh:379c7680983383862236e9e6e720c3114195c40526172188e88d0ffcf50dfe2e",
     "zh:55533beb6cfc02d22ffda8cba8027bc2c841bb172cd637ed0d28323d41395f8f",
@@ -29,6 +30,7 @@ provider "registry.terraform.io/digitalocean/digitalocean" {
   constraints = "~> 2.0"
   hashes = [
     "h1:+0Ac3zTxDflUVF78+8NwrTepooK3nOKIoNv5KsgyNAc=",
+    "h1:+iWAw4cJKZlZUk1Uj92FibEB5ni+grTNrfI3Y5oDoDs=",
     "zh:0c407e4af7f8363ccea094462e5e93da93fd61449ba7a4d8b2ed2ff318676b0f",
     "zh:0d639896d38086fdbf1791c5a2f489c7a207580e8a343eb03f059c084b730c75",
     "zh:16035612c48dd6ef085322068de15ea58c8360fac855ac6b72997a4deb5e4d28",
@@ -53,6 +55,7 @@ provider "registry.terraform.io/hashicorp/aws" {
   constraints = "~> 5.0"
   hashes = [
     "h1:H3mU/7URhP0uCRGK8jeQRKxx2XFzEqLiOq/L2Bbiaxs=",
+    "h1:Ijt7pOlB7Tr7maGQIqtsLFbl7pSMIj06TVdkoSBcYOw=",
     "zh:054b8dd49f0549c9a7cc27d159e45327b7b65cf404da5e5a20da154b90b8a644",
     "zh:0b97bf8d5e03d15d83cc40b0530a1f84b459354939ba6f135a0086c20ebbe6b2",
     "zh:1589a2266af699cbd5d80737a0fe02e54ec9cf2ca54e7e00ac51c7359056f274",
