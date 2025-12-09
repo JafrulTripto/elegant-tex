@@ -1,0 +1,86 @@
+# Elegant-Tex Terraform Variables
+# Copy this file to terraform.tfvars and fill in your actual values
+# IMPORTANT: Never commit terraform.tfvars to version control!
+
+# ==============================================================================
+# Project Configuration
+# ==============================================================================
+project_name = "elegant-tex"
+environment  = "production"
+
+# ==============================================================================
+# DigitalOcean Configuration
+# ==============================================================================
+# Get token from: https://cloud.digitalocean.com/account/api/tokens
+# Set as environment variable: export DIGITALOCEAN_TOKEN="your_token"
+
+droplet_name   = "elegant-tex-prod"
+droplet_size   = "s-1vcpu-1gb"        # $6/month - Use s-2vcpu-4gb for production ($24/month)
+droplet_region = "sgp1"               # Singapore - Change to your preferred region
+droplet_image  = "docker-20-04"       # Ubuntu 20.04 with Docker pre-installed
+
+# SSH Configuration
+ssh_key_name = "elegant-tex-key"
+# Generate SSH key: ssh-keygen -t rsa -b 4096 -C "elegant-tex-deploy"
+# Then paste the public key here:
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAA... your-public-key-here"
+
+# Monitoring & Backups
+enable_monitoring  = true
+enable_backups     = true              # Automated weekly backups (+20% cost)
+enable_reserved_ip = false             # Static IP (+$4/month)
+alert_email        = "admin@elegant-tex.com"
+
+# ==============================================================================
+# AWS Configuration
+# ==============================================================================
+# Set as environment variables:
+# export AWS_ACCESS_KEY_ID="your_access_key"
+# export AWS_SECRET_ACCESS_KEY="your_secret_key"
+
+aws_region = "ap-southeast-1"          # Singapore - Change to match your region
+
+# S3 Buckets
+storage_bucket_name  = "elegant-tex-prod-storage"
+frontend_bucket_name = "www.elegant-tex.com"
+
+# CloudFront Configuration
+cloudfront_price_class = "PriceClass_100"  # US, Canada, Europe (cheapest)
+# For global coverage use: PriceClass_200 or PriceClass_All
+
+# SSL Certificate (REQUIRED for HTTPS on custom domain)
+# 1. Create ACM certificate in us-east-1 region (required for CloudFront)
+# 2. Verify domain ownership via DNS or email
+# 3. Copy the ARN here:
+ssl_certificate_arn = ""  # e.g., "arn:aws:acm:us-east-1:123456789:certificate/abc-123"
+
+frontend_domain = "www.elegant-tex.com"
+
+# Cost Optimization
+enable_lifecycle_policy    = true
+enable_intelligent_tiering = true
+enable_compression         = true
+
+# ==============================================================================
+# Cloudflare Configuration
+# ==============================================================================
+# Get API token from: https://dash.cloudflare.com/profile/api-tokens
+# Set as environment variable: export CLOUDFLARE_API_TOKEN="your_token"
+
+# Get Zone ID from your domain's overview page in Cloudflare dashboard
+cloudflare_zone_id = "your_cloudflare_zone_id_here"
+domain_name        = "elegant-tex.com"
+
+# Security Settings
+enable_security_rules = true
+enable_rate_limiting  = true
+
+# ==============================================================================
+# Common Tags
+# ==============================================================================
+common_tags = {
+  Project     = "elegant-tex"
+  Environment = "production"
+  ManagedBy   = "terraform"
+  Owner       = "your-team"
+}
