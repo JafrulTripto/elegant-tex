@@ -88,6 +88,10 @@ const OrderValidationSchema = Yup.object().shape({
         .required('Fabric is required')
         .min(1, 'Please select a fabric'),
       
+      styleCode: Yup.string()
+        .required('Style code is required')
+        .min(1, 'Please select a style code'),
+      
       quantity: Yup.number()
         .required('Quantity is required')
         .min(1, 'Quantity must be at least 1'),
@@ -509,16 +513,6 @@ const OrderFormPage: React.FC = () => {
                   )}
                 </Grid>
 
-                {/* Delivery Information */}
-                <Grid size={{xs:12}}>
-                  <DeliveryInformationSection
-                    values={values}
-                    touched={touched}
-                    errors={errors}
-                    setFieldValue={setFieldValue}
-                  />
-                </Grid>
-
                 {/* Products */}
                 <Grid size={{xs:12}}>
                   <ProductFormSection
@@ -533,14 +527,24 @@ const OrderFormPage: React.FC = () => {
                     setFieldValue={setFieldValue}
                     createEmptyProduct={createEmptyProduct}
                   />
-                  
-                  {/* Order Summary */}
-                  <Box sx={{ mt: 2 }}>
-                    <OrderSummarySection
-                      products={values.products}
-                      deliveryCharge={values.deliveryCharge}
-                    />
-                  </Box>
+                </Grid>
+
+                {/* Delivery Information */}
+                <Grid size={{xs:12}}>
+                  <DeliveryInformationSection
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    setFieldValue={setFieldValue}
+                  />
+                </Grid>
+
+                {/* Order Summary */}
+                <Grid size={{xs:12}}>
+                  <OrderSummarySection
+                    products={values.products}
+                    deliveryCharge={values.deliveryCharge}
+                  />
                 </Grid>
 
                 {/* Submit Button */}
