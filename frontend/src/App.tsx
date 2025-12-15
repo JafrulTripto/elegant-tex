@@ -31,9 +31,11 @@ import OrdersPage from './pages/OrdersPage';
 import OrderFormPage from './pages/OrderFormPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import CustomersPage from './pages/CustomersPage';
+import StorePage from './pages/StorePage';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import PrivacyPolicy from './pages/Privacy';
+import PendingApprovalsPage from './pages/PendingApprovalsPage';
 
 const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage'));
 const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
@@ -110,6 +112,14 @@ const App: React.FC = () => {
               <Route element={<ProtectedRoute requiredPermissions={['ORDER_READ']} />}>
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:id" element={<OrderDetailPage />} />
+              </Route>
+
+              {/* Store routes */}
+              <Route element={<ProtectedRoute requiredPermissions={['STORE_READ']} />}>
+                <Route path="/store" element={<StorePage />} />
+              </Route>
+              <Route element={<ProtectedRoute requiredPermissions={['STORE_APPROVE']} />}>
+                <Route path="/store/approvals" element={<PendingApprovalsPage />} />
               </Route>
               
               <Route element={<ProtectedRoute requiredPermissions={['ORDER_CREATE']} />}>

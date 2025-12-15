@@ -12,6 +12,7 @@ import com.tripzin.eleganttex.repository.OrderStatusHistoryRepository;
 import com.tripzin.eleganttex.repository.UserRepository;
 import com.tripzin.eleganttex.service.OrderStatusService;
 import com.tripzin.eleganttex.service.OrderStatusValidationService;
+import com.tripzin.eleganttex.service.StoreService;
 import com.tripzin.eleganttex.service.mapper.OrderMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class OrderStatusServiceImpl implements OrderStatusService {
     private final UserRepository userRepository;
     private final OrderStatusValidationService statusValidationService;
     private final OrderMapper orderMapper;
+    private final StoreService storeService;
 
     /**
      * Update order status
@@ -68,6 +70,18 @@ public class OrderStatusServiceImpl implements OrderStatusService {
                 .build();
         
         orderStatusHistoryRepository.save(statusHistory);
+        
+            // Automatically add products to store if order is RETURNED or CANCELLED
+            if (newStatus == OrderStatus.RETURNED || newStatus == OrderStatus.CANCELLED) {
+                try {
+                    log.info("Order status changed to {}, adding products to store", newStatus);
+                    storeService.addProductsFromOrder(savedOrder, newStatus, userId);
+                } catch (Exception e) {
+                    log.error("Failed to add products from order {} to store: {}", savedOrder.getOrderNumber(), e.getMessage(), e);
+                    // Don't fail the status update if store addition fails
+                    // This can be retried manually by admin
+                }
+            }
         
         return orderMapper.mapOrderToResponse(savedOrder);
     }

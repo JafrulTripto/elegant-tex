@@ -97,6 +97,7 @@ resource "digitalocean_project" "main" {
   description = "Infrastructure for ${var.project_name} ${var.environment} environment"
   purpose     = "Web Application"
   environment = lower(var.environment) # must be one of: development, staging, production
+  is_default  = true                   # Keep as default to avoid validation errors
 
   resources = [
     digitalocean_droplet.app_server.urn

@@ -36,6 +36,8 @@ import {
   Category as CategoryIcon,
   ShoppingCart as ShoppingCartIcon,
   ContactPhone as ContactPhoneIcon,
+  Inventory2 as InventoryIcon,
+  Verified as ApproveIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -189,6 +191,42 @@ const MainLayout: React.FC = () => {
                 <ShoppingCartIcon style={navStyle('/orders')}/>
               </ListItemIcon>
               <ListItemText primary="Orders" sx={navStyle('/orders')} />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {(authState.user?.permissions?.includes('STORE_READ') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={() => handleNavigate('/store')}
+              sx={isActive('/store') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2, // Ensure consistent padding
+              } : {
+                paddingLeft: 2, // Ensure consistent padding
+              }}
+            >
+              <ListItemIcon color="secondary">
+                <InventoryIcon style={navStyle('/store')}/>
+              </ListItemIcon>
+              <ListItemText primary="Store" sx={navStyle('/store')} />
+            </ListItemButton>
+          </ListItem>
+        )}
+        {(authState.user?.permissions?.includes('STORE_APPROVE') || authState.user?.roles.includes('ROLE_ADMIN')) && (
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={() => handleNavigate('/store/approvals')}
+              sx={isActive('/store/approvals') ? {
+                backgroundColor: mode === 'dark' ? 'rgba(215, 106, 158, 0.08)' : 'rgba(185, 70, 126, 0.08)',
+                borderLeft: `4px solid ${theme.palette.primary.main}`,
+                paddingLeft: 2,
+              } : { paddingLeft: 2 }}
+            >
+              <ListItemIcon color="secondary">
+                <ApproveIcon style={navStyle('/store/approvals')}/>
+              </ListItemIcon>
+              <ListItemText primary="Approvals" sx={navStyle('/store/approvals')} />
             </ListItemButton>
           </ListItem>
         )}

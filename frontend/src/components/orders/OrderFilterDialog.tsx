@@ -118,13 +118,21 @@ const OrderFilterDialog: React.FC<OrderFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
+      <DialogTitle
+        sx={{
+          background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+          color: 'white',
+          borderRadius: '4px 4px 0 0',
+          position: 'relative',
+          padding: 2
+        }}
+      >
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center">
-            <FilterIcon sx={{ mr: 1 }} />
-            <Typography variant="h6">Filter Orders</Typography>
+            <FilterIcon sx={{ mr: 1, color: 'white' }} />
+            <Typography variant="h6" sx={{ color: 'white' }}>Filter Orders</Typography>
           </Box>
-          <IconButton edge="end" color="inherit" onClick={onClose} aria-label="close">
+          <IconButton edge="end" onClick={onClose} aria-label="close" sx={{ color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </Box>

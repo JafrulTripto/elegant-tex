@@ -358,12 +358,20 @@ const CustomersPage: React.FC = () => {
             sx: { borderRadius: theme.shape.borderRadius }
           }}
         >
-          <DialogTitle>
+          <DialogTitle
+            sx={{
+              background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+              color: 'white',
+              borderRadius: '4px 4px 0 0',
+              position: 'relative',
+              padding: 2
+            }}
+          >
             {selectedCustomer ? 'Edit Customer' : 'Add Customer'}
             <IconButton
               aria-label="close"
               onClick={() => setDialogOpen(false)}
-              sx={{ position: 'absolute', right: 8, top: 8 }}
+              sx={{ position: 'absolute', right: 8, top: 8, color: 'white' }}
             >
               <CloseIcon />
             </IconButton>

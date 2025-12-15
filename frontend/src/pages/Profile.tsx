@@ -412,7 +412,17 @@ const Profile: React.FC = () => {
         
         {/* Password Change Dialog */}
         <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
-          <DialogTitle>Change Password</DialogTitle>
+          <DialogTitle
+            sx={{
+              background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+              color: 'white',
+              borderRadius: '4px 4px 0 0',
+              position: 'relative',
+              padding: 2
+            }}
+          >
+            Change Password
+          </DialogTitle>
           <DialogContent>
             <DialogContentText>
               To change your password, please enter your current password and then your new password.
@@ -468,7 +478,17 @@ const Profile: React.FC = () => {
         
         {/* Profile Image Upload Dialog */}
         <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
-          <DialogTitle>Upload Profile Picture</DialogTitle>
+          <DialogTitle
+            sx={{
+              background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+              color: 'white',
+              borderRadius: '4px 4px 0 0',
+              position: 'relative',
+              padding: 2
+            }}
+          >
+            Upload Profile Picture
+          </DialogTitle>
           <DialogContent>
             <DialogContentText>
               Select an image file to use as your profile picture.

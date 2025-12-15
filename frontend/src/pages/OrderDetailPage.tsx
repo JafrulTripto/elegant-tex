@@ -96,6 +96,8 @@ const OrderDetailPage: React.FC = () => {
   const [displayStatus, setDisplayStatus] = useState<string>('');
   const [statusNotes, setStatusNotes] = useState<string>('');
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
+  const [confirmStoreAddOpen, setConfirmStoreAddOpen] = useState<boolean>(false);
+  const [pendingStatusForConfirm, setPendingStatusForConfirm] = useState<OrderStatus | ''>('');
   const [generatingPdf, setGeneratingPdf] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
@@ -178,6 +180,12 @@ const OrderDetailPage: React.FC = () => {
   // Handle status update
   const handleStatusUpdate = async () => {
     if (!id || !newStatus) return;
+    // If transitioning to RETURNED or CANCELLED, confirm store auto-add
+    if ((newStatus === 'RETURNED' || newStatus === 'CANCELLED') && !confirmStoreAddOpen) {
+      setPendingStatusForConfirm(newStatus);
+      setConfirmStoreAddOpen(true);
+      return;
+    }
     
     setUpdatingStatus(true);
     try {
@@ -188,6 +196,7 @@ const OrderDetailPage: React.FC = () => {
       );
       setOrder(updatedOrder);
       setStatusDialogOpen(false);
+      setConfirmStoreAddOpen(false);
     } catch (err: any) {
       console.error('Error updating status:', err);
       // Check if it's an invalid status transition error
@@ -1091,7 +1100,17 @@ const OrderDetailPage: React.FC = () => {
           }
         }}
       >
-        <DialogTitle>Update Order Status</DialogTitle>
+        <DialogTitle
+          sx={{
+            background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+            color: 'white',
+            borderRadius: '4px 4px 0 0',
+            position: 'relative',
+            padding: 2
+          }}
+        >
+          Update Order Status
+        </DialogTitle>
         <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 2 } }}>
           <Box sx={{ pt: 1 }}>
             {error && (
@@ -1147,6 +1166,52 @@ const OrderDetailPage: React.FC = () => {
             size={isMobile ? "small" : "medium"}
           >
             {updatingStatus ? 'Updating...' : 'Update Status'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm store add dialog for RETURNED/CANCELLED */}
+      <Dialog
+        open={confirmStoreAddOpen}
+        onClose={() => setConfirmStoreAddOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle
+          sx={{
+            background: (theme) => `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+            color: 'white',
+            borderRadius: '4px 4px 0 0',
+            position: 'relative',
+            padding: 2
+          }}
+        >
+          Confirm Inventory Addition
+        </DialogTitle>
+        <DialogContent>
+          <Typography gutterBottom>
+            Confirm Inventory Addition
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Changing status to {pendingStatusForConfirm} will add these items to Store:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2, mb: 0 }}>
+            {order?.products.map(p => (
+              <li key={p.id}>
+                <Typography variant="body2">
+                  {p.productType.name} • {p.fabric.name} • Qty: {p.quantity}
+                </Typography>
+              </li>
+            ))}
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            You can manage these items later from the Store page.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmStoreAddOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleStatusUpdate} disabled={updatingStatus}>
+            {updatingStatus ? 'Updating...' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>
