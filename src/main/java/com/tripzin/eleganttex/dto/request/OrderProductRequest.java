@@ -38,7 +38,8 @@ public class OrderProductRequest {
     @Size(max = 1000, message = "Description must be less than 1000 characters")
     private String description;
 
-    @Size(max = 64, message = "Style code must be less than 64 characters")
+    @NotNull(message = "Style code is required")
+    @Size(min = 1, max = 64, message = "Style code must be between 1 and 64 characters")
     private String styleCode;
     
     @Builder.Default

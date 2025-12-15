@@ -72,11 +72,13 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
           )}
         </Box>
 
-        <Grid container spacing={1.5}>
-          <Grid item xs={12} sm={4}>
+        <Grid container spacing={1} alignItems="flex-end">
+          {/* Product Type */}
+          <Grid item xs={12} sm={6}>
             <FormControl 
               fullWidth
               size="small"
+              margin="dense"
               error={
                 touched.products && 
                 Array.isArray(touched.products) &&
@@ -117,7 +119,38 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               )}
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          {/* Style Code */}
+          <Grid item xs={12} sm={6}>
+            <Field name={`products[${index}].styleCode`}>
+              {({ field, meta }: FieldProps) => {
+                const selectedStyleCode = styleCodes.find(sc => sc.code === field.value);
+                return (
+                  <Autocomplete
+                    size="small"
+                    value={selectedStyleCode || null}
+                    onChange={(_, newValue) => {
+                      setFieldValue(field.name, newValue?.code || '');
+                    }}
+                    options={styleCodes}
+                    getOptionLabel={(option) => `${option.code} - ${option.name}`}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Style Code"
+                        margin="dense"
+                        error={meta.touched && Boolean(meta.error)}
+                        helperText={meta.touched && meta.error}
+                        required
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.code === value.code}
+                  />
+                );
+              }}
+            </Field>
+          </Grid>
+          {/* Fabric */}
+          <Grid item xs={12} sm={6}>
             <FabricSelector
               fabrics={fabrics}
               selectedFabricId={product.fabricId}
@@ -149,7 +182,8 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               }
             />
           </Grid>
-          <Grid item xs={6} sm={2}>
+          {/* Quantity */}
+          <Grid item xs={6} sm={3}>
             <Field name={`products[${index}].quantity`}>
               {({ field, meta }: FieldProps) => (
                 <TextField
@@ -161,6 +195,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
                   InputProps={{ 
                     inputProps: { min: 0 }
                   }}
+                  margin="dense"
                   error={meta.touched && Boolean(meta.error)}
                   helperText={meta.touched && meta.error}
                   required
@@ -168,7 +203,8 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
               )}
             </Field>
           </Grid>
-          <Grid item xs={6} sm={2}>
+          {/* Price */}
+          <Grid item xs={6} sm={3}>
             <Field name={`products[${index}].price`}>
               {({ field, meta }: FieldProps) => (
                 <TextField
@@ -181,38 +217,12 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
                     startAdornment: <InputAdornment position="start"><TakaSymble/> </InputAdornment>,
                     inputProps: { step: 0.01 }
                   }}
+                  margin="dense"
                   error={meta.touched && Boolean(meta.error)}
                   helperText={meta.touched && meta.error}
                   required
                 />
               )}
-            </Field>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Field name={`products[${index}].styleCode`}>
-              {({ field, meta }: FieldProps) => {
-                const selectedStyleCode = styleCodes.find(sc => sc.code === field.value);
-                return (
-                  <Autocomplete
-                    size="small"
-                    value={selectedStyleCode || null}
-                    onChange={(_, newValue) => {
-                      setFieldValue(field.name, newValue?.code || '');
-                    }}
-                    options={styleCodes}
-                    getOptionLabel={(option) => `${option.code} - ${option.name}`}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Style Code (Optional)"
-                        error={meta.touched && Boolean(meta.error)}
-                        helperText={meta.touched && meta.error}
-                      />
-                    )}
-                    isOptionEqualToValue={(option, value) => option.code === value.code}
-                  />
-                );
-              }}
             </Field>
           </Grid>
           <Grid item xs={12}>
@@ -225,6 +235,7 @@ const ProductFormItem: React.FC<ProductFormItemProps> = memo(({
                   label="Description (Optional)"
                   multiline
                   rows={2}
+                  margin="dense"
                   error={meta.touched && Boolean(meta.error)}
                   helperText={meta.touched && meta.error}
                 />

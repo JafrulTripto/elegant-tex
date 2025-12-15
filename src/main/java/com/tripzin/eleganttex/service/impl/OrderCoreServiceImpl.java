@@ -104,9 +104,15 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         List<OrderProduct> createdProducts = orderProductRepository.findByOrderId(order.getId());
         if (createdProducts != null && !createdProducts.isEmpty()) {
             OrderProduct first = createdProducts.get(0);
-            String fabricCode = first.getFabric() != null ? first.getFabric().getFabricCode() : "NA";
-            String styleCode = first.getStyleCode() != null ? first.getStyleCode() : "NA";
-            String finalOrderNumber = String.format("ET-%s-%s-%04d", fabricCode, styleCode, order.getId());
+            String fabricCode = first.getFabric() != null && first.getFabric().getFabricCode() != null 
+                ? first.getFabric().getFabricCode() : "";
+            String styleCode = first.getStyleCode() != null ? first.getStyleCode() : "";
+            
+            if (fabricCode.isEmpty() || styleCode.isEmpty()) {
+                throw new IllegalArgumentException("Fabric code and style code are mandatory for order number generation");
+            }
+            
+            String finalOrderNumber = String.format("ET-%s-%s-%d", fabricCode, styleCode, order.getId());
             order.setOrderNumber(finalOrderNumber);
             orderRepository.save(order);
         }
@@ -235,8 +241,8 @@ public class OrderCoreServiceImpl implements OrderCoreService {
         Order savedOrder = orderRepository.save(newOrder);
         
         // Set final order number using first product of source order
-        String fabricCode = "NA";
-        String styleCode = "NA";
+        String fabricCode = "";
+        String styleCode = "";
         if (sourceOrder.getProducts() != null && !sourceOrder.getProducts().isEmpty()) {
             OrderProduct first = sourceOrder.getProducts().get(0);
             if (first.getFabric() != null && first.getFabric().getFabricCode() != null) {
@@ -246,7 +252,12 @@ public class OrderCoreServiceImpl implements OrderCoreService {
                 styleCode = first.getStyleCode();
             }
         }
-        String orderNumber = String.format("ET-%s-%s-%04d", fabricCode, styleCode, savedOrder.getId());
+        
+        if (fabricCode.isEmpty() || styleCode.isEmpty()) {
+            throw new IllegalArgumentException("Fabric code and style code are mandatory for order number generation");
+        }
+        
+        String orderNumber = String.format("ET-%s-%s-%d", fabricCode, styleCode, savedOrder.getId());
         savedOrder.setOrderNumber(orderNumber);
         savedOrder = orderRepository.save(savedOrder);
         
