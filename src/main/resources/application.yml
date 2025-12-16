@@ -58,6 +58,12 @@ logging:
   level:
     org.springframework.security: INFO
     com.tripzin.eleganttex: DEBUG
+  file:
+    name: /app/logs/app.log
+    max-size: 10MB
+    max-history: 10
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 # Monitoring Configuration
 management:

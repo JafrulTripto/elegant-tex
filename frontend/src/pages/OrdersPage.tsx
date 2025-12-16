@@ -625,19 +625,32 @@ const OrdersPage: React.FC = () => {
                 Orders
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={isXsScreen ? null : <AddIcon />}
-              component={RouterLink}
-              to="/orders/new"
-              sx={{ 
-                height: { xs: 36, sm: 40 },
-                px: { xs: 1.5, sm: 2 }
-              }}
-            >
-              {isXsScreen ? 'New' : 'New Order'}
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="outlined"
+                startIcon={isXsScreen ? null : <FileDownloadIcon />}
+                onClick={handleExportExcel}
+                sx={{ 
+                  height: { xs: 36, sm: 40 },
+                  px: { xs: 1.5, sm: 2 }
+                }}
+              >
+                {isXsScreen ? 'Export' : 'Export to Excel'}
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={isXsScreen ? null : <AddIcon />}
+                component={RouterLink}
+                to="/orders/new"
+                sx={{ 
+                  height: { xs: 36, sm: 40 },
+                  px: { xs: 1.5, sm: 2 }
+                }}
+              >
+                {isXsScreen ? 'New' : 'New Order'}
+              </Button>
+            </Box>
           </Box>
           <Typography 
             variant="body2" 
@@ -659,25 +672,6 @@ const OrdersPage: React.FC = () => {
         </Box>
 
         <Grid container spacing={{ xs: 2, sm: 3 }}>
-          <Grid size={{ xs: 12 }}>
-            <Box 
-              sx={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                mb: 2
-              }}
-            >
-              <Button
-                variant="outlined"
-                startIcon={isXsScreen ? null : <FileDownloadIcon />}
-                onClick={handleExportExcel}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-              >
-                {isXsScreen ? 'Export' : 'Export to Excel'}
-              </Button>
-            </Box>
-          </Grid>
-
           {/* Orders DataGrid */}
           <Grid size={{ xs: 12 }}>
             <Paper 

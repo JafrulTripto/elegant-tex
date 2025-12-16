@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../contexts/ToastContext';
 import { canViewAllOrders } from '../utils/permissionUtils';
 import {
   Box,
@@ -70,6 +71,7 @@ const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { authState } = useAuth();
+  const { showToast } = useToast();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
@@ -188,13 +190,15 @@ const OrderDetailPage: React.FC = () => {
       );
       setOrder(updatedOrder);
       setStatusDialogOpen(false);
+      setError(null);
+      showToast('Order status updated successfully', 'success');
     } catch (err: any) {
       console.error('Error updating status:', err);
       // Check if it's an invalid status transition error
       if (err.message?.includes('Invalid status transition from')) {
-        setError(err.message);
+        showToast(err.message, 'error');
       } else {
-        setError('Failed to update order status. Please try again later.');
+        showToast('Failed to update order status. Please try again later.', 'error');
       }
     } finally {
       setUpdatingStatus(false);
@@ -1094,11 +1098,6 @@ const OrderDetailPage: React.FC = () => {
         <DialogTitle>Update Order Status</DialogTitle>
         <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 2 } }}>
           <Box sx={{ pt: 1 }}>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel id="status-label">Status</InputLabel>
               <Select
@@ -1133,7 +1132,10 @@ const OrderDetailPage: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 2 } }}>
           <Button 
-            onClick={() => setStatusDialogOpen(false)} 
+            onClick={() => {
+              setStatusDialogOpen(false);
+              setError(null);
+            }} 
             color="inherit"
             size={isMobile ? "small" : "medium"}
           >
