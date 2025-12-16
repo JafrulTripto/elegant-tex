@@ -1,0 +1,28 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: elegant-tex-app-logs
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: varlogs
+          app: elegant-tex-app
+          env: ${SPRING_PROFILES_ACTIVE:-dev}
+          __path__: /var/log/elegant-tex/*.log
+    pipeline_stages:
+      - match:
+          selector: '{app="elegant-tex-app"}'
+          stages:
+            - regex:
+                expression: '^(?P<ts>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3})\s+\[(?P<thread>[^\]]+)\]\s+(?P<level>[A-Z]+)\s+(?P<logger>[^ ]+)\s+-\s+(?P<msg>.*)$'
+            - labels:
+                level:
+                logger:

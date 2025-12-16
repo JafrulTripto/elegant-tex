@@ -86,3 +86,6 @@ crash.log
 # Ignore Terraform CLI config files
 terraform.rc
 .terraformrc
+
+# Auto-generated docker-compose
+docker-compose.yml
