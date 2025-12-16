@@ -1,4 +1,4 @@
-.PHONY: help dev prod local up down logs ps build restart clean generate-compose status
+.PHONY: help dev prod local up down logs ps build restart clean generate-compose status local-down local-logs logs-promtail
 
 # Load .env
 include .env
@@ -44,6 +44,9 @@ help:
 	@echo "  $(CYAN)make logs-app$(NC)       - Tail app logs only"
 	@echo "  $(CYAN)make logs-nginx$(NC)     - Tail nginx logs"
 	@echo "  $(CYAN)make logs-grafana$(NC)   - Tail grafana logs"
+	@echo "  $(CYAN)make logs-promtail$(NC)  - Tail promtail logs"
+	@echo "  $(MAGENTA)make local-down$(NC)     - Stop local infrastructure"
+	@echo "  $(MAGENTA)make local-logs$(NC)     - View local infrastructure logs"
 	@echo "  $(CYAN)make build$(NC)          - Build app image"
 	@echo "  $(CYAN)make restart$(NC)        - Restart all services"
 	@echo "  $(CYAN)make clean$(NC)          - Stop and remove all containers"
@@ -53,12 +56,20 @@ help:
 
 dev:
 	@echo "$(GREEN)Switching to DEVELOPMENT environment...$(NC)"
-	@sed -i '' 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=dev/' .env
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sed -i '' 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=dev/' .env; \
+	else \
+		sed -i 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=dev/' .env; \
+	fi
 	@echo "$(GREEN)✓ Set SPRING_PROFILES_ACTIVE=dev in .env$(NC)"
 
 prod:
 	@echo "$(GREEN)Switching to PRODUCTION environment...$(NC)"
-	@sed -i '' 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=prod/' .env
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sed -i '' 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=prod/' .env; \
+	else \
+		sed -i 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=prod/' .env; \
+	fi
 	@echo "$(GREEN)✓ Set SPRING_PROFILES_ACTIVE=prod in .env$(NC)"
 
 local:
@@ -67,7 +78,11 @@ local:
 	@echo "$(MAGENTA)╚════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(GREEN)Setting environment to dev...$(NC)"
-	@sed -i '' 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=dev/' .env
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sed -i '' 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=dev/' .env; \
+	else \
+		sed -i 's/^SPRING_PROFILES_ACTIVE=.*/SPRING_PROFILES_ACTIVE=dev/' .env; \
+	fi
 	@echo "$(GREEN)Starting infrastructure services only...$(NC)"
 	@$(COMPOSE_LOCAL_CMD) up -d
 	@echo ""
@@ -119,6 +134,9 @@ logs-nginx:
 logs-grafana:
 	@$(COMPOSE_CMD) logs -f grafana
 
+logs-promtail:
+	@$(COMPOSE_CMD) logs -f promtail
+
 build:
 	@echo "$(GREEN)Building app image...$(NC)"
 	@$(COMPOSE_CMD) build app
@@ -151,3 +169,11 @@ status:
 	@echo "  $(COMPOSE_CMD) [action]"
 	@echo ""
 	@make ps
+
+local-down:
+	@echo "$(YELLOW)Stopping local infrastructure services...$(NC)"
+	@docker compose down
+	@echo "$(GREEN)✓ Services stopped$(NC)"
+
+local-logs:
+	@docker compose logs -f
